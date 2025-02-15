@@ -1,0 +1,48 @@
+{
+  "name": "yvee",
+  "version": "0.0.1",
+  "description": "Yvee JS framework",
+  "author": "Marky <markjotep@gmail.com>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "util": "cp -r ../misc/util ./",
+    "dirs": "for dir in ./src ./dist ./test ./util ./types; do mkdir -p $dir; done",
+    "@": "ln -sf ../../misc/@/ ./src",
+    "ts": "ln -sf ../misc/tsconfig.json ./;",
+    "init": "bun run dirs && bun run util && bun run @ && bun run ts;",
+    "build": "rm -r ./types ; tsc && bun build ./src/index.ts --outdir ./dist --minify --packages external --target browser && rollup -c ./util/rollup.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MARKjotep/yvee.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MARKjotep/yvee/issues"
+  },
+  "homepage": "https://github.com/MARKjotep/yvee#readme",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "authored": "^0.0.2",
+    "rollup": "^4.31.0",
+    "rollup-plugin-dts": "^6.1.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/pg": "^8.11.10",
+    "@types/bun": "^1.2.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "type": "module"
+}
