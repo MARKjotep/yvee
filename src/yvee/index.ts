@@ -61,7 +61,7 @@ function MAIN(r: Router, a: attr & { render?: string }, isYRA: boolean) {
   );
 }
 
-export interface yraCfg {
+export interface yveeCfg {
   pushState?: boolean;
   classes?: string | string[];
 }
@@ -77,7 +77,7 @@ export class Router extends minClient {
   A: (a: attr & { href: string }, ...D: ctx[]) => Dom;
   Main: (a: attr & { render?: string }) => Dom;
   load: (path?: string, data?: obj<string>) => Promise<this>;
-  constructor(ImportMeta: ImportMeta, config: yraCfg, isYRA = false) {
+  constructor(ImportMeta: ImportMeta, config: yveeCfg, isYRA = false) {
     super(ImportMeta, config);
     this.socket = new socket(this);
     //
@@ -171,8 +171,8 @@ Make this independent?
 -------------------------
 */
 
-export class Yve extends Router {
-  constructor(ImportMeta: ImportMeta, { classes, pushState = true }: yraCfg) {
+export class Yvee extends Router {
+  constructor(ImportMeta: ImportMeta, { classes, pushState = true }: yveeCfg) {
     super(ImportMeta, { classes, pushState }, true);
     //
 

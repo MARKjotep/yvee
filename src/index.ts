@@ -6,7 +6,7 @@ import { Elements } from "./storage";
 export { __, $$, Meta, cssLoader, addCSS } from "./@";
 export { $, _$ } from "./$";
 export { State, Stateful, stateHook } from "./stateful";
-export { Yve, Router, doc, websocket } from "./yve";
+export { Yvee, Router, doc, websocket } from "./yvee";
 export { local, session, eventStream, minClient } from "./storage";
 export { Dom, dom, frag, ctx } from "./dom";
 export * from "./ui";

@@ -338,7 +338,7 @@ declare class socket {
     unload(_path: string): void;
 }
 
-interface yraCfg {
+interface yveeCfg {
     pushState?: boolean;
     classes?: string | string[];
 }
@@ -356,7 +356,7 @@ declare class Router extends minClient {
         render?: string;
     }) => Dom;
     load: (path?: string, data?: obj<string>) => Promise<this>;
-    constructor(ImportMeta: ImportMeta, config: yraCfg, isYRA?: boolean);
+    constructor(ImportMeta: ImportMeta, config: yveeCfg, isYRA?: boolean);
     hooker(): void;
     class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
     render(_path: string, _error?: number, data?: obj<string>): Promise<{
@@ -364,8 +364,8 @@ declare class Router extends minClient {
     }>;
     fetch(CL?: doc<{}>): Promise<void>;
 }
-declare class Yve extends Router {
-    constructor(ImportMeta: ImportMeta, { classes, pushState }: yraCfg);
+declare class Yvee extends Router {
+    constructor(ImportMeta: ImportMeta, { classes, pushState }: yveeCfg);
     processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
     private processClassHead;
     private processDefaultHead;
@@ -389,7 +389,7 @@ declare class SocketPath extends MinStorage {
 }
 declare class minClient extends htmlHead {
     ImportMeta: ImportMeta;
-    config: yraCfg;
+    config: yveeCfg;
     storage: Storage$1<ClientPath>;
     errorStorage: Storage$1<ClientPath>;
     wssStorage: Storage$1<SocketPath>;
@@ -400,7 +400,7 @@ declare class minClient extends htmlHead {
     route: (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
     error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
     wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
-    constructor(ImportMeta: ImportMeta, config: yraCfg);
+    constructor(ImportMeta: ImportMeta, config: yveeCfg);
     getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
     loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
     loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
@@ -757,4 +757,4 @@ declare global {
 }
 declare const resolvePath: (base: string, relative: string) => string;
 
-export { $, $$, ColorScheme, Dom, Meta, Router, State, Stateful, Yve, type _$, __, addCSS, cssLoader, type ctx, doc, dom, eventStream, frag, local, minClient, resolvePath, session, stateHook, websocket };
+export { $, $$, ColorScheme, Dom, Meta, Router, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, type ctx, doc, dom, eventStream, frag, local, minClient, resolvePath, session, stateHook, websocket };

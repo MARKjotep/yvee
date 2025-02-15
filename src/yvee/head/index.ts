@@ -1,11 +1,11 @@
-import { Yve } from "..";
+import { Yvee } from "..";
 import { $$, headType, isNotWindow } from "../../@";
 import { BASE } from "./base";
 import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
 
-export async function processHead(this: Yve, GH: headType, lang: string) {
+export async function processHead(this: Yvee, GH: headType, lang: string) {
   const toUnload: (() => void)[] = [];
   if (isNotWindow) return [];
 

@@ -1,6 +1,6 @@
 import { Storage, htmlHead, MinStorage, makeID, $$ } from "../../@";
 import { dom } from "../..";
-import { doc, websocket, yraCfg } from "../../yve";
+import { doc, websocket, yveeCfg } from "../../yvee";
 
 export class ClientPath extends MinStorage {
   constructor(
@@ -38,7 +38,7 @@ export class minClient extends htmlHead {
   // error: () => <Q extends typeof doc<{}>>(f: Q) => Q;
   constructor(
     public ImportMeta: ImportMeta,
-    public config: yraCfg,
+    public config: yveeCfg,
   ) {
     super();
     this.route = (path: string) => {
