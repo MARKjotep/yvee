@@ -17,7 +17,7 @@ import { ctx, dom, frag, Dom } from "../dom";
 import { Wizard } from "../oz";
 import { State, Stateful, stateHook } from "../stateful";
 import { getElementById, minClient } from "../storage";
-import { doc } from "./body";
+import { defaultError, doc } from "./body";
 import { processHead, pushHistory } from "./head";
 import { HTML } from "./html";
 import { socket } from "./wss";
@@ -75,9 +75,13 @@ export class Router extends minClient {
   element = State<HTMLElement | null>(null);
 
   A: (a: attr & { href: string }, ...D: ctx[]) => Dom;
-  Main: (a: attr & { render?: string }) => Dom;
+  Main: (a: attr) => Dom;
   load: (path?: string, data?: obj<string>) => Promise<this>;
-  constructor(ImportMeta: ImportMeta, config: yveeCfg, isYRA = false) {
+  constructor(
+    ImportMeta: ImportMeta,
+    config: yveeCfg = {},
+    private isYRA = false,
+  ) {
     super(ImportMeta, config);
     this.socket = new socket(this);
     //
@@ -88,11 +92,12 @@ export class Router extends minClient {
       return MAIN(this, a, isYRA);
     };
     this.load = async (path?: string, data: obj<string> = {}) => {
+      if (this.hook) this.hook();
       if (path) {
         this.path.value = path;
         await this.render(path, 404, data);
+        this.hooker();
       }
-      this.hooker();
       return this;
     };
   }
@@ -132,10 +137,15 @@ export class Router extends minClient {
     const CL = await this.class(_path, _error, false);
     CL.data = data;
 
+    await this.fetch(CL);
+    if (CL.head) {
+      await CL.head();
+    }
+
     if (!CL) {
       return { done: false };
     }
-    await this.fetch(CL);
+
     this.root.value = await CL.loader();
     return { done: true };
   }
@@ -161,7 +171,9 @@ async function loadERROR(this: Router, _path: string, _error: number) {
     const { cls, id } = clientP;
     return new cls(_path, args, id, _error);
   } else {
-    return new doc(_path, args, makeID(5));
+    const ndoc = new defaultError(_path, args, makeID(5));
+    ndoc.title = `error ${_error}`;
+    return ndoc;
   }
 }
 
@@ -172,7 +184,10 @@ Make this independent?
 */
 
 export class Yvee extends Router {
-  constructor(ImportMeta: ImportMeta, { classes, pushState = true }: yveeCfg) {
+  constructor(
+    ImportMeta: ImportMeta,
+    { classes, pushState = true }: yveeCfg = {},
+  ) {
     super(ImportMeta, { classes, pushState }, true);
     //
 
@@ -184,6 +199,7 @@ export class Yvee extends Router {
     });
 
     this.load = async (path?: string, data: obj<string> = {}) => {
+      if (this.hook) this.hook();
       if (path) {
         this.path.value = path;
       }
@@ -210,7 +226,9 @@ export class Yvee extends Router {
   }
 
   private async processClassHead(CL: doc<{}>, head: headAttr) {
-    await CL.head();
+    if (CL.head) {
+      await CL.head();
+    }
     return CL.getHeadAttr(head, this.htmlHead);
   }
 

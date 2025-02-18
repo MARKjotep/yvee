@@ -26,30 +26,34 @@ export class doc<T = Record<string, string>> extends head {
     super();
   }
   async fetch?(): Promise<Record<string, string>>;
-  head(): Promise<void> | void {
-    this.title = "error " + this.status;
-  }
-  body(): Promise<Dom> | Dom {
-    return dom("div", {}, this.path + " not found...");
-  }
+  head?(): Promise<void> | void;
+  body?(): Promise<Dom> | Dom;
   async loader() {
     if (this.import) {
       try {
         const cimp = await this.import;
         if (cimp.default) {
-          const CD = await cimp.default({ ...this.args, ...this.data });
-
-          return isArr(CD) ? CD : [CD];
+          this.import = await cimp.default({ ...this.args, ...this.data });
+        } else {
+          this.import = undefined;
         }
       } catch (error) {
         $$.p = error;
-        const CD = await this.body();
-        return isArr(CD) ? CD : [CD];
+        this.import = undefined;
       }
-    } else {
+    }
+
+    if (this.body) {
+      //
       const CD = await this.body();
       return isArr(CD) ? CD : [CD];
     }
+
+    if (this.import) {
+      const CD = this.import;
+      return isArr(CD) ? CD : [CD];
+    }
+
     return [];
   }
 
@@ -79,6 +83,15 @@ export class doc<T = Record<string, string>> extends head {
   }
 }
 
+export class defaultError extends doc<{}> {
+  head(): Promise<void> | void {
+    this.title = `error ${this.status}`;
+  }
+  body(): Promise<Dom> | Dom {
+    return dom("div", {}, this.path + " not found...");
+  }
+}
+
 function DOC(rh: _htmlHead, doc: doc) {
   const { link, script, meta, title, base, description, css } = doc;
   rh.head = {
@@ -101,11 +114,14 @@ function DOC(rh: _htmlHead, doc: doc) {
   }
 
   if (css) {
-    const mp = css.map((mm) => ({
+    const isc = isArr(css) ? css : [css];
+    const mp = isc.map((mm) => ({
       rel: `${isNotWindow ? "preload " : ""}stylesheet`,
       href: mm,
       as: "style",
     }));
+    if (rh.head.lacks("link")) {
+    }
     rh.head = {
       link: [...mp],
     };

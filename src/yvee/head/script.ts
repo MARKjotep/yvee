@@ -45,7 +45,7 @@ const scrptLoader = (attrs: obj<string>) => {
     }
     scrpt.attr.set(attrs);
 
-    scrpt.e.onload = () => resolve(() => {}); // Resolve when loaded
+    scrpt.e.onload = () => resolve(scrpt.e); // Resolve when loaded
     scrpt.e.onerror = () => reject(new Error("Failed to load CSS")); // Reject on error
     document.head.appendChild(scrpt.e);
   });

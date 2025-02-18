@@ -133,7 +133,7 @@ declare class head implements headAttr {
     meta?: meta<string>[] | Meta;
     link?: link<string>[];
     script?: script<string | boolean>[];
-    css?: string[];
+    css?: string[] | string;
 }
 type CSSinT$1 = {
     [P in keyof CSSStyleDeclaration]?: V;
@@ -299,8 +299,8 @@ declare class doc<T = Record<string, string>> extends head {
     _data: T;
     constructor(path: string, args: T | undefined, id: string, status?: number);
     fetch?(): Promise<Record<string, string>>;
-    head(): Promise<void> | void;
-    body(): Promise<Dom> | Dom;
+    head?(): Promise<void> | void;
+    body?(): Promise<Dom> | Dom;
     loader(): Promise<any[]>;
     getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
     set data(data: obj<any>);
@@ -343,6 +343,7 @@ interface yveeCfg {
     classes?: string | string[];
 }
 declare class Router extends minClient {
+    private isYRA;
     hook?: () => void;
     id: string;
     root: Stateful<ctx[]>;
@@ -352,11 +353,9 @@ declare class Router extends minClient {
     A: (a: attr & {
         href: string;
     }, ...D: ctx[]) => Dom;
-    Main: (a: attr & {
-        render?: string;
-    }) => Dom;
+    Main: (a: attr) => Dom;
     load: (path?: string, data?: obj<string>) => Promise<this>;
-    constructor(ImportMeta: ImportMeta, config: yveeCfg, isYRA?: boolean);
+    constructor(ImportMeta: ImportMeta, config?: yveeCfg, isYRA?: boolean);
     hooker(): void;
     class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
     render(_path: string, _error?: number, data?: obj<string>): Promise<{
@@ -365,7 +364,7 @@ declare class Router extends minClient {
     fetch(CL?: doc<{}>): Promise<void>;
 }
 declare class Yvee extends Router {
-    constructor(ImportMeta: ImportMeta, { classes, pushState }: yveeCfg);
+    constructor(ImportMeta: ImportMeta, { classes, pushState }?: yveeCfg);
     processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
     private processClassHead;
     private processDefaultHead;
@@ -757,4 +756,4 @@ declare global {
 }
 declare const resolvePath: (base: string, relative: string) => string;
 
-export { $, $$, ColorScheme, Dom, Meta, Router, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, type ctx, doc, dom, eventStream, frag, local, minClient, resolvePath, session, stateHook, websocket };
+export { $, $$, ColorScheme, Dom, Meta, Router, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, type ctx, doc, dom, eventStream, frag, type headAttr, local, minClient, resolvePath, session, stateHook, websocket };

@@ -4,13 +4,18 @@ import { Dom, dom, frag, baseAttr, c_events, X3, ctx } from "./dom";
 import { Elements } from "./storage";
 
 export { __, $$, Meta, cssLoader, addCSS } from "./@";
-export { $, _$ } from "./$";
+export { $ } from "./$";
 export { State, Stateful, stateHook } from "./stateful";
 export { Yvee, Router, doc, websocket } from "./yvee";
 export { local, session, eventStream, minClient } from "./storage";
-export { Dom, dom, frag, ctx } from "./dom";
+export { Dom, dom, frag } from "./dom";
 export * from "./ui";
-export * from "./misc";
+// export * from "./misc";
+
+//
+export type { _$ } from "./$";
+export type { ctx } from "./dom";
+export type { headAttr } from "./@";
 
 declare global {
   type events = {
