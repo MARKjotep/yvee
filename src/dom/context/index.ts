@@ -24,6 +24,15 @@ const TAGS = [
 ];
 const hasTag = (tag: string) => TAGS.includes(tag);
 
+function escapeHTML(input: string) {
+  return String(input)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 const ctx_value = (cc: any, catt: CATT): string => {
   if (isArr(cc)) {
     return cc.map((c) => ctx_value(c, catt)).join("");
@@ -37,7 +46,7 @@ const ctx_value = (cc: any, catt: CATT): string => {
   } else if (isFN(cc)) {
     return ctx_value((cc as any)(), catt);
   } else if (cc !== undefined && cc !== null) {
-    return String(cc);
+    return escapeHTML(cc);
   }
   return "";
 };
