@@ -23,9 +23,9 @@ export class SocketPath extends MinStorage {
 }
 
 export class minClient extends htmlHead {
-  storage: Storage<ClientPath> = new Storage();
-  errorStorage: Storage<ClientPath> = new Storage();
-  wssStorage: Storage<SocketPath> = new Storage();
+  protected storage: Storage<ClientPath> = new Storage();
+  protected errorStorage: Storage<ClientPath> = new Storage();
+  protected wssStorage: Storage<SocketPath> = new Storage();
 
   /** --------------------
    * string | int | float | file | uuid
@@ -37,8 +37,8 @@ export class minClient extends htmlHead {
 
   // error: () => <Q extends typeof doc<{}>>(f: Q) => Q;
   constructor(
-    public ImportMeta: ImportMeta,
-    public config: yveeCfg,
+    protected ImportMeta: ImportMeta,
+    protected config: yveeCfg,
   ) {
     super();
     this.route = (path: string) => {
@@ -71,13 +71,13 @@ export class minClient extends htmlHead {
     // this.error()(defaultError);
   }
 
-  async getPath(path: string) {
+  protected async getPath(path: string) {
     return this.storage.get(path);
   }
-  async loadError(code: number) {
+  protected async loadError(code: number) {
     return this.errorStorage.get(code.toString());
   }
-  async loadWSS(path: string) {
+  protected async loadWSS(path: string) {
     return this.wssStorage.get(path);
   }
 }

@@ -1,4 +1,4 @@
-import { ctx, dom, Dom } from "..";
+import { dom, Dom } from "..";
 import { $$, idm, isArr, isFN, isObj, ngify, V } from "../../@";
 import { CATT, Wizard } from "../../oz";
 import { Stateful } from "../../stateful";

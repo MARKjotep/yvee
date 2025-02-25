@@ -76,7 +76,7 @@ export class socket {
   //
   async load(_path: string) {
     if (!websockets.has(_path)) {
-      const [clientP, args] = await this.yra.loadWSS(_path);
+      const [clientP, args] = await this.yra["loadWSS"](_path);
       if (!clientP) return;
       const { cls, path, id } = clientP;
       const client = new cls(path, args).connect;

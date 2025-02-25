@@ -1,14 +1,31 @@
 import { $ } from "../../$";
-import { $$, obj, oItems, oLen, oVals } from "../../@";
+import { $$, Mapper, obj, oItems, oLen, oVals, scrptLoader } from "../../@";
+import { YveePath } from "..";
 
-export async function SCRPT(src?: obj<string>[]) {
+const YMAP = new Mapper<string, Set<string>>();
+
+export async function SCRPT(src?: obj<any>[], unload: boolean = false) {
+  const ypath = YveePath.value;
   const ss: obj<() => void> = {};
 
   $("script[yid]")?.all.forEach((sc) => {
     const SX = $(sc);
     const yd = SX.attr.get("yid");
     if (yd) {
-      ss[yd] = SX.unload;
+      const isRT = SX.attr.get("rt");
+      if (unload) {
+        const YP = YMAP.get(ypath);
+        if (YP) {
+          if (!YP.has(yd)) {
+            ss[yd] = SX.unload;
+          }
+        } else {
+          // -
+          ss[yd] = SX.unload;
+        }
+      } else if (isRT) {
+        ss[yd] = SX.unload;
+      }
     }
   });
   //
@@ -19,7 +36,19 @@ export async function SCRPT(src?: obj<string>[]) {
         if (vv.yid in ss) {
           delete ss[vv.yid];
         } else {
-          await scrptLoader(vv);
+          try {
+            if (!unload) {
+              vv.rt = true;
+              const vid = vv.yid;
+              const YNIT = YMAP.init(ypath, new Set());
+              if (!YNIT.has(vid)) {
+                YNIT.add(vid);
+              }
+            }
+            await scrptLoader(vv);
+          } catch (e) {
+            $$.p = e;
+          }
         }
       }
     }
@@ -27,26 +56,3 @@ export async function SCRPT(src?: obj<string>[]) {
 
   return oVals(ss);
 }
-
-const scrptLoader = (attrs: obj<string>) => {
-  return new Promise((resolve, reject) => {
-    const scrpt = $(document.createElement("script"));
-    let content = "";
-    if ("importmap" in attrs) {
-      attrs.type = "importmap";
-      content = JSON.stringify(attrs.importmap);
-      delete attrs.importmap;
-    } else if ("body" in attrs) {
-      content = attrs.body;
-      delete attrs.body;
-    }
-    if (content) {
-      scrpt.inner = content;
-    }
-    scrpt.attr.set(attrs);
-
-    scrpt.e.onload = () => resolve(scrpt.e); // Resolve when loaded
-    scrpt.e.onerror = () => reject(new Error("Failed to load CSS")); // Reject on error
-    document.head.appendChild(scrpt.e);
-  });
-};

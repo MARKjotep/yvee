@@ -12,8 +12,6 @@ TYPES
 */
 type X2 = V | V[];
 
-export type ctx = V | Dom | Stateful<V | Dom> | ctx[];
-
 export type X3 = X2 | Stateful<X2>;
 
 export type CSSinT = {
@@ -46,7 +44,7 @@ export interface baseAttr {
 
 export class Dom {
   declare private attr: ATTR;
-  declare ctx: CTX;
+  declare private ctx: CTX;
   constructor(
     public tag: string,
     attr: attr = {},

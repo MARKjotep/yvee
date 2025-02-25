@@ -143,7 +143,7 @@ type CSSinT$1 = {
 type headType = Mapper<keyof head, any>;
 declare class htmlHead {
     lang: string;
-    htmlHead: headType;
+    protected htmlHead: headType;
     head: (heads?: headAttr) => void;
     constructor();
 }
@@ -235,15 +235,6 @@ declare class OZ {
     get processWindowEvents(): this;
     reset(id: string[]): this;
     RPS(oz?: this): this;
-}
-
-declare class CTX {
-    tag: string;
-    ctx: ctx[];
-    closing: string;
-    constructor(tag: string, ctx: ctx[]);
-    private process;
-    get(catt: CATT): string;
 }
 
 declare class eStream {
@@ -344,36 +335,41 @@ interface yveeCfg {
 }
 declare class Router extends minClient {
     private isYRA;
-    hook?: () => void;
+    protected unload: boolean;
+    protected hook?: () => void;
+    protected root: Stateful<ctx[]>;
+    protected socket: socket;
     id: string;
-    root: Stateful<ctx[]>;
     path: Stateful<string>;
-    socket: socket;
-    element: Stateful<HTMLElement | null>;
     A: (a: attr & {
         href: string;
     }, ...D: ctx[]) => Dom;
-    Main: (a: attr) => Dom;
+    Main: (a: attr & {
+        load?: string;
+    }) => Dom;
     load: (path?: string, data?: obj<string>) => Promise<this>;
     constructor(ImportMeta: ImportMeta, config?: yveeCfg, isYRA?: boolean);
-    hooker(): void;
-    class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
-    render(_path: string, _error?: number, data?: obj<string>): Promise<{
-        done: boolean;
-    }>;
-    fetch(CL?: doc<{}>): Promise<void>;
-}
-declare class Yvee extends Router {
-    constructor(ImportMeta: ImportMeta, { classes, pushState }?: yveeCfg);
-    processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
+    protected hooker(): void;
+    protected class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
+    protected fetch(CL?: doc<{}>): Promise<void>;
+    protected processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
     private processClassHead;
     private processDefaultHead;
-    render(_path?: string, _error?: number, data?: obj<string>, head?: headAttr, isClient?: boolean, isError?: boolean): Promise<{
+    protected render(_path: string, _error?: number, data?: obj<string>, head?: headAttr, isClient?: boolean, isError?: boolean): Promise<{
         lang: string;
         heads: headType;
         done: boolean;
     }>;
-    html(path: string, data?: obj<string>, status?: number): Promise<string>;
+}
+declare class Yvee extends Router {
+    protected unload: boolean;
+    constructor(ImportMeta: ImportMeta, { classes, pushState }?: yveeCfg);
+    html({ path, data, status, attr, }: {
+        path: string;
+        data?: Record<string, string>;
+        status?: number;
+        attr?: string;
+    }): Promise<string>;
 }
 
 declare class ClientPath extends MinStorage {
@@ -387,11 +383,11 @@ declare class SocketPath extends MinStorage {
     constructor(path: string, id: string, cls: typeof websocket<{}>);
 }
 declare class minClient extends htmlHead {
-    ImportMeta: ImportMeta;
-    config: yveeCfg;
-    storage: Storage$1<ClientPath>;
-    errorStorage: Storage$1<ClientPath>;
-    wssStorage: Storage$1<SocketPath>;
+    protected ImportMeta: ImportMeta;
+    protected config: yveeCfg;
+    protected storage: Storage$1<ClientPath>;
+    protected errorStorage: Storage$1<ClientPath>;
+    protected wssStorage: Storage$1<SocketPath>;
     /** --------------------
      * string | int | float | file | uuid
      * - /url/\<string:hell>
@@ -400,9 +396,9 @@ declare class minClient extends htmlHead {
     error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
     wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
     constructor(ImportMeta: ImportMeta, config: yveeCfg);
-    getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
-    loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
-    loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
+    protected getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
+    protected loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
+    protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
 }
 
 type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
@@ -436,7 +432,6 @@ declare class Stateful<T> extends EventTarget {
 declare function State<T>(value: T): Stateful<T>;
 
 type X2 = V | V[];
-type ctx = V | Dom | Stateful<V | Dom> | ctx[];
 type X3 = X2 | Stateful<X2>;
 type CSSinT = {
     [P in keyof CSSStyleDeclaration]?: X3;
@@ -463,7 +458,7 @@ interface baseAttr {
 declare class Dom {
     tag: string;
     private attr;
-    ctx: CTX;
+    private ctx;
     constructor(tag: string, attr?: attr, ...ctx: ctx[]);
     __(pid?: idm): {
         ctx: string;
@@ -583,6 +578,7 @@ declare global {
         [P in keyof GlobalEventHandlersEventMap]?: (this: Elements, e: GlobalEventHandlersEventMap[P]) => void;
     } & c_events;
     type attr = baseAttr | obj<X3>;
+    type ctx = V | Dom | Stateful<V | Dom> | ctx[];
     type obj<T> = Record<string, T>;
     type DomFN<T extends {}> = (a: attr & T, ...D: ctx[]) => Dom;
     namespace JSX {
@@ -755,5 +751,9 @@ declare global {
     }
 }
 declare const resolvePath: (base: string, relative: string) => string;
+type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+declare const Routes: (fn: (route: RouteType) => void) => (route: RouteType) => void;
+type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
+declare const Errors: (fn: (error: ErrorType) => void) => (error: ErrorType) => void;
 
-export { $, $$, ColorScheme, Dom, Meta, Router, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, type ctx, doc, dom, eventStream, frag, type headAttr, local, minClient, resolvePath, session, stateHook, websocket };
+export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, minClient, resolvePath, session, stateHook, websocket };

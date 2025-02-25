@@ -1,15 +1,32 @@
 import { $ } from "../../$";
-import { $$, obj, oLen, oVals, cssLoader } from "../../@";
+import { $$, obj, oLen, oVals, cssLoader, Mapper } from "../../@";
+import { YveePath } from "..";
 
-export async function LINK(link?: obj<obj<string>>) {
+const YMAP = new Mapper<string, Set<string>>();
+
+export async function LINK(link: obj<obj<any>>, unload: boolean = false) {
   //
+  const ypath = YveePath.value;
   const lnks: obj<() => void> = {};
 
   $("link")?.all.forEach((ml) => {
     const _ml = $(ml);
     const hrf = _ml.attr.get("href");
     if (hrf) {
-      lnks[hrf] = _ml.unload;
+      const isRT = _ml.attr.get("rt");
+      if (unload) {
+        const YP = YMAP.get(ypath);
+        if (YP) {
+          if (!YP.has(hrf)) {
+            lnks[hrf] = _ml.unload;
+          }
+        } else {
+          // -
+          lnks[hrf] = _ml.unload;
+        }
+      } else if (isRT) {
+        lnks[hrf] = _ml.unload;
+      }
     }
   });
 
@@ -17,7 +34,20 @@ export async function LINK(link?: obj<obj<string>>) {
     for (const vv of oVals(link)) {
       const vref = vv.href;
       if (!(vref in lnks)) {
-        await cssLoader(vv);
+        try {
+          if (!unload) {
+            vv.rt = true;
+            const YNIT = YMAP.init(ypath, new Set());
+            if (!YNIT.has(vref)) {
+              YNIT.add(vref);
+            }
+          }
+          await cssLoader(vv);
+        } catch (e) {
+          $$.p = e;
+
+          // Remove the path from the YMAP
+        }
       } else {
         delete lnks[vref];
       }

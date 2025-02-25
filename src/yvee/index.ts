@@ -13,7 +13,7 @@ import {
   isNotWindow,
   oAss,
 } from "../@";
-import { ctx, dom, frag, Dom } from "../dom";
+import { dom, frag, Dom, CSSinT } from "../dom";
 import { Wizard } from "../oz";
 import { State, Stateful, stateHook } from "../stateful";
 import { getElementById, minClient } from "../storage";
@@ -37,15 +37,18 @@ function HREF(a: attr & { href: string }, D: ctx[], path: Stateful<string>) {
   return dom("a", { ...a, on: { ..._e } }, ...D);
 }
 
-function MAIN(r: Router, a: attr & { render?: string }, isYRA: boolean) {
-  const { classes } = r.config;
+function MAIN(r: Router, a: attr & { load?: string }, isYRA: boolean) {
+  const { classes } = r["config"];
+  const { load: ld, on: __, ...aa } = a;
   //
   const _e: events = {
     ...((a.on as events) ?? {}),
-    ready() {
-      r.element.value = this;
-      a.render && r.render(a.render);
-    },
+    ...(!isYRA &&
+      ld && {
+        ready(e) {
+          r.load(ld);
+        },
+      }),
     ...(isYRA && {
       popstate(e) {
         const targ = e.target as Window;
@@ -53,11 +56,11 @@ function MAIN(r: Router, a: attr & { render?: string }, isYRA: boolean) {
       },
     }),
   };
-  const { render: _, on: __, ...aa } = a;
+
   return dom(
     "div",
     { ...aa, ...(classes && { class: classes }), on: _e },
-    r.root as any,
+    r["root"] as any,
   );
 }
 
@@ -67,15 +70,14 @@ export interface yveeCfg {
 }
 
 export class Router extends minClient {
-  hook?: () => void;
+  protected unload: boolean = false;
+  protected hook?: () => void;
+  protected root = State<ctx[]>([]);
+  protected socket: socket;
   id: string = makeID(4);
-  root = State<ctx[]>([]);
   path = State("");
-  socket: socket;
-  element = State<HTMLElement | null>(null);
-
   A: (a: attr & { href: string }, ...D: ctx[]) => Dom;
-  Main: (a: attr) => Dom;
+  Main: (a: attr & { load?: string }) => Dom;
   load: (path?: string, data?: obj<string>) => Promise<this>;
   constructor(
     ImportMeta: ImportMeta,
@@ -88,7 +90,7 @@ export class Router extends minClient {
     this.A = (a: attr & { href: string }, ...D: ctx[]) => {
       return HREF(a, D, this.path);
     };
-    this.Main = (a: attr & { render?: string }) => {
+    this.Main = (a: attr) => {
       return MAIN(this, a, isYRA);
     };
     this.load = async (path?: string, data: obj<string> = {}) => {
@@ -101,7 +103,7 @@ export class Router extends minClient {
       return this;
     };
   }
-  hooker() {
+  protected hooker() {
     const scrolls: obj<number> = {};
     let lastURL = this.path.value;
     if (this.hook) this.hook();
@@ -110,6 +112,7 @@ export class Router extends minClient {
       async (nav) => {
         //
         scrolls[lastURL] = window.scrollY;
+
         if ((await this.render(nav, 404)).done) {
           window.scrollTo({ top: scrolls[nav] ?? 0, behavior: "instant" });
           lastURL = nav;
@@ -119,7 +122,8 @@ export class Router extends minClient {
       { id: "router" },
     );
   }
-  async class(
+
+  protected async class(
     this: Router,
     _path: string,
     _error: number,
@@ -133,23 +137,8 @@ export class Router extends minClient {
       return loadERROR.call(this, _path, _error);
     }
   }
-  async render(_path: string, _error: number = 404, data: obj<string> = {}) {
-    const CL = await this.class(_path, _error, false);
-    CL.data = data;
 
-    await this.fetch(CL);
-    if (CL.head) {
-      await CL.head();
-    }
-
-    if (!CL) {
-      return { done: false };
-    }
-
-    this.root.value = await CL.loader();
-    return { done: true };
-  }
-  async fetch(CL?: doc<{}>) {
+  protected async fetch(CL?: doc<{}>) {
     if (CL) {
       try {
         if (CL.fetch) {
@@ -163,61 +152,8 @@ export class Router extends minClient {
       }
     }
   }
-}
 
-async function loadERROR(this: Router, _path: string, _error: number) {
-  const [clientP, args] = await this.loadError(_error ?? 0);
-  if (clientP) {
-    const { cls, id } = clientP;
-    return new cls(_path, args, id, _error);
-  } else {
-    const ndoc = new defaultError(_path, args, makeID(5));
-    ndoc.title = `error ${_error}`;
-    return ndoc;
-  }
-}
-
-/*
--------------------------
-Make this independent?
--------------------------
-*/
-
-export class Yvee extends Router {
-  constructor(
-    ImportMeta: ImportMeta,
-    { classes, pushState = true }: yveeCfg = {},
-  ) {
-    super(ImportMeta, { classes, pushState }, true);
-    //
-
-    this.head({
-      meta: [
-        { charset: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1.0" },
-      ],
-    });
-
-    this.load = async (path?: string, data: obj<string> = {}) => {
-      if (this.hook) this.hook();
-      if (path) {
-        this.path.value = path;
-      }
-      if (isWindow) {
-        this.render(path, 404, data).then(() => {
-          if (path && this.config.pushState) {
-            pushHistory(path, document.title);
-          }
-          _WIZARD.call(this, this.Main({}));
-
-          this.hooker();
-        });
-      }
-      return this;
-    };
-  }
-
-  async processHead(CL?: doc<{}>, head: headAttr = {}) {
+  protected async processHead(CL?: doc<{}>, head: headAttr = {}) {
     const headAttrs = CL
       ? await this.processClassHead(CL, head)
       : await this.processDefaultHead(head);
@@ -239,9 +175,9 @@ export class Yvee extends Router {
     return rh.head;
   }
 
-  async render(
-    _path: string = location.pathname,
-    _error?: number,
+  protected async render(
+    _path: string,
+    _error: number = 404,
     data: obj<string> = {},
     head: headAttr = {},
     isClient = true,
@@ -265,13 +201,21 @@ export class Yvee extends Router {
       };
     }
 
-    let unloader: (() => void)[] = [];
+    const CTX = await CL.loader();
 
     if (isClient) {
-      unloader = await processHead.call(this, heads, CL?.lang || this.lang);
+      let unloader = await processHead.call(
+        this,
+        heads,
+        CL?.lang || this.lang,
+        this.unload,
+      );
+      if (isClient) unloader.forEach((un) => un());
     }
 
-    const CTX = await CL.loader();
+    //
+
+    //
 
     if (CTX.length) {
       this.root.value = CTX;
@@ -279,12 +223,74 @@ export class Yvee extends Router {
       await this.render(_path, _error, data, head, isClient, true);
     }
 
-    if (isClient) unloader.forEach((un) => un());
-
     return { heads, lang: CL.lang ?? this.lang, done: true };
   }
+}
 
-  async html(path: string, data: obj<string> = {}, status?: number) {
+async function loadERROR(this: Router, _path: string, _error: number) {
+  const [clientP, args] = await this.loadError(_error ?? 0);
+  if (clientP) {
+    const { cls, id } = clientP;
+    return new cls(_path, args, id, _error);
+  } else {
+    const ndoc = new defaultError(_path, args, makeID(5));
+    ndoc.title = `error ${_error}`;
+    return ndoc;
+  }
+}
+
+export const YveePath = State("");
+
+export class Yvee extends Router {
+  protected unload: boolean = true;
+  constructor(
+    ImportMeta: ImportMeta,
+    { classes, pushState = true }: yveeCfg = {},
+  ) {
+    super(ImportMeta, { classes, pushState }, true);
+    //
+    this.path = YveePath;
+
+    this.head({
+      meta: [
+        { charset: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1.0" },
+      ],
+    });
+
+    this.load = async (
+      path: string = location.pathname,
+      data: obj<string> = {},
+    ) => {
+      if (this.hook) this.hook();
+      if (path) {
+        this.path.value = path;
+      }
+      if (isWindow) {
+        this.render(path, 404, data).then(() => {
+          if (path && this.config.pushState) {
+            pushHistory(path, document.title);
+          }
+          _WIZARD.call(this, this.Main({}));
+
+          this.hooker();
+        });
+      }
+      return this;
+    };
+  }
+
+  async html({
+    path,
+    data = {},
+    status = 200,
+    attr = "",
+  }: {
+    path: string;
+    data?: Record<string, string>;
+    status?: number;
+    attr?: string;
+  }) {
     const _hds: headAttr = {
       script: [
         {
@@ -301,7 +307,7 @@ export class Yvee extends Router {
 
     const { ctx } = this.Main({}).__(new idm(this.id));
 
-    return new HTML(lang, heads).body(ctx, this.id);
+    return new HTML(lang, heads).body(ctx, this.id, attr);
   }
 }
 

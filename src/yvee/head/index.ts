@@ -1,34 +1,42 @@
-import { Yvee } from "..";
+import { Router } from "..";
 import { $$, headType, isNotWindow } from "../../@";
 import { BASE } from "./base";
 import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
 
-export async function processHead(this: Yvee, GH: headType, lang: string) {
+export async function processHead(
+  this: Router,
+  GH: headType,
+  lang: string,
+  unload: boolean = false,
+) {
   const toUnload: (() => void)[] = [];
   if (isNotWindow) return [];
 
   const ttle = GH.get("title") ?? "";
-  const { pushState: PS } = this.config;
-  const npath = this.path.value;
+  if (unload) {
+    const { pushState: PS } = this.config;
+    const npath = this.path.value;
+    if (PS) pushHistory(npath, ttle);
 
-  if (PS) pushHistory(npath, ttle);
+    document.documentElement.lang = lang;
+    // Title
+    document.title = ttle;
+  }
 
-  // unload head props
-
-  document.documentElement.lang = lang;
-  // Title
-  document.title = ttle;
+  const path = this.path.value;
   // base
-  toUnload.push(...BASE(GH.get("base")));
-  //  meta
-  toUnload.push(...META(GH.get("meta")));
+  if (unload) {
+    toUnload.push(...BASE(GH.get("base")));
+    //  meta
+    toUnload.push(...META(GH.get("meta")));
+  }
   // link
-  toUnload.push(...(await LINK(GH.get("link"))));
 
-  // Scripts
-  toUnload.push(...(await SCRPT(GH.get("script"))));
+  toUnload.push(...(await LINK(GH.get("link"), unload)));
+
+  toUnload.push(...(await SCRPT(GH.get("script"), unload)));
 
   return toUnload;
 }

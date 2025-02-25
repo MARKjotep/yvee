@@ -1,7 +1,9 @@
-import { $$, obj } from "./@";
-import { Dom, dom, frag, baseAttr, c_events, X3, ctx } from "./dom";
+import { $$, obj, V } from "./@";
+import { Dom, dom, frag, baseAttr, c_events, X3 } from "./dom";
+import { Stateful } from "./stateful";
 
 import { Elements } from "./storage";
+import { doc } from "./yvee";
 
 export { __, $$, Meta, cssLoader, addCSS } from "./@";
 export { $ } from "./$";
@@ -14,7 +16,7 @@ export * from "./ui";
 
 //
 export type { _$ } from "./$";
-export type { ctx } from "./dom";
+
 export type { headAttr } from "./@";
 
 declare global {
@@ -25,6 +27,7 @@ declare global {
     ) => void;
   } & c_events;
   type attr = baseAttr | obj<X3>;
+  type ctx = V | Dom | Stateful<V | Dom> | ctx[];
   type obj<T> = Record<string, T>;
   type DomFN<T extends {}> = (a: attr & T, ...D: ctx[]) => Dom;
 
@@ -216,4 +219,18 @@ declare global {
 
 export const resolvePath = (base: string, relative: string) => {
   return `${base.replace(/\/+$/, "")}/${relative.replace(/^\.\/+/, "")}`;
+};
+
+type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+export const Routes = (fn: (route: RouteType) => void) => {
+  return (route: RouteType) => {
+    fn(route);
+  };
+};
+
+type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
+export const Errors = (fn: (error: ErrorType) => void) => {
+  return (error: ErrorType) => {
+    fn(error);
+  };
 };

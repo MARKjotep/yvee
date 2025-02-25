@@ -9,7 +9,7 @@ import {
   oItems,
   V,
 } from "../../@";
-import { Elements, getElementById } from "../../storage";
+import { Elements } from "../../storage";
 import { CATT } from "../../oz";
 import { Stateful } from "../../stateful";
 
@@ -18,7 +18,7 @@ import { Stateful } from "../../stateful";
 
 -------------------------
 */
-const attr_value = (v: any): string => {
+export const attr_value = (v: any): string => {
   if (isArr(v)) {
     return v.join(" ");
   } else if (isObj(v)) {
