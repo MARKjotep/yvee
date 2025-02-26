@@ -1,22 +1,18 @@
 import { $$, obj, V } from "./@";
-import { Dom, dom, frag, baseAttr, c_events, X3 } from "./dom";
+import { Dom, baseAttr, c_events, X3 } from "./dom";
 import { Stateful } from "./stateful";
-
 import { Elements } from "./storage";
-import { doc } from "./yvee";
 
 export { __, $$, Meta, cssLoader, addCSS } from "./@";
 export { $ } from "./$";
 export { State, Stateful, stateHook } from "./stateful";
-export { Yvee, Router, doc, websocket } from "./yvee";
-export { local, session, eventStream, minClient } from "./storage";
+export { Yvee, Router, doc, websocket, Routes, Errors } from "./yvee";
+export { local, session, eventStream } from "./storage";
 export { Dom, dom, frag } from "./dom";
 export * from "./ui";
-// export * from "./misc";
 
 //
 export type { _$ } from "./$";
-
 export type { headAttr } from "./@";
 
 declare global {
@@ -219,18 +215,4 @@ declare global {
 
 export const resolvePath = (base: string, relative: string) => {
   return `${base.replace(/\/+$/, "")}/${relative.replace(/^\.\/+/, "")}`;
-};
-
-type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-export const Routes = (fn: (route: RouteType) => void) => {
-  return (route: RouteType) => {
-    fn(route);
-  };
-};
-
-type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-export const Errors = (fn: (error: ErrorType) => void) => {
-  return (error: ErrorType) => {
-    fn(error);
-  };
 };

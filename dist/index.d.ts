@@ -371,6 +371,10 @@ declare class Yvee extends Router {
         attr?: string;
     }): Promise<string>;
 }
+type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+declare const Routes: (fn: (route: RouteType) => void) => (route: RouteType) => void;
+type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
+declare const Errors: (fn: (error: ErrorType) => void) => (error: ErrorType) => void;
 
 declare class ClientPath extends MinStorage {
     id: string;
@@ -751,9 +755,5 @@ declare global {
     }
 }
 declare const resolvePath: (base: string, relative: string) => string;
-type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-declare const Routes: (fn: (route: RouteType) => void) => (route: RouteType) => void;
-type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-declare const Errors: (fn: (error: ErrorType) => void) => (error: ErrorType) => void;
 
-export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, minClient, resolvePath, session, stateHook, websocket };
+export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, resolvePath, session, stateHook, websocket };

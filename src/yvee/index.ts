@@ -200,17 +200,30 @@ export class Router extends minClient {
         done: false,
       };
     }
+    let CTX = [];
 
-    const CTX = await CL.loader();
+    if (this.unload) {
+      CTX = await CL.loader();
+    }
+
+    let unloader: (() => void)[] = [];
 
     if (isClient) {
-      let unloader = await processHead.call(
+      unloader = await processHead.call(
         this,
         heads,
         CL?.lang || this.lang,
         this.unload,
       );
-      if (isClient) unloader.forEach((un) => un());
+    }
+
+    if (!this.unload) {
+      unloader.forEach((un) => un());
+      CTX = await CL.loader();
+    }
+
+    if (this.unload) {
+      unloader.forEach((un) => un());
     }
 
     //
@@ -340,4 +353,18 @@ const isError = (_hds: headAttr, status?: number) => {
     default:
       return;
   }
+};
+
+type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+export const Routes = (fn: (route: RouteType) => void) => {
+  return (route: RouteType) => {
+    fn(route);
+  };
+};
+
+type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
+export const Errors = (fn: (error: ErrorType) => void) => {
+  return (error: ErrorType) => {
+    fn(error);
+  };
 };
