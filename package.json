@@ -1,6 +1,6 @@
 {
   "name": "yvee",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Yvee JS framework",
   "author": "Marky <markjotep@gmail.com>",
   "license": "MIT",
@@ -25,18 +25,10 @@
     "url": "https://github.com/MARKjotep/yvee/issues"
   },
   "homepage": "https://github.com/MARKjotep/yvee#readme",
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1",
-    "authored": "^0.0.2",
-    "rollup": "^4.31.0",
-    "rollup-plugin-dts": "^6.1.1"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@types/jsonwebtoken": "^9.0.7",
-    "@types/pg": "^8.11.10",
-    "@types/bun": "^1.2.2"
+    "rollup": "^4.34.8",
+    "rollup-plugin-dts": "^6.1.1"
   },
   "peerDependencies": {
     "typescript": "^5.7.3"
