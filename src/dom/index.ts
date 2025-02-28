@@ -5,6 +5,7 @@ import { CTX } from "./context";
 import { Stateful } from "../stateful";
 import { Elements } from "../storage";
 
+export { attr_value } from "./attr";
 /*
 -------------------------
 TYPES

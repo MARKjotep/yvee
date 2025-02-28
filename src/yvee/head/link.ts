@@ -4,7 +4,11 @@ import { YveePath } from "..";
 
 const YMAP = new Mapper<string, Set<string>>();
 
-export async function LINK(link: obj<obj<any>>, unload: boolean = false) {
+export async function LINK(
+  id: string,
+  link: obj<obj<any>> = {},
+  unload: boolean = false,
+) {
   //
   const ypath = YveePath.value;
   const lnks: obj<() => void> = {};
@@ -25,7 +29,9 @@ export async function LINK(link: obj<obj<any>>, unload: boolean = false) {
           lnks[hrf] = _ml.unload;
         }
       } else if (isRT) {
-        lnks[hrf] = _ml.unload;
+        if (isRT === id) {
+          lnks[hrf] = _ml.unload;
+        }
       }
     }
   });
@@ -36,7 +42,7 @@ export async function LINK(link: obj<obj<any>>, unload: boolean = false) {
       if (!(vref in lnks)) {
         try {
           if (!unload) {
-            vv.rt = true;
+            vv.rt = id;
             const YNIT = YMAP.init(ypath, new Set());
             if (!YNIT.has(vref)) {
               YNIT.add(vref);
@@ -45,7 +51,6 @@ export async function LINK(link: obj<obj<any>>, unload: boolean = false) {
           await cssLoader(vv);
         } catch (e) {
           $$.p = e;
-
           // Remove the path from the YMAP
         }
       } else {

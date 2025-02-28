@@ -4,7 +4,11 @@ import { YveePath } from "..";
 
 const YMAP = new Mapper<string, Set<string>>();
 
-export async function SCRPT(src?: obj<any>[], unload: boolean = false) {
+export async function SCRPT(
+  id: string,
+  src?: obj<any>[],
+  unload: boolean = false,
+) {
   const ypath = YveePath.value;
   const ss: obj<() => void> = {};
 
@@ -24,7 +28,9 @@ export async function SCRPT(src?: obj<any>[], unload: boolean = false) {
           ss[yd] = SX.unload;
         }
       } else if (isRT) {
-        ss[yd] = SX.unload;
+        if (isRT === id) {
+          ss[yd] = SX.unload;
+        }
       }
     }
   });
@@ -38,7 +44,7 @@ export async function SCRPT(src?: obj<any>[], unload: boolean = false) {
         } else {
           try {
             if (!unload) {
-              vv.rt = true;
+              vv.rt = id;
               const vid = vv.yid;
               const YNIT = YMAP.init(ypath, new Set());
               if (!YNIT.has(vid)) {

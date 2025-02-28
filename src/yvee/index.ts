@@ -25,11 +25,17 @@ import { socket } from "./wss";
 export { doc } from "./body";
 export { websocket } from "./wss";
 
-function HREF(a: attr & { href: string }, D: ctx[], path: Stateful<string>) {
+function HREF(
+  a: attr & { href: string },
+  D: ctx[],
+  path: Stateful<string>,
+  last: Stateful<string>,
+) {
   const _e: events = {
     ...((a.on as events) ?? {}),
     click(e) {
       e.preventDefault();
+      last.value = path.value;
       path.value = $(this).path;
     },
   };
@@ -76,6 +82,7 @@ export class Router extends minClient {
   protected socket: socket;
   id: string = makeID(4);
   path = State("");
+  lastPath = State("");
   A: (a: attr & { href: string }, ...D: ctx[]) => Dom;
   Main: (a: attr & { load?: string }) => Dom;
   load: (path?: string, data?: obj<string>) => Promise<this>;
@@ -88,7 +95,7 @@ export class Router extends minClient {
     this.socket = new socket(this);
     //
     this.A = (a: attr & { href: string }, ...D: ctx[]) => {
-      return HREF(a, D, this.path);
+      return HREF(a, D, this.path, this.lastPath);
     };
     this.Main = (a: attr) => {
       return MAIN(this, a, isYRA);
@@ -97,6 +104,8 @@ export class Router extends minClient {
       if (this.hook) this.hook();
       if (path) {
         this.path.value = path;
+        this.lastPath.value = path;
+        this.lang = path;
         await this.render(path, 404, data);
         this.hooker();
       }
@@ -183,9 +192,6 @@ export class Router extends minClient {
     isClient = true,
     isError = false,
   ) {
-    if (isNotWindow) {
-      this.path.value = _path;
-    }
     const CL = await this.class(_path, _error ?? getErrorCode(), isError);
     CL.data = data;
 
@@ -271,15 +277,16 @@ export class Yvee extends Router {
       ],
     });
 
-    this.load = async (
-      path: string = location.pathname,
-      data: obj<string> = {},
-    ) => {
+    this.load = async (path?: string, data: obj<string> = {}) => {
+      if (isWindow) {
+        path = path || location.pathname;
+      }
       if (this.hook) this.hook();
+
       if (path) {
         this.path.value = path;
       }
-      if (isWindow) {
+      if (isWindow && path) {
         this.render(path, 404, data).then(() => {
           if (path && this.config.pushState) {
             pushHistory(path, document.title);
@@ -316,6 +323,7 @@ export class Yvee extends Router {
     isError(_hds, status);
     //
 
+    this.path.value = path;
     const { lang, heads } = await this.render(path, status, data, _hds, false);
 
     const { ctx } = this.Main({}).__(new idm(this.id));

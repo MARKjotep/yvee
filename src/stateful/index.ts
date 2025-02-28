@@ -110,7 +110,6 @@ export class Stateful<T> extends EventTarget {
       };
     };
   }
-
   hook<T extends any[]>(callback: hookFN<T>) {
     return (id: string) => {
       //

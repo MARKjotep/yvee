@@ -1,7 +1,7 @@
 import { Elem, TElem } from ".";
 import { $ } from "..";
 import { idm, isFN, isNum, obj, oItems, V } from "../../@";
-import { CSSinT } from "../../dom";
+import { attr_value, CSSinT } from "../../dom";
 import { Dom } from "../../dom";
 import { OZ, Wizard } from "../../oz";
 import { anim } from "./anim";
@@ -41,7 +41,7 @@ export class Eget<T extends TElem = HTMLElement> {
         for (const ats in attrs) {
           let aat = attrs[ats];
           if (attrs[ats] !== undefined) {
-            lat.setAttribute(ats, aat ? aat : "");
+            lat.setAttribute(ats, attr_value(aat));
           }
         }
         return this;

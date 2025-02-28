@@ -1,3 +1,42 @@
+declare const isFN: (v: any) => v is Function;
+declare const isAsync: (v: any) => v is Function;
+declare const isNumber: (value: any) => boolean;
+declare const isDict: (val: any) => boolean;
+declare const isPlainObject: (value: any) => boolean;
+declare const isArraybuff: (val: any) => val is string | ArrayBuffer | Uint8Array<ArrayBufferLike>;
+declare const isClassOrId: (k: string) => boolean;
+declare const isBool: (v: any) => v is boolean;
+declare const isStr: (v: any) => v is string;
+declare const isArr: (v: any) => v is any[];
+declare const isObj: (v: any) => v is object;
+declare const isNum: (v: any) => v is number;
+declare const isNull: (v: any) => v is null;
+declare const isUndefined: (v: any) => v is undefined;
+declare const isInt: (str: string) => boolean;
+declare const isWindow: boolean;
+declare const isNotWindow: boolean;
+
+declare const is_isArr: typeof isArr;
+declare const is_isArraybuff: typeof isArraybuff;
+declare const is_isAsync: typeof isAsync;
+declare const is_isBool: typeof isBool;
+declare const is_isClassOrId: typeof isClassOrId;
+declare const is_isDict: typeof isDict;
+declare const is_isFN: typeof isFN;
+declare const is_isInt: typeof isInt;
+declare const is_isNotWindow: typeof isNotWindow;
+declare const is_isNull: typeof isNull;
+declare const is_isNum: typeof isNum;
+declare const is_isNumber: typeof isNumber;
+declare const is_isObj: typeof isObj;
+declare const is_isPlainObject: typeof isPlainObject;
+declare const is_isStr: typeof isStr;
+declare const is_isUndefined: typeof isUndefined;
+declare const is_isWindow: typeof isWindow;
+declare namespace is {
+  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+}
+
 type V = string | number | boolean;
 type obj<T> = Record<string, T>;
 
@@ -177,7 +216,7 @@ declare class __ {
     }): HTMLElement;
     static randFrom(arr: any[] | Object): any;
     static makeID: (length: number) => string;
-    static reClass: (a: obj<any>, classes: string[]) => any[];
+    static class(a: obj<any>, classes: string[]): void;
     static get O(): {
         vals: {
             <T>(o: {
@@ -204,6 +243,11 @@ declare class __ {
         };
         len: (obj?: {}) => number;
     };
+    static get is(): typeof is;
+    static get return(): typeof returner;
+}
+declare class returner {
+    static array(val: any): any[];
 }
 
 declare class CATT {
@@ -341,6 +385,7 @@ declare class Router extends minClient {
     protected socket: socket;
     id: string;
     path: Stateful<string>;
+    lastPath: Stateful<string>;
     A: (a: attr & {
         href: string;
     }, ...D: ctx[]) => Dom;

@@ -25,7 +25,6 @@ export async function processHead(
     document.title = ttle;
   }
 
-  const path = this.path.value;
   // base
   if (unload) {
     toUnload.push(...BASE(GH.get("base")));
@@ -34,9 +33,9 @@ export async function processHead(
   }
   // link
 
-  toUnload.push(...(await LINK(GH.get("link"), unload)));
+  toUnload.push(...(await LINK(this.id, GH.get("link"), unload)));
 
-  toUnload.push(...(await SCRPT(GH.get("script"), unload)));
+  toUnload.push(...(await SCRPT(this.id, GH.get("script"), unload)));
 
   return toUnload;
 }
