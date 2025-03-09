@@ -13,19 +13,24 @@ import {
 } from "../../@";
 import { dom, Dom } from "../../dom";
 
-export class doc<T = Record<string, string>> extends head {
+export class doc<
+  T extends { args?: Record<string, any>; data?: Record<string, any> } = Record<
+    string,
+    any
+  >,
+> extends head {
   lang?: string;
   import?: any;
-  _data: T = {} as T;
+  _data: T["data"] = {};
   constructor(
     public path: string,
-    public args: T = {} as T,
+    public args: T["args"] = {},
     public id: string,
     public status: number = 200,
   ) {
     super();
   }
-  async fetch?(): Promise<Record<string, string>>;
+  async fetch?(): Promise<Record<string, any>>;
   head?(): Promise<void> | void;
   body?(): Promise<Dom> | Dom;
   async loader() {
@@ -78,7 +83,7 @@ export class doc<T = Record<string, string>> extends head {
   set data(data: obj<any>) {
     oAss(this._data as {}, data);
   }
-  get data(): T {
+  get data(): T["data"] {
     return this._data;
   }
 }

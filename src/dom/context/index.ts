@@ -1,5 +1,15 @@
 import { dom, Dom } from "..";
-import { $$, idm, isArr, isFN, isObj, ngify, V } from "../../@";
+import {
+  $$,
+  idm,
+  isArr,
+  isAsync,
+  isFN,
+  isObj,
+  isPromise,
+  ngify,
+  V,
+} from "../../@";
 import { CATT, Wizard } from "../../oz";
 import { Stateful } from "../../stateful";
 import { Elements, getElementById } from "../../storage";

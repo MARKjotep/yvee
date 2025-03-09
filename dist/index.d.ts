@@ -1,5 +1,6 @@
 declare const isFN: (v: any) => v is Function;
 declare const isAsync: (v: any) => v is Function;
+declare const isPromise: (v: any) => v is Function;
 declare const isNumber: (value: any) => boolean;
 declare const isDict: (val: any) => boolean;
 declare const isPlainObject: (value: any) => boolean;
@@ -30,11 +31,12 @@ declare const is_isNum: typeof isNum;
 declare const is_isNumber: typeof isNumber;
 declare const is_isObj: typeof isObj;
 declare const is_isPlainObject: typeof isPlainObject;
+declare const is_isPromise: typeof isPromise;
 declare const is_isStr: typeof isStr;
 declare const is_isUndefined: typeof isUndefined;
 declare const is_isWindow: typeof isWindow;
 declare namespace is {
-  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
 }
 
 type V = string | number | boolean;
@@ -324,22 +326,25 @@ declare const session: {
     get: (item: obj<() => any> | string) => storageInterface;
 };
 
-declare class doc<T = Record<string, string>> extends head {
+declare class doc<T extends {
+    args?: Record<string, any>;
+    data?: Record<string, any>;
+} = Record<string, any>> extends head {
     path: string;
-    args: T;
+    args: T["args"];
     id: string;
     status: number;
     lang?: string;
     import?: any;
-    _data: T;
-    constructor(path: string, args: T | undefined, id: string, status?: number);
-    fetch?(): Promise<Record<string, string>>;
+    _data: T["data"];
+    constructor(path: string, args: T["args"] | undefined, id: string, status?: number);
+    fetch?(): Promise<Record<string, any>>;
     head?(): Promise<void> | void;
     body?(): Promise<Dom> | Dom;
     loader(): Promise<any[]>;
     getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
     set data(data: obj<any>);
-    get data(): T;
+    get data(): T["data"];
 }
 
 declare class websocket<T = Record<string, string>> {
@@ -373,12 +378,17 @@ declare class socket {
     unload(_path: string): void;
 }
 
-interface yveeCfg {
-    pushState?: boolean;
+interface routerCfg {
     classes?: string | string[];
+    id?: string;
+    base?: string;
+    pushState?: boolean;
+}
+interface yveeCfg extends routerCfg {
 }
 declare class Router extends minClient {
-    private isYRA;
+    protected config: routerCfg;
+    protected isYRA: boolean;
     protected unload: boolean;
     protected hook?: () => void;
     protected root: Stateful<ctx[]>;
@@ -386,14 +396,15 @@ declare class Router extends minClient {
     id: string;
     path: Stateful<string>;
     lastPath: Stateful<string>;
+    loading: Stateful<boolean>;
+    mainElement?: HTMLElement;
     A: (a: attr & {
         href: string;
     }, ...D: ctx[]) => Dom;
-    Main: (a: attr & {
-        load?: string;
-    }) => Dom;
+    Main: (a: attr) => Dom;
     load: (path?: string, data?: obj<string>) => Promise<this>;
-    constructor(ImportMeta: ImportMeta, config?: yveeCfg, isYRA?: boolean);
+    matchPath: (str: string) => boolean;
+    constructor(config?: routerCfg, isYRA?: boolean, events?: events);
     protected hooker(): void;
     protected class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
     protected fetch(CL?: doc<{}>): Promise<void>;
@@ -407,8 +418,10 @@ declare class Router extends minClient {
     }>;
 }
 declare class Yvee extends Router {
+    protected ImportMeta: ImportMeta;
+    protected config: yveeCfg;
     protected unload: boolean;
-    constructor(ImportMeta: ImportMeta, { classes, pushState }?: yveeCfg);
+    constructor(ImportMeta: ImportMeta, config?: yveeCfg, events?: events);
     html({ path, data, status, attr, }: {
         path: string;
         data?: Record<string, string>;
@@ -432,8 +445,6 @@ declare class SocketPath extends MinStorage {
     constructor(path: string, id: string, cls: typeof websocket<{}>);
 }
 declare class minClient extends htmlHead {
-    protected ImportMeta: ImportMeta;
-    protected config: yveeCfg;
     protected storage: Storage$1<ClientPath>;
     protected errorStorage: Storage$1<ClientPath>;
     protected wssStorage: Storage$1<SocketPath>;
@@ -444,7 +455,9 @@ declare class minClient extends htmlHead {
     route: (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
     error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
     wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
-    constructor(ImportMeta: ImportMeta, config: yveeCfg);
+    base: string;
+    constructor(base?: string);
+    protected _base(str: string): string;
     protected getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
     protected loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
     protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
@@ -479,44 +492,6 @@ declare class Stateful<T> extends EventTarget {
     hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
 }
 declare function State<T>(value: T): Stateful<T>;
-
-type X2 = V | V[];
-type X3 = X2 | Stateful<X2>;
-type CSSinT = {
-    [P in keyof CSSStyleDeclaration]?: X3;
-} & {
-    [key: string]: X3;
-};
-interface c_events {
-    watch?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any> | Stateful<any>[], boolean?];
-    ready?: (this: Elements, e: Elements) => void;
-    resize?: (this: Elements, e: UIEvent) => void;
-    beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
-    popstate?: (this: Elements, e: PopStateEvent) => void;
-    winscroll?: (this: Elements, e: Event) => void;
-    winload?: (this: Elements, e: Event) => void;
-    winfocus?: (this: Elements, e: Event) => void;
-    winblur?: (this: Elements, e: Event) => void;
-}
-interface baseAttr {
-    style?: CSSinT;
-    on?: events;
-    id?: string;
-    class?: X3;
-}
-declare class Dom {
-    tag: string;
-    private attr;
-    private ctx;
-    constructor(tag: string, attr?: attr, ...ctx: ctx[]);
-    __(pid?: idm): {
-        ctx: string;
-        oz: OZ;
-        id: string | undefined;
-    };
-}
-declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
-declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
 
 type kf = KeyframeAnimationOptions;
 type KFType = (CSSinT | obj<V>)[] | CSSinT | obj<V>;
@@ -607,6 +582,54 @@ declare class Elem<T extends TElem = HTMLElement> extends Eget {
 declare function $<T extends TElem = HTMLElement>(query: string): Elem<T> | undefined;
 declare function $<T extends TElem = HTMLElement>(element: T): Elem<T>;
 type _$ = Elem | undefined;
+declare class _useElement<T extends TElem = HTMLElement> {
+    state: Stateful<Elem<T> | undefined>;
+    constructor();
+    get element(): T | undefined;
+    set element(elem: T);
+    get $(): Elem<T> | undefined;
+}
+declare const useRef: () => _useElement<HTMLElement>;
+
+type X2 = V | V[];
+type X3 = X2 | Stateful<X2>;
+type CSSinT = {
+    [P in keyof CSSStyleDeclaration]?: X3;
+} & {
+    [key: string]: X3;
+};
+interface c_events {
+    watch?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any> | Stateful<any>[], boolean?];
+    ready?: (this: Elements, e: Elements) => void;
+    resize?: (this: Elements, e: UIEvent) => void;
+    beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
+    popstate?: (this: Elements, e: PopStateEvent) => void;
+    winscroll?: (this: Elements, e: Event) => void;
+    winload?: (this: Elements, e: Event) => void;
+    winfocus?: (this: Elements, e: Event) => void;
+    winblur?: (this: Elements, e: Event) => void;
+}
+type XU4 = V | undefined | XU4[];
+interface baseAttr {
+    style?: CSSinT;
+    on?: events;
+    id?: string;
+    class?: XU4 | Stateful<X2>;
+    ref?: _useElement;
+}
+declare class Dom {
+    tag: string;
+    private attr;
+    private ctx;
+    constructor(tag: string, attr?: attr, ...ctx: ctx[]);
+    __(pid?: idm): {
+        ctx: string;
+        oz: OZ;
+        id: string | undefined;
+    };
+}
+declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
+declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
 
 declare class ColorScheme {
     state: Stateful<boolean>;
@@ -630,6 +653,7 @@ declare global {
     type ctx = V | Dom | Stateful<V | Dom> | ctx[];
     type obj<T> = Record<string, T>;
     type DomFN<T extends {}> = (a: attr & T, ...D: ctx[]) => Dom;
+    const BASE_STRING: string;
     namespace JSX {
         type Element = Dom;
         interface IntrinsicElements {
@@ -801,4 +825,4 @@ declare global {
 }
 declare const resolvePath: (base: string, relative: string) => string;
 
-export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, resolvePath, session, stateHook, websocket };
+export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, resolvePath, session, stateHook, useRef, websocket };

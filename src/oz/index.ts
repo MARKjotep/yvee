@@ -78,6 +78,7 @@ export class OZ {
       ev.forEach((event, type) => {
         switch (type) {
           case "ready":
+          case "element":
             event.apply(E, [E]);
             break;
           case "resize":
@@ -134,11 +135,33 @@ export class OZ {
   // call once
   get processWindowEvents() {
     //
+
     const WinListener = (evnt: string, wt: windowEvents) => {
+      let lastKnownScrollPosition = 0;
+      let ticking = false;
+
+      const _scrll = (e: Event) => {
+        lastKnownScrollPosition = window.scrollY;
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            wt.forEach((cb, id) => {
+              const D = getElementById(id);
+              if (D) {
+                cb.call(D, e as any);
+              } else {
+                this.windowEvents.get(evnt)?.delete(id);
+              }
+            });
+
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
       const _cb = (e: Event) => {
         wt.forEach((cb, id) => {
           const D = getElementById(id);
-
           if (D) {
             cb.call(D, e as any);
           } else {
@@ -146,9 +169,10 @@ export class OZ {
           }
         });
       };
-      window.addEventListener(evnt, _cb);
+
+      window.addEventListener(evnt, evnt === "scroll" ? _scrll : _cb);
       return () => {
-        window.removeEventListener(evnt, _cb);
+        window.removeEventListener(evnt, evnt === "scroll" ? _scrll : _cb);
       };
     };
     this.windowEvents.forEach((st, evnt) => {

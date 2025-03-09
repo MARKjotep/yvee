@@ -4,6 +4,8 @@ import { CATT } from "../oz";
 import { CTX } from "./context";
 import { Stateful } from "../stateful";
 import { Elements } from "../storage";
+import { hookFN } from "../stateful/hook";
+import { _useElement } from "../$";
 
 export { attr_value } from "./attr";
 /*
@@ -36,11 +38,14 @@ export interface c_events {
   winblur?: (this: Elements, e: Event) => void;
 }
 
+type XU4 = V | undefined | XU4[];
+
 export interface baseAttr {
   style?: CSSinT;
   on?: events;
   id?: string;
-  class?: X3;
+  class?: XU4 | Stateful<X2>;
+  ref?: _useElement;
 }
 
 export class Dom {

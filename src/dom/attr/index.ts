@@ -12,6 +12,7 @@ import {
 import { Elements } from "../../storage";
 import { CATT } from "../../oz";
 import { Stateful } from "../../stateful";
+import { _useElement } from "../../$";
 
 /*
 -------------------------
@@ -20,7 +21,7 @@ import { Stateful } from "../../stateful";
 */
 export const attr_value = (v: any): string => {
   if (isArr(v)) {
-    return v.join(" ");
+    return v.filter((f) => f !== undefined).join(" ");
   } else if (isObj(v)) {
     if (isDict(v)) {
       return ngify(v);
@@ -71,7 +72,15 @@ export class ATTR {
     };
 
     oItems(attr).forEach(([k, v]) => {
-      if (["on"].includes(k)) {
+      if (k === "ref") {
+        if (v instanceof _useElement) {
+          catt.events.obj({
+            element() {
+              v.element = this;
+            },
+          });
+        }
+      } else if (["on"].includes(k)) {
         isObj(attr.on) && catt.events.obj(attr.on);
       } else {
         processValue(k, v);

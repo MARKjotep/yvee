@@ -4,7 +4,7 @@ import { Stateful } from "./stateful";
 import { Elements } from "./storage";
 
 export { __, $$, Meta, cssLoader, addCSS } from "./@";
-export { $ } from "./$";
+export { $, useRef } from "./$";
 export { State, Stateful, stateHook } from "./stateful";
 export { Yvee, Router, doc, websocket, Routes, Errors } from "./yvee";
 export { local, session, eventStream } from "./storage";
@@ -26,6 +26,8 @@ declare global {
   type ctx = V | Dom | Stateful<V | Dom> | ctx[];
   type obj<T> = Record<string, T>;
   type DomFN<T extends {}> = (a: attr & T, ...D: ctx[]) => Dom;
+
+  const BASE_STRING: string;
 
   namespace JSX {
     type Element = Dom;

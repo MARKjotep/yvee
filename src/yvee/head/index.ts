@@ -1,9 +1,11 @@
-import { Router } from "..";
+import { Router, yveeCfg } from "..";
 import { $$, headType, isNotWindow } from "../../@";
 import { BASE } from "./base";
 import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
+
+let lastHistory = "";
 
 export async function processHead(
   this: Router,
@@ -15,18 +17,32 @@ export async function processHead(
   if (isNotWindow) return [];
 
   const ttle = GH.get("title") ?? "";
-  if (unload) {
-    const { pushState: PS } = this.config;
-    const npath = this.path.value;
-    if (PS) pushHistory(npath, ttle);
 
-    document.documentElement.lang = lang;
-    // Title
-    document.title = ttle;
+  const { pushState } = this.config as yveeCfg;
+
+  if (pushState) {
+    const npath = this.path.value;
+
+    if (lastHistory !== npath) {
+      if (!lastHistory.startsWith(npath)) {
+        pushHistory(npath, ttle);
+        lastHistory = npath;
+      } else if (npath === this.base) {
+        pushHistory(npath, ttle);
+        lastHistory = npath;
+      } else {
+        // $$.p = [npath, lastHistory, lastHistory.replace(this.base, "")];
+      }
+    }
   }
+
+  document.title = ttle;
 
   // base
   if (unload) {
+    document.documentElement.lang = lang;
+    // Title
+
     toUnload.push(...BASE(GH.get("base")));
     //  meta
     toUnload.push(...META(GH.get("meta")));

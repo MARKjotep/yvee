@@ -1,6 +1,6 @@
-import { Storage, htmlHead, MinStorage, makeID, $$ } from "../../@";
+import { Storage, htmlHead, MinStorage, makeID, $$, addBASE } from "../../@";
 import { dom } from "../..";
-import { doc, websocket, yveeCfg } from "../../yvee";
+import { doc, websocket } from "../../yvee";
 
 export class ClientPath extends MinStorage {
   constructor(
@@ -36,21 +36,21 @@ export class minClient extends htmlHead {
   wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
 
   // error: () => <Q extends typeof doc<{}>>(f: Q) => Q;
-  constructor(
-    protected ImportMeta: ImportMeta,
-    protected config: yveeCfg,
-  ) {
+  public base: string;
+  constructor(base: string = "") {
     super();
+    this.base = base.startsWith("/") ? base : `/${base}`;
     this.route = (path: string) => {
       return <Q extends typeof doc<{}>>(f: Q): Q => {
-        this.storage.set(new ClientPath(path, makeID(5), f));
+        this.storage.set(new ClientPath(this._base(path), makeID(5), f));
         return f;
       };
     };
 
     this.wss = (path: string) => {
       return <Q extends typeof websocket<{}>>(f: Q): Q => {
-        this.wssStorage.set(new SocketPath(path, makeID(5), f));
+        this.wssStorage.set(new SocketPath(this._base(path), makeID(5), f));
+
         return f;
       };
     };
@@ -69,6 +69,10 @@ export class minClient extends htmlHead {
     };
 
     // this.error()(defaultError);
+  }
+
+  protected _base(str: string) {
+    return addBASE(this.base, str);
   }
 
   protected async getPath(path: string) {

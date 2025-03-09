@@ -13,9 +13,6 @@ export function BASE(BS?: obj<string>[]) {
       base.attr.set({ href, target });
       document.head.append(base.e);
     }
-  } else {
-    const un = $("base")?.unload;
-    un && unl.push(un);
   }
 
   return unl;
