@@ -25,7 +25,7 @@ declare global {
   type attr = baseAttr | obj<X3>;
   type ctx = V | Dom | Stateful<V | Dom> | ctx[];
   type obj<T> = Record<string, T>;
-  type DomFN<T extends {}> = (a: attr & T, ...D: ctx[]) => Dom;
+  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
 
   const BASE_STRING: string;
 

@@ -36,7 +36,13 @@ export async function processHead(
     }
   }
 
-  document.title = ttle;
+  if (!this.isYRA) {
+    if (ttle) {
+      document.title = ttle;
+    }
+  } else {
+    document.title = ttle;
+  }
 
   // base
   if (unload) {

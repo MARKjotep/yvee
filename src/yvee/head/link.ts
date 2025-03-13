@@ -1,4 +1,4 @@
-import { $ } from "../../$";
+import { $, _$ } from "../../$";
 import { $$, obj, oLen, oVals, cssLoader, Mapper } from "../../@";
 import { YveePath } from "..";
 
@@ -41,14 +41,21 @@ export async function LINK(
       const vref = vv.href;
       if (!(vref in lnks)) {
         try {
+          let LV: _$ = undefined;
           if (!unload) {
+            LV = $(`link[href='${vref}']`);
+            if (LV) {
+              LV.attr.set({ rt: id });
+            }
             vv.rt = id;
             const YNIT = YMAP.init(ypath, new Set());
             if (!YNIT.has(vref)) {
               YNIT.add(vref);
             }
           }
-          await cssLoader(vv);
+          if (!LV) {
+            await cssLoader(vv);
+          }
         } catch (e) {
           $$.p = e;
           // Remove the path from the YMAP

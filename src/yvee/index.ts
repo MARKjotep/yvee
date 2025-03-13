@@ -12,11 +12,14 @@ import {
   isWindow,
   oAss,
   addBASE,
+  getHead,
+  Mapper,
+  headType,
 } from "../@";
 import { dom, frag, Dom, CSSinT } from "../dom";
 import { Wizard } from "../oz";
 import { State, Stateful, stateHook } from "../stateful";
-import { getElementById, minClient } from "../storage";
+import { minClient } from "../storage";
 import { defaultError, doc } from "./body";
 import { processHead, pushHistory } from "./head";
 import { HTML } from "./html";
@@ -79,6 +82,8 @@ export interface routerCfg {
 
 export interface yveeCfg extends routerCfg {}
 
+let routeHeads: headType = new Mapper();
+
 export class Router extends minClient {
   protected unload: boolean = false;
   protected hook?: () => void;
@@ -94,6 +99,7 @@ export class Router extends minClient {
   load: (path?: string, data?: obj<string>) => Promise<this>;
 
   matchPath: (str: string) => boolean;
+
   constructor(
     protected config: routerCfg = {},
     protected isYRA = false,
@@ -266,9 +272,11 @@ export class Router extends minClient {
         done: false,
       };
     }
+
     let CTX = [];
 
     this.loading.value = true;
+
     if (this.unload) {
       CTX = await CL.loader();
     }
@@ -287,6 +295,7 @@ export class Router extends minClient {
     if (!this.unload) {
       unloader.forEach((un) => un());
       CTX = await CL.loader();
+      routeHeads = heads;
     }
 
     if (this.unload) {
@@ -294,14 +303,12 @@ export class Router extends minClient {
     }
 
     //
-
-    //
-
     if (CTX.length) {
       this.root.value = CTX;
     } else {
       await this.render(_path, _error, data, head, isClient, true);
     }
+
     this.loading.value = false;
 
     return { heads, lang: CL.lang ?? this.lang, done: true };
@@ -350,14 +357,18 @@ export class Yvee extends Router {
         this.path.value = path;
       }
       if (isWindow && path) {
-        this.render(path, 404, data).then(() => {
+        try {
+          await this.render(path, 404, data);
+
           if (path && this.config.pushState) {
             pushHistory(path, document.title);
           }
           _WIZARD.call(this, this.Main({}));
 
           this.hooker();
-        });
+        } catch (e) {
+          $$.p = e;
+        }
       }
       return this;
     };
@@ -398,6 +409,8 @@ export class Yvee extends Router {
     this.path.value = path;
 
     const { lang, heads } = await this.render(path, status, data, _hds, false);
+
+    oAss(heads.init("link", {}), routeHeads.get("link") ?? {});
 
     const { ctx } = this.Main({}).__(new idm(this.id));
 

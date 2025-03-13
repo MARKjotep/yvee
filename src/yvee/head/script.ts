@@ -1,4 +1,4 @@
-import { $ } from "../../$";
+import { $, _$ } from "../../$";
 import { $$, Mapper, obj, oItems, oLen, oVals, scrptLoader } from "../../@";
 import { YveePath } from "..";
 

@@ -61,7 +61,7 @@ const ctx_value = (cc: any, catt: CATT): string => {
   return "";
 };
 
-const processCTXStateful = (xid: string, value: any) => {
+export const processCTXStateful = (value: any, xid?: string) => {
   const ndm = new idm(xid);
   const catt = new CATT(ndm.id, ndm);
   const ctx = ctx_value(value, catt);
@@ -71,7 +71,7 @@ const processCTXStateful = (xid: string, value: any) => {
 function Callback(this: Elements, arg: ctx) {
   const elementId = this.id;
   if (elementId) {
-    const { ctx, catt } = processCTXStateful(elementId, arg);
+    const { ctx, catt } = processCTXStateful(arg, elementId);
     if (this.innerHTML !== ctx) {
       this.innerHTML = ctx;
 
@@ -91,7 +91,7 @@ const processCTX2 = (v: ctx, len: number, catt: CATT, inner: string[] = []) => {
     } else {
       const VL = v.value;
       const entry = VL instanceof Dom ? "dom" : "ctx";
-      const { ctx, catt: _ct } = processCTXStateful(catt.xid + "-0", VL);
+      const { ctx, catt: _ct } = processCTXStateful(VL, catt.xid + "-0");
       catt.xid = _ct.xid;
 
       inner.push(ctx);

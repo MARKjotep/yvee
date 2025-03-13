@@ -3,7 +3,8 @@ import { $ } from "..";
 import { idm, isFN, isNum, obj, oItems, V } from "../../@";
 import { attr_value, CSSinT } from "../../dom";
 import { Dom } from "../../dom";
-import { OZ, Wizard } from "../../oz";
+import { processCTXStateful } from "../../dom/context";
+import { CATT, OZ, Wizard } from "../../oz";
 import { anim } from "./anim";
 
 export class Eget<T extends TElem = HTMLElement> {
@@ -206,10 +207,8 @@ const pushDOM = (
   val: Dom | string,
   pid?: string,
 ): { ctx: string; oz: OZ | undefined } => {
-  if (val instanceof Dom) {
-    return val.__(new idm(pid));
-  }
-  return { ctx: val, oz: undefined };
+  const { ctx, catt } = processCTXStateful(val, pid);
+  return { ctx, oz: catt.OZ };
 };
 
 const dID = (id?: string): string | undefined => (id ? `${id}-0` : id);

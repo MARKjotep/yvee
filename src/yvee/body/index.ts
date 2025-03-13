@@ -121,12 +121,11 @@ function DOC(rh: _htmlHead, doc: doc) {
   if (css) {
     const isc = isArr(css) ? css : [css];
     const mp = isc.map((mm) => ({
-      rel: `${isNotWindow ? "preload " : ""}stylesheet`,
+      rel: `preload stylesheet`,
       href: mm,
       as: "style",
     }));
-    if (rh.head.lacks("link")) {
-    }
+
     rh.head = {
       link: [...mp],
     };

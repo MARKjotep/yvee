@@ -39,7 +39,7 @@ export class minClient extends htmlHead {
   public base: string;
   constructor(base: string = "") {
     super();
-    this.base = base.startsWith("/") ? base : `/${base}`;
+    this.base = base ? (base.startsWith("/") ? base : `/${base}`) : "";
     this.route = (path: string) => {
       return <Q extends typeof doc<{}>>(f: Q): Q => {
         this.storage.set(new ClientPath(this._base(path), makeID(5), f));
@@ -67,7 +67,6 @@ export class minClient extends htmlHead {
         return f;
       };
     };
-
     // this.error()(defaultError);
   }
 
