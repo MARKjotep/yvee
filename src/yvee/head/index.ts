@@ -1,5 +1,5 @@
-import { Router, yveeCfg } from "..";
-import { $$, headType, isNotWindow } from "../../@";
+import { Pager, yveeCfg } from "..";
+import { headType, isNotWindow, log } from "../../@";
 import { BASE } from "./base";
 import { LINK } from "./link";
 import { META } from "./meta";
@@ -8,12 +8,13 @@ import { SCRPT } from "./script";
 let lastHistory = "";
 
 export async function processHead(
-  this: Router,
+  this: Pager,
   GH: headType,
   lang: string,
   unload: boolean = false,
 ) {
   const toUnload: (() => void)[] = [];
+
   if (isNotWindow) return [];
 
   const ttle = GH.get("title") ?? "";
@@ -26,21 +27,16 @@ export async function processHead(
     if (lastHistory !== npath) {
       if (!lastHistory.startsWith(npath)) {
         pushHistory(npath, ttle);
-        lastHistory = npath;
       } else if (npath === this.base) {
         pushHistory(npath, ttle);
-        lastHistory = npath;
       } else {
-        // $$.p = [npath, lastHistory, lastHistory.replace(this.base, "")];
+        pushHistory(npath, ttle);
       }
+      lastHistory = npath;
     }
   }
 
-  if (!this.isYRA) {
-    if (ttle) {
-      document.title = ttle;
-    }
-  } else {
+  if (this.isYvee) {
     document.title = ttle;
   }
 
@@ -63,7 +59,10 @@ export async function processHead(
 }
 
 export function pushHistory(path?: string, title?: string) {
-  const cURL = window.location.pathname;
+  if (isNotWindow) return;
+  const { pathname, hash } = window.location;
+  const cURL = pathname + hash;
+
   if (path && cURL !== path) {
     history.pushState({}, title ?? "", path);
   }

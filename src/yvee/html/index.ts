@@ -1,4 +1,4 @@
-import { getHead, headType, makeID } from "../../@";
+import { getHead, headType, log, makeID } from "../../@";
 
 export class HTML {
   lang: string;

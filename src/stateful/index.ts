@@ -1,5 +1,4 @@
 import {
-  $$,
   areSetsEqual,
   compareObjects,
   isArr,
@@ -13,9 +12,9 @@ import {
   objectUdpated,
 } from "../@";
 import { Elements, getElementById } from "../storage";
-import { stateHook, hookFN, hookM, handleHooks } from "./hook";
+import { stateHook, observer, hookFN, hookM, handleHooks } from "./hook";
 
-export { stateHook };
+export { stateHook, observer };
 type statesM<T> = Mapper<string, (this: Elements, arg: T) => any>;
 
 export type statefulValue<T extends any[]> = {

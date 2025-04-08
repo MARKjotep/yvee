@@ -1,4 +1,4 @@
-import { $$, isNotWindow, Mapper } from "../@";
+import { isNotWindow, Mapper } from "../@";
 export { eventStream } from "./estream";
 export { local } from "./local";
 export { session } from "./session";

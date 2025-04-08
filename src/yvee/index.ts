@@ -1,6 +1,5 @@
-import { $ } from "../$";
+import { $, _$ } from "../$";
 import {
-  $$,
   head,
   idm,
   _htmlHead,
@@ -11,13 +10,15 @@ import {
   makeID,
   isWindow,
   oAss,
-  addBASE,
-  getHead,
   Mapper,
   headType,
+  isNotWindow,
+  log,
+  isArr,
 } from "../@";
 import { dom, frag, Dom, CSSinT } from "../dom";
-import { Wizard } from "../oz";
+import { CTX, processCTX } from "../dom/context";
+import { CATT, Wizard } from "../oz";
 import { State, Stateful, stateHook } from "../stateful";
 import { minClient } from "../storage";
 import { defaultError, doc } from "./body";
@@ -27,43 +28,83 @@ import { socket } from "./wss";
 
 export { doc } from "./body";
 export { websocket } from "./wss";
+export { pushHistory } from "./head";
 
 function HREF(
-  a: attr & { href: string },
+  a: attr & {
+    href: string;
+    topRef?: Stateful<_$>;
+    top?: number | (() => number);
+  },
   D: ctx[],
   path: Stateful<string>,
   last: Stateful<string>,
 ) {
+  const { on, top: _tp, topRef, ..._a } = a;
   const _e: events = {
-    ...((a.on as events) ?? {}),
+    ...((on as events) ?? {}),
     click(e) {
       e.preventDefault();
+      const _E = $(this);
+      const PT = _E.path;
+
       last.value = path.value;
-      path.value = $(this).path;
+      path.value = PT;
+
+      //
+      const HS = _E.hash;
+      if (HS) {
+        const _HS = $(HS);
+        let top = window.scrollY;
+        if (_HS) {
+          top += _HS.rect.top;
+        }
+        if (topRef) {
+          top -= topRef?.value?.e.offsetHeight || 0;
+        }
+        if (_tp) {
+          if (typeof _tp === "number") {
+            top -= _tp;
+          } else {
+            top -= _tp();
+          }
+        }
+        window.scrollTo({
+          top,
+          behavior: "smooth",
+        });
+
+        pushHistory(PT + HS);
+      } else if (last.value === path.value) {
+        window.scrollTo({
+          top: _E.rect.top || 0,
+          behavior: "smooth",
+        });
+        pushHistory(window.location.pathname);
+      }
     },
   };
-  delete a.on;
-  return dom("a", { ...a, on: { ..._e } }, ...D);
+  return dom("a", { ..._a, on: { ..._e } }, ...D);
 }
 
-function MAIN(r: Router, a: attr, isYRA: boolean) {
+function MAIN(r: Pager, a: attr, isYvee: boolean) {
   const { classes } = r["config"];
   const { on: __, ...aa } = a;
   //
   const _e: events = {
     ...((a.on as events) ?? {}),
-    ...(true && {
+    ...(isYvee && {
       popstate(e) {
         const targ = e.target as Window;
         const tloc = targ.location.pathname;
-        if (tloc.includes(r.base)) {
-          r.path.value = targ.location.pathname;
-        }
+        r.path.value = tloc;
       },
+    }),
+    ...{
       element(e: any) {
         r.mainElement = this as HTMLElement;
       },
-    }),
+    },
   };
 
   return dom(
@@ -77,14 +118,15 @@ export interface routerCfg {
   classes?: string | string[];
   id?: string;
   base?: string;
+}
+
+export interface yveeCfg extends routerCfg {
   pushState?: boolean;
 }
 
-export interface yveeCfg extends routerCfg {}
+let routeHeads = new Mapper<string, headType>();
 
-let routeHeads: headType = new Mapper();
-
-export class Router extends minClient {
+export class Pager extends minClient {
   protected unload: boolean = false;
   protected hook?: () => void;
   protected root = State<ctx[]>([]);
@@ -94,15 +136,20 @@ export class Router extends minClient {
   lastPath = State("");
   loading = State(false);
   mainElement?: HTMLElement;
-  A: (a: attr & { href: string }, ...D: ctx[]) => Dom;
+  A: (
+    a: attr & {
+      href: string;
+      topRef?: Stateful<_$>;
+      top?: number | (() => number);
+    },
+    ...D: ctx[]
+  ) => Dom;
   Main: (a: attr) => Dom;
   load: (path?: string, data?: obj<string>) => Promise<this>;
-
   matchPath: (str: string) => boolean;
-
+  protected isYvee = false;
   constructor(
     protected config: routerCfg = {},
-    protected isYRA = false,
     events: events = {},
   ) {
     super(config.base ?? "");
@@ -127,15 +174,19 @@ export class Router extends minClient {
           oAss(a.on, events);
         }
       }
-      return MAIN(this, a, isYRA);
+      return MAIN(this, a, this.isYvee);
     };
     this.load = async (path?: string, data: obj<string> = {}) => {
       if (this.hook) this.hook();
       if (path) {
         this.path.value = path;
         this.lastPath.value = path;
-        await this.render(this.path.value, 404, data);
-        this.hooker();
+        try {
+          await this.render(path, 404, data);
+          this.hooker();
+        } catch (e) {
+          log.e = ["render error", { error: "Pager loader" }];
+        }
       }
       return this;
     };
@@ -197,7 +248,7 @@ export class Router extends minClient {
   }
 
   protected async class(
-    this: Router,
+    this: Pager,
     _path: string,
     _error: number,
     isError: boolean = false,
@@ -205,10 +256,9 @@ export class Router extends minClient {
     const [clientP, args] = await this.getPath(_path);
     if (clientP && !isError) {
       const { cls, id } = clientP;
-
       return new cls(_path, args, id);
     } else {
-      return await loadERROR.call(this, _path, _error);
+      return await loadERROR.call(this, _path, 404);
     }
   }
 
@@ -222,7 +272,7 @@ export class Router extends minClient {
           }
         }
       } catch (e) {
-        $$.p = e;
+        log.e = ["class fetch", { error: "fetch" }];
       }
     }
   }
@@ -249,7 +299,7 @@ export class Router extends minClient {
     return rh.head;
   }
 
-  protected async render(
+  async render(
     _path: string,
     _error: number = 404,
     data: obj<string> = {},
@@ -264,6 +314,9 @@ export class Router extends minClient {
 
     const heads = await this.processHead(CL, head);
     //
+    if (isNotWindow) {
+      routeHeads.set(this.id, heads);
+    }
 
     if (!CL) {
       return {
@@ -273,12 +326,12 @@ export class Router extends minClient {
       };
     }
 
-    let CTX = [];
+    let DOM = [];
 
     this.loading.value = true;
 
     if (this.unload) {
-      CTX = await CL.loader();
+      DOM = await CL.loader();
     }
 
     let unloader: (() => void)[] = [];
@@ -293,9 +346,8 @@ export class Router extends minClient {
     }
 
     if (!this.unload) {
+      DOM = await CL.loader();
       unloader.forEach((un) => un());
-      CTX = await CL.loader();
-      routeHeads = heads;
     }
 
     if (this.unload) {
@@ -303,8 +355,8 @@ export class Router extends minClient {
     }
 
     //
-    if (CTX.length) {
-      this.root.value = CTX;
+    if (DOM.length) {
+      this.root.value = DOM;
     } else {
       await this.render(_path, _error, data, head, isClient, true);
     }
@@ -315,7 +367,7 @@ export class Router extends minClient {
   }
 }
 
-async function loadERROR(this: Router, _path: string, _error: number) {
+async function loadERROR(this: Pager, _path: string, _error: number) {
   const [clientP, args] = await this.loadError(_error ?? 0);
   if (clientP) {
     const { cls, id } = clientP;
@@ -329,14 +381,14 @@ async function loadERROR(this: Router, _path: string, _error: number) {
 
 export const YveePath = State("");
 
-export class Yvee extends Router {
+export class Yvee extends Pager {
+  protected isYvee = true;
   protected unload: boolean = true;
   constructor(
-    protected ImportMeta: ImportMeta,
     protected config: yveeCfg = {},
     events: events = {},
   ) {
-    super(config, true, events);
+    super(config, events);
     //
     this.path = YveePath;
 
@@ -351,85 +403,22 @@ export class Yvee extends Router {
       if (isWindow) {
         path = getMetaYvee() || this._base(path ?? "/");
       }
+
       if (this.hook) this.hook();
 
       if (path) {
         this.path.value = path;
-      }
-      if (isWindow && path) {
+        this.lastPath.value = path;
         try {
           await this.render(path, 404, data);
-
-          if (path && this.config.pushState) {
-            pushHistory(path, document.title);
-          }
-          _WIZARD.call(this, this.Main({}));
-
           this.hooker();
         } catch (e) {
-          $$.p = e;
+          log.e = ["render error", { error: "Yvee loader" }];
         }
       }
       return this;
     };
   }
-
-  async html({
-    path,
-    data = {},
-    status = 200,
-    attr = "",
-  }: {
-    path: string;
-    data?: Record<string, string>;
-    status?: number;
-    attr?: string;
-  }) {
-    const { base, ImportMeta } = this;
-
-    const _hds: headAttr = {
-      base: [
-        {
-          href: base === "/" ? base : `${base}/`,
-          target: "_blank",
-        },
-      ],
-      script: [
-        {
-          type: "module",
-          src: `${ImportMeta.file}`,
-        },
-      ],
-    };
-
-    addMeta(_hds, path, status);
-
-    //
-
-    this.path.value = path;
-
-    const { lang, heads } = await this.render(path, status, data, _hds, false);
-
-    oAss(heads.init("link", {}), routeHeads.get("link") ?? {});
-
-    const { ctx } = this.Main({}).__(new idm(this.id));
-
-    return new HTML(lang, heads).body(ctx, this.id, attr);
-  }
-}
-
-function _WIZARD(this: Router, loader: Dom) {
-  const bodyElement = document.body.id;
-
-  const { oz, id } = loader.__(new idm(bodyElement));
-
-  this.id = id || this.id;
-  //
-  if (!oz) return;
-  Wizard.push(oz);
-  requestAnimationFrame(() => {
-    Wizard.stage;
-  });
 }
 
 function getErrorCode() {
@@ -462,16 +451,78 @@ const addMeta = (_hds: headAttr, path: string, status?: number) => {
   _hds.meta = mt;
 };
 
-type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-export const Routes = (fn: (route: RouteType) => void) => {
-  return (route: RouteType) => {
-    fn(route);
+// type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+export const Routes = (fn: (Yvee: Yvee) => void) => {
+  return (Yvee: Yvee) => {
+    fn(Yvee);
   };
 };
 
-type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-export const Errors = (fn: (error: ErrorType) => void) => {
-  return (error: ErrorType) => {
-    fn(error);
-  };
+const getCTX = (id: string, DOM: () => Dom, inner: string[] = []) => {
+  const DM = DOM();
+  const IR = isArr(DM) ? DM : [DM];
+  const CTT = new CATT(id, new idm(id));
+  IR.forEach((fr) => {
+    processCTX(fr, IR.length, CTT, inner);
+  });
+  CTT.OZ.set(CTT);
+  return CTT.OZ;
 };
+
+export async function Render(App: Yvee, DOM: () => Dom) {
+  if (isWindow) {
+    await App.load();
+    const bodyElement = document.body.id;
+    const OZ = getCTX(bodyElement, DOM);
+    Wizard.push(OZ);
+    requestAnimationFrame(() => {
+      Wizard.stage;
+    });
+  }
+
+  return async ({
+    path,
+    data = {},
+    status = 200,
+    attr = "",
+  }: {
+    path: string;
+    data?: Record<string, string>;
+    status?: number;
+    attr?: string;
+  }) => {
+    //
+
+    const { base } = App;
+
+    const _hds: headAttr = {
+      base: [
+        {
+          href: base === "/" ? base : `${base}/`,
+          target: "_blank",
+        },
+      ],
+      script: [
+        {
+          type: "module",
+          src: `index.js`,
+        },
+      ],
+    };
+
+    addMeta(_hds, path, status);
+
+    App.path.value = path;
+
+    const { lang, heads } = await App.render(path, status, data, _hds, false);
+
+    routeHeads.values().forEach((rr) => {
+      oAss(heads.init("link", {}), rr.get("link") ?? {});
+    });
+
+    const INNR: string[] = [];
+    getCTX(App.id, DOM, INNR);
+
+    return new HTML(lang, heads).body(INNR.join(""), App.id, attr);
+  };
+}

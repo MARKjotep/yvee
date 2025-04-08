@@ -1,5 +1,5 @@
 import { Stateful, statefulValue } from "..";
-import { isArr, makeID, Mapper } from "../../@";
+import { Mapper } from "../../@";
 
 export type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
 export type hookM<T extends any[]> = Mapper<string, hookFN<T>>;
@@ -8,7 +8,6 @@ export type hookM<T extends any[]> = Mapper<string, hookFN<T>>;
   dom, ctx, style, etc
   -------------------------
   */
-
 interface stateCFG {
   id?: string;
   init?: boolean;
@@ -41,3 +40,11 @@ export function stateHook<T extends any[]>(
 export const handleHooks = (hooks: hookM<any>) => {
   hooks.forEach((hook) => hook());
 };
+
+export function observer<T extends any[]>(
+  callback: hookFN<T>,
+  statefuls: [...{ [K in keyof T]: Stateful<T[K]> }],
+  { id = "state", init }: stateCFG = {},
+) {
+  return stateHook(callback, statefuls);
+}

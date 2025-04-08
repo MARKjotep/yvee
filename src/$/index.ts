@@ -1,4 +1,4 @@
-import { $$, isStr } from "../@";
+import { isStr } from "../@";
 import { Stateful } from "../stateful";
 import { Elem, TElem } from "./element";
 
@@ -17,9 +17,10 @@ export function $<T extends TElem = HTMLElement>(element: T | string) {
 }
 
 export type _$ = Elem | undefined;
+export type $E<T extends TElem = HTMLElement> = Elem<T>;
 
 export class _useElement<T extends TElem = HTMLElement> {
-  state = new Stateful<Elem<T> | undefined>(undefined);
+  state = new Stateful<_$>(undefined);
   constructor() {}
   get element(): T | undefined {
     return this.state.value?.e as T;

@@ -1,5 +1,5 @@
 import { $, _$ } from "../../$";
-import { $$, obj, oLen, oVals, cssLoader, Mapper } from "../../@";
+import { obj, oLen, oVals, cssLoader, Mapper, log } from "../../@";
 import { YveePath } from "..";
 
 const YMAP = new Mapper<string, Set<string>>();
@@ -57,8 +57,7 @@ export async function LINK(
             await cssLoader(vv);
           }
         } catch (e) {
-          $$.p = e;
-          // Remove the path from the YMAP
+          log.e = ["link error", { error: "yvee @ link" }];
         }
       } else {
         delete lnks[vref];

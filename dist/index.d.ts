@@ -12,7 +12,9 @@ declare const isArr: (v: any) => v is any[];
 declare const isObj: (v: any) => v is object;
 declare const isNum: (v: any) => v is number;
 declare const isNull: (v: any) => v is null;
+declare const isNotNull: <T>(v: T) => v is Exclude<T, null>;
 declare const isUndefined: (v: any) => v is undefined;
+declare const isDefined: <T>(v: T) => v is Exclude<T, undefined>;
 declare const isInt: (str: string) => boolean;
 declare const isWindow: boolean;
 declare const isNotWindow: boolean;
@@ -22,9 +24,11 @@ declare const is_isArraybuff: typeof isArraybuff;
 declare const is_isAsync: typeof isAsync;
 declare const is_isBool: typeof isBool;
 declare const is_isClassOrId: typeof isClassOrId;
+declare const is_isDefined: typeof isDefined;
 declare const is_isDict: typeof isDict;
 declare const is_isFN: typeof isFN;
 declare const is_isInt: typeof isInt;
+declare const is_isNotNull: typeof isNotNull;
 declare const is_isNotWindow: typeof isNotWindow;
 declare const is_isNull: typeof isNull;
 declare const is_isNum: typeof isNum;
@@ -36,7 +40,7 @@ declare const is_isStr: typeof isStr;
 declare const is_isUndefined: typeof isUndefined;
 declare const is_isWindow: typeof isWindow;
 declare namespace is {
-  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
 }
 
 type V = string | number | boolean;
@@ -56,8 +60,10 @@ declare class Mapper<K, V> extends Map<K, V> {
     init(key: K, val: V): V;
 }
 
-declare class $$ {
-    static set p(a: any);
+declare class log {
+    static set i(a: any);
+    static set e(a: any);
+    static set w(a: any);
 }
 declare class idm {
     _c: number;
@@ -166,6 +172,8 @@ interface headAttr {
     meta?: meta<string>[] | Meta;
     link?: link<string>[];
     script?: script<string | boolean>[];
+    css?: string[] | string;
+    description?: string;
 }
 declare class head implements headAttr {
     title?: string;
@@ -204,6 +212,8 @@ declare class MinStorage {
  */
 declare class Storage$1<T extends MinStorage> {
     private _storage;
+    private CC;
+    constructor();
     set(min: T): void;
     get(path: string): [T | undefined, Record<string, string>];
 }
@@ -248,6 +258,8 @@ declare class __ {
     };
     static get is(): typeof is;
     static get return(): typeof returner;
+    static sleep: (ms?: number) => Promise<unknown>;
+    static get screen(): "xs" | "sm" | "smd" | "md" | "lg" | "xl" | "xxl" | undefined;
 }
 declare class returner {
     static array(val: any): any[];
@@ -327,173 +339,6 @@ declare const session: {
     get: (item: obj<() => any> | string) => storageInterface;
 };
 
-declare class doc<T extends {
-    args?: Record<string, any>;
-    data?: Record<string, any>;
-} = Record<string, any>> extends head {
-    path: string;
-    args: T["args"];
-    id: string;
-    status: number;
-    lang?: string;
-    import?: any;
-    _data: T["data"];
-    constructor(path: string, args: T["args"] | undefined, id: string, status?: number);
-    fetch?(): Promise<Record<string, any>>;
-    head?(): Promise<void> | void;
-    body?(): Promise<Dom> | Dom;
-    loader(): Promise<any[]>;
-    getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
-    set data(data: obj<any>);
-    get data(): T["data"];
-}
-
-declare class websocket<T = Record<string, string>> {
-    path: string;
-    args: T;
-    ws: WebSocket;
-    isConnected: Stateful<boolean>;
-    data: T;
-    constructor(path: string, args?: T);
-    open(event: Event): Promise<void> | void;
-    message(event: MessageEvent): Promise<void> | void;
-    close(event: CloseEvent): Promise<void> | void;
-    error(event: Event): Promise<void> | void;
-    get connect(): this;
-    get reconnect(): this;
-    get disconnect(): this;
-    /**
-     * code:
-     * * 0 - CONNECTING: The connection is being established.
-     * * 1 - OPEN: The connection is open and ready to communicate.
-     * * 2 - CLOSING: The connection is in the process of closing.
-     * * 3 - CLOSED: The connection has been closed or could not be opened.
-     */
-    get state(): number;
-    set send(message: string | ArrayBufferLike | Blob | ArrayBufferView);
-}
-declare class socket {
-    private yra;
-    constructor(yra: Router);
-    load(_path: string): Promise<websocket<{}> | undefined>;
-    unload(_path: string): void;
-}
-
-interface routerCfg {
-    classes?: string | string[];
-    id?: string;
-    base?: string;
-    pushState?: boolean;
-}
-interface yveeCfg extends routerCfg {
-}
-declare class Router extends minClient {
-    protected config: routerCfg;
-    protected isYRA: boolean;
-    protected unload: boolean;
-    protected hook?: () => void;
-    protected root: Stateful<ctx[]>;
-    protected socket: socket;
-    id: string;
-    path: Stateful<string>;
-    lastPath: Stateful<string>;
-    loading: Stateful<boolean>;
-    mainElement?: HTMLElement;
-    A: (a: attr & {
-        href: string;
-    }, ...D: ctx[]) => Dom;
-    Main: (a: attr) => Dom;
-    load: (path?: string, data?: obj<string>) => Promise<this>;
-    matchPath: (str: string) => boolean;
-    constructor(config?: routerCfg, isYRA?: boolean, events?: events);
-    protected hooker(): void;
-    protected class(this: Router, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
-    protected fetch(CL?: doc<{}>): Promise<void>;
-    protected processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
-    private processClassHead;
-    private processDefaultHead;
-    protected render(_path: string, _error?: number, data?: obj<string>, head?: headAttr, isClient?: boolean, isError?: boolean): Promise<{
-        lang: string;
-        heads: headType;
-        done: boolean;
-    }>;
-}
-declare class Yvee extends Router {
-    protected ImportMeta: ImportMeta;
-    protected config: yveeCfg;
-    protected unload: boolean;
-    constructor(ImportMeta: ImportMeta, config?: yveeCfg, events?: events);
-    html({ path, data, status, attr, }: {
-        path: string;
-        data?: Record<string, string>;
-        status?: number;
-        attr?: string;
-    }): Promise<string>;
-}
-type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-declare const Routes: (fn: (route: RouteType) => void) => (route: RouteType) => void;
-type ErrorType = (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-declare const Errors: (fn: (error: ErrorType) => void) => (error: ErrorType) => void;
-
-declare class ClientPath extends MinStorage {
-    id: string;
-    cls: typeof doc<{}>;
-    constructor(path: string, id: string, cls: typeof doc<{}>);
-}
-declare class SocketPath extends MinStorage {
-    id: string;
-    cls: typeof websocket<{}>;
-    constructor(path: string, id: string, cls: typeof websocket<{}>);
-}
-declare class minClient extends htmlHead {
-    protected storage: Storage$1<ClientPath>;
-    protected errorStorage: Storage$1<ClientPath>;
-    protected wssStorage: Storage$1<SocketPath>;
-    /** --------------------
-     * string | int | float | file | uuid
-     * - /url/\<string:hell>
-     */
-    route: (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-    error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-    wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
-    base: string;
-    constructor(base?: string);
-    protected _base(str: string): string;
-    protected getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
-    protected loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
-    protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
-}
-
-type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
-
-type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
-interface stateCFG {
-    id?: string;
-    init?: boolean;
-}
-declare function stateHook<T extends any[]>(callback: hookFN<T>, statefuls: [...{
-    [K in keyof T]: Stateful<T[K]>;
-}], { id, init }?: stateCFG): () => void;
-
-type statefulValue<T extends any[]> = {
-    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
-};
-declare class Stateful<T> extends EventTarget {
-    private options?;
-    private hooks;
-    private states;
-    private _value;
-    private listening;
-    private end?;
-    constructor(value: T, options?: AddEventListenerOptions | undefined);
-    get value(): T;
-    set value(newValue: T);
-    get listen(): () => void;
-    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
-    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
-}
-declare function State<T>(value: T): Stateful<T>;
-
 type kf = KeyframeAnimationOptions;
 type KFType = (CSSinT | obj<V>)[] | CSSinT | obj<V>;
 declare class anim {
@@ -536,6 +381,7 @@ declare class Eget<T extends TElem = HTMLElement> {
     get inner(): string;
     get offsetParent(): Elem | undefined;
     get parent(): Elem | undefined;
+    get hash(): string;
     get path(): string;
     get rect(): DOMRect;
     get remove_element(): this;
@@ -583,14 +429,185 @@ declare class Elem<T extends TElem = HTMLElement> extends Eget {
 declare function $<T extends TElem = HTMLElement>(query: string): Elem<T> | undefined;
 declare function $<T extends TElem = HTMLElement>(element: T): Elem<T>;
 type _$ = Elem | undefined;
+type $E<T extends TElem = HTMLElement> = Elem<T>;
 declare class _useElement<T extends TElem = HTMLElement> {
-    state: Stateful<Elem<T> | undefined>;
+    state: Stateful<_$>;
     constructor();
     get element(): T | undefined;
     set element(elem: T);
-    get $(): Elem<T> | undefined;
+    get $(): _$;
 }
 declare const useRef: () => _useElement<HTMLElement>;
+
+declare class doc<T extends {
+    args?: Record<string, any>;
+    data?: Record<string, any>;
+} = Record<string, any>> extends head {
+    path: string;
+    args: T["args"];
+    id: string;
+    status: number;
+    lang?: string;
+    import?: any;
+    _data: T["data"];
+    static route: string;
+    constructor(path: string, args: T["args"] | undefined, id: string, status?: number);
+    fetch?(): Promise<Record<string, any>>;
+    head?(): Promise<void> | void;
+    body?(): Promise<Dom> | Dom;
+    loader(): Promise<any[]>;
+    getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
+    set data(data: obj<any>);
+    get data(): T["data"];
+}
+
+declare class websocket<T = Record<string, string>> {
+    path: string;
+    args: T;
+    ws: WebSocket;
+    static route: string;
+    isConnected: Stateful<boolean>;
+    data: T;
+    constructor(path: string, args?: T);
+    open(event: Event): Promise<void> | void;
+    message(event: MessageEvent): Promise<void> | void;
+    close(event: CloseEvent): Promise<void> | void;
+    error(event: Event): Promise<void> | void;
+    get connect(): this;
+    get reconnect(): this;
+    get disconnect(): this;
+    /**
+     * code:
+     * * 0 - CONNECTING: The connection is being established.
+     * * 1 - OPEN: The connection is open and ready to communicate.
+     * * 2 - CLOSING: The connection is in the process of closing.
+     * * 3 - CLOSED: The connection has been closed or could not be opened.
+     */
+    get state(): number;
+    set send(message: string | ArrayBufferLike | Blob | ArrayBufferView);
+}
+declare class socket {
+    private yra;
+    constructor(yra: Pager);
+    load(_path: string): Promise<websocket<{}> | undefined>;
+    unload(_path: string): void;
+}
+
+declare function pushHistory(path?: string, title?: string): void;
+
+interface routerCfg {
+    classes?: string | string[];
+    id?: string;
+    base?: string;
+}
+interface yveeCfg extends routerCfg {
+    pushState?: boolean;
+}
+declare class Pager extends minClient {
+    protected config: routerCfg;
+    protected unload: boolean;
+    protected hook?: () => void;
+    protected root: Stateful<ctx[]>;
+    protected socket: socket;
+    id: string;
+    path: Stateful<string>;
+    lastPath: Stateful<string>;
+    loading: Stateful<boolean>;
+    mainElement?: HTMLElement;
+    A: (a: attr & {
+        href: string;
+        topRef?: Stateful<_$>;
+        top?: number | (() => number);
+    }, ...D: ctx[]) => Dom;
+    Main: (a: attr) => Dom;
+    load: (path?: string, data?: obj<string>) => Promise<this>;
+    matchPath: (str: string) => boolean;
+    protected isYvee: boolean;
+    constructor(config?: routerCfg, events?: events);
+    protected hooker(): void;
+    protected class(this: Pager, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
+    protected fetch(CL?: doc<{}>): Promise<void>;
+    protected processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
+    private processClassHead;
+    private processDefaultHead;
+    render(_path: string, _error?: number, data?: obj<string>, head?: headAttr, isClient?: boolean, isError?: boolean): Promise<{
+        lang: string;
+        heads: headType;
+        done: boolean;
+    }>;
+}
+declare class Yvee extends Pager {
+    protected config: yveeCfg;
+    protected isYvee: boolean;
+    protected unload: boolean;
+    constructor(config?: yveeCfg, events?: events);
+}
+declare const Routes: (fn: (Yvee: Yvee) => void) => (Yvee: Yvee) => void;
+declare function Render(App: Yvee, DOM: () => Dom): Promise<({ path, data, status, attr, }: {
+    path: string;
+    data?: Record<string, string>;
+    status?: number;
+    attr?: string;
+}) => Promise<string>>;
+
+declare class ClientPath extends MinStorage {
+    id: string;
+    cls: typeof doc<{}>;
+    constructor(path: string, id: string, cls: typeof doc<{}>);
+}
+declare class SocketPath extends MinStorage {
+    id: string;
+    cls: typeof websocket<{}>;
+    constructor(path: string, id: string, cls: typeof websocket<{}>);
+}
+declare class minClient extends htmlHead {
+    protected storage: Storage$1<ClientPath>;
+    protected errorStorage: Storage$1<ClientPath>;
+    protected wssStorage: Storage$1<SocketPath>;
+    /** --------------------
+     * string | int | float | file | uuid
+     * - /url/\<string:hell>
+     */
+    route: (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
+    error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
+    wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
+    base: string;
+    constructor(base?: string);
+    protected _base(str: string): string;
+    protected getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
+    protected loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
+    protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
+}
+
+type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
+
+type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
+interface stateCFG {
+    id?: string;
+    init?: boolean;
+}
+declare function observer<T extends any[]>(callback: hookFN<T>, statefuls: [...{
+    [K in keyof T]: Stateful<T[K]>;
+}], { id, init }?: stateCFG): () => void;
+
+type statefulValue<T extends any[]> = {
+    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
+};
+declare class Stateful<T> extends EventTarget {
+    private options?;
+    private hooks;
+    private states;
+    private _value;
+    private listening;
+    private end?;
+    constructor(value: T, options?: AddEventListenerOptions | undefined);
+    get value(): T;
+    set value(newValue: T);
+    get listen(): () => void;
+    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
+    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
+}
+declare function State<T>(value: T): Stateful<T>;
 
 type X2 = V | V[];
 type X3 = X2 | Stateful<X2>;
@@ -600,7 +617,8 @@ type CSSinT = {
     [key: string]: X3;
 };
 interface c_events {
-    watch?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any> | Stateful<any>[], boolean?];
+    watch?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any>[], boolean?];
+    observe?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any>[], boolean?];
     ready?: (this: Elements, e: Elements) => void;
     resize?: (this: Elements, e: UIEvent) => void;
     beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
@@ -631,20 +649,6 @@ declare class Dom {
 }
 declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
 declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
-
-declare class ColorScheme {
-    state: Stateful<boolean>;
-    body?: HTMLElement;
-    click: () => void;
-    constructor({ toggle, initialState, }?: {
-        toggle?: string[];
-        initialState?: boolean;
-    });
-    private loader;
-    get isMatchMediaSupported(): boolean;
-    get isDark(): boolean;
-    toggle(clist: DOMTokenList, isDark: boolean, toggles: string[]): void;
-}
 
 declare global {
     type events = {
@@ -826,4 +830,4 @@ declare global {
 }
 declare const resolvePath: (base: string, relative: string) => string;
 
-export { $, $$, ColorScheme, Dom, Errors, Meta, Router, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, resolvePath, session, stateHook, useRef, websocket };
+export { $, type $E, Dom, Meta, Pager, Render, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, observer, pushHistory, resolvePath, session, useRef, websocket };

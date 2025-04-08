@@ -1,5 +1,5 @@
 import { $ } from "../../$";
-import { obj } from "../../@";
+import { log, obj } from "../../@";
 
 export function BASE(BS?: obj<string>[]) {
   const unl: (() => void)[] = [];
@@ -7,7 +7,10 @@ export function BASE(BS?: obj<string>[]) {
     const { href, target } = BS[0];
     const _B = $("base");
     if (_B) {
-      _B.attr.set({ href, target });
+      const hr = _B.attr.get("href");
+      if (hr !== href) {
+        _B.attr.set({ href, target });
+      }
     } else {
       const base = $(document.createElement("base"));
       base.attr.set({ href, target });

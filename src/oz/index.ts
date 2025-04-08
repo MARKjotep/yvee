@@ -1,4 +1,4 @@
-import { $$, isArr, keyInMap, keyInMapArray, Mapper, obj, oItems } from "../@";
+import { isArr, keyInMap, keyInMapArray, Mapper, obj, oItems } from "../@";
 import { Elements, getElementById, IDNotConnected } from "../storage";
 import { Stateful } from "../stateful";
 import { CATT } from "./cat";
@@ -94,6 +94,7 @@ export class OZ {
             this.windowEvents.init(tp, new Mapper()).set(id, event);
 
             break;
+          case "observe":
           case "watch":
             const [cb, statefuls, ini] = event.apply(E, [E]) as watchType;
 

@@ -1,12 +1,12 @@
 import { $ } from "../../$";
 import {
-  $$,
   _htmlHead,
   head,
   headAttr,
   headType,
   isArr,
   isNotWindow,
+  log,
   oAss,
   obj,
   oLen,
@@ -22,6 +22,7 @@ export class doc<
   lang?: string;
   import?: any;
   _data: T["data"] = {};
+  static route: string = "/";
   constructor(
     public path: string,
     public args: T["args"] = {},
@@ -36,14 +37,15 @@ export class doc<
   async loader() {
     if (this.import) {
       try {
-        const cimp = await this.import;
+        const cimp = (await this.import) as { default?: (args: any) => any };
+
         if (cimp.default) {
           this.import = await cimp.default({ ...this.args, ...this.data });
         } else {
           this.import = undefined;
         }
       } catch (error) {
-        $$.p = error;
+        log.e = ["import", { error: "loader" }];
         this.import = undefined;
       }
     }
@@ -61,7 +63,6 @@ export class doc<
 
     return [];
   }
-
   getHeadAttr(head: headAttr = {}, ...toMap: headType[]) {
     //
     const rh = new _htmlHead();

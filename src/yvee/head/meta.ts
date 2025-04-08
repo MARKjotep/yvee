@@ -1,5 +1,5 @@
 import { $ } from "../../$";
-import { $$, obj, oItems, oLen, oVals } from "../../@";
+import { obj, oItems, oLen, oVals } from "../../@";
 
 const GID = ["charset", "name", "property", "http-equiv"];
 export function META(meta?: obj<obj<string>>) {

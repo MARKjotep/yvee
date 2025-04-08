@@ -91,6 +91,9 @@ export class Eget<T extends TElem = HTMLElement> {
     }
     return undefined;
   }
+  get hash() {
+    return (this.e as unknown as HTMLAnchorElement)?.hash ?? "";
+  }
   get path() {
     return (this.e as unknown as HTMLAnchorElement)?.pathname ?? "";
   }

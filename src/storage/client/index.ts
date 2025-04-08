@@ -1,5 +1,4 @@
-import { Storage, htmlHead, MinStorage, makeID, $$, addBASE } from "../../@";
-import { dom } from "../..";
+import { Storage, htmlHead, MinStorage, makeID, addBASE } from "../../@";
 import { doc, websocket } from "../../yvee";
 
 export class ClientPath extends MinStorage {
@@ -41,15 +40,19 @@ export class minClient extends htmlHead {
     super();
     this.base = base ? (base.startsWith("/") ? base : `/${base}`) : "";
     this.route = (path: string) => {
+      const Tb = this._base(path);
       return <Q extends typeof doc<{}>>(f: Q): Q => {
-        this.storage.set(new ClientPath(this._base(path), makeID(5), f));
+        f.route = Tb;
+        this.storage.set(new ClientPath(Tb, makeID(5), f));
         return f;
       };
     };
 
     this.wss = (path: string) => {
+      const Tb = this._base(path);
       return <Q extends typeof websocket<{}>>(f: Q): Q => {
-        this.wssStorage.set(new SocketPath(this._base(path), makeID(5), f));
+        f.route = Tb;
+        this.wssStorage.set(new SocketPath(Tb, makeID(5), f));
 
         return f;
       };

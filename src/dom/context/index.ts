@@ -1,15 +1,5 @@
 import { dom, Dom } from "..";
-import {
-  $$,
-  idm,
-  isArr,
-  isAsync,
-  isFN,
-  isObj,
-  isPromise,
-  ngify,
-  V,
-} from "../../@";
+import { idm, isArr, isAsync, isFN, isObj, isPromise, ngify, V } from "../../@";
 import { CATT, Wizard } from "../../oz";
 import { Stateful } from "../../stateful";
 import { Elements, getElementById } from "../../storage";
@@ -80,14 +70,19 @@ function Callback(this: Elements, arg: ctx) {
   }
 }
 
-const processCTX2 = (v: ctx, len: number, catt: CATT, inner: string[] = []) => {
+export const processCTX = (
+  v: ctx,
+  len: number,
+  catt: CATT,
+  inner: string[] = [],
+) => {
   if (isArr(v)) {
     v.forEach((vv) => {
-      processCTX2(vv, v.length, catt, inner);
+      processCTX(vv, v.length, catt, inner);
     });
   } else if (v instanceof Stateful) {
     if (len > 1) {
-      processCTX2(dom("div", {}, v), len, catt, inner);
+      processCTX(dom("div", {}, v), len, catt, inner);
     } else {
       const VL = v.value;
       const entry = VL instanceof Dom ? "dom" : "ctx";
@@ -117,7 +112,7 @@ export class CTX {
 
   private process(catt: CATT, ctx: any[] = this.ctx, inner: string[] = []) {
     ctx.forEach((ct) => {
-      processCTX2(ct, ctx.length, catt, inner);
+      processCTX(ct, ctx.length, catt, inner);
     });
     return inner.join("");
   }

@@ -1,5 +1,5 @@
 import { $, _$ } from "../../$";
-import { $$, Mapper, obj, oItems, oLen, oVals, scrptLoader } from "../../@";
+import { log, Mapper, obj, oItems, oLen, oVals, scrptLoader } from "../../@";
 import { YveePath } from "..";
 
 const YMAP = new Mapper<string, Set<string>>();
@@ -53,7 +53,7 @@ export async function SCRPT(
             }
             await scrptLoader(vv);
           } catch (e) {
-            $$.p = e;
+            log.e = ["script error", { error: "yvee @ script" }];
           }
         }
       }

@@ -1,14 +1,4 @@
-import {
-  $$,
-  isArr,
-  isBool,
-  isDict,
-  isFN,
-  isObj,
-  ngify,
-  oItems,
-  V,
-} from "../../@";
+import { isArr, isBool, isDict, isFN, isObj, ngify, oItems, V } from "../../@";
 import { Elements } from "../../storage";
 import { CATT } from "../../oz";
 import { Stateful } from "../../stateful";

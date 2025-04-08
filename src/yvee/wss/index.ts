@@ -1,10 +1,11 @@
-import { Router } from "..";
-import { $$, Mapper, obj } from "../../@";
+import { Pager } from "..";
+import { Mapper, obj } from "../../@";
 import { State } from "../../stateful";
 
 //
 export class websocket<T = Record<string, string>> {
   declare public ws: WebSocket;
+  static route: string = "/";
   public isConnected = State(false);
   public data: T = {} as T;
   constructor(
@@ -72,7 +73,7 @@ export class websocket<T = Record<string, string>> {
 const websockets: Mapper<string, websocket> = new Mapper();
 
 export class socket {
-  constructor(private yra: Router) {}
+  constructor(private yra: Pager) {}
   //
   async load(_path: string) {
     if (!websockets.has(_path)) {

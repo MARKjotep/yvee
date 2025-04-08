@@ -1,4 +1,4 @@
-import { $$, idm, isFN, readOnly, V } from "../@";
+import { idm, isFN, readOnly, V } from "../@";
 import { ATTR } from "./attr";
 import { CATT } from "../oz";
 import { CTX } from "./context";
@@ -27,7 +27,11 @@ export interface c_events {
   watch?: (
     this: Elements,
     e: Elements,
-  ) => [(...args: any[]) => void, Stateful<any> | Stateful<any>[], boolean?];
+  ) => [(...args: any[]) => void, Stateful<any>[], boolean?];
+  observe?: (
+    this: Elements,
+    e: Elements,
+  ) => [(...args: any[]) => void, Stateful<any>[], boolean?];
   ready?: (this: Elements, e: Elements) => void;
   resize?: (this: Elements, e: UIEvent) => void;
   beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
