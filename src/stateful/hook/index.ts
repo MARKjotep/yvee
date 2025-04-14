@@ -1,5 +1,5 @@
 import { Stateful, statefulValue } from "..";
-import { Mapper } from "../../@";
+import { isNotWindow, Mapper } from "../../@";
 
 export type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
 export type hookM<T extends any[]> = Mapper<string, hookFN<T>>;
@@ -13,11 +13,12 @@ interface stateCFG {
   init?: boolean;
 }
 
-export function stateHook<T extends any[]>(
+export function StateHook<T extends any[]>(
   callback: hookFN<T>,
   statefuls: [...{ [K in keyof T]: Stateful<T[K]> }],
-  { id = "state", init }: stateCFG = {},
+  { id = "stateHook", init }: stateCFG = {},
 ) {
+  if (isNotWindow) return () => {};
   const hooks: (() => void)[] = [];
 
   const smap = () => statefuls.map((st) => st.value);
@@ -40,11 +41,3 @@ export function stateHook<T extends any[]>(
 export const handleHooks = (hooks: hookM<any>) => {
   hooks.forEach((hook) => hook());
 };
-
-export function observer<T extends any[]>(
-  callback: hookFN<T>,
-  statefuls: [...{ [K in keyof T]: Stateful<T[K]> }],
-  { id = "state", init }: stateCFG = {},
-) {
-  return stateHook(callback, statefuls);
-}

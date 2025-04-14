@@ -7,15 +7,14 @@ export function META(meta?: obj<obj<string>>) {
   const mg: obj<HTMLElement> = {};
 
   $("meta")?.all.forEach((ml) => {
-    const mattr = ml.attributes;
+    const mattr = (ml as HTMLElement).attributes;
     for (const g of GID) {
       if (g in mattr) {
         const mmg = mattr[g as any].value;
-        mg[`${g}_${g === "charset" ? "" : mmg}`] = ml;
+        mg[`${g}_${g === "charset" ? "" : mmg}`] = ml as HTMLElement;
       }
     }
   });
-
   if (meta) {
     oItems(meta).forEach(([k, v]) => {
       if (k in mg) {

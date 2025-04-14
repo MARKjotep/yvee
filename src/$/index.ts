@@ -1,12 +1,13 @@
 import { isStr } from "../@";
 import { Stateful } from "../stateful";
-import { Elem, TElem } from "./element";
+import { Elements } from "../storage";
+import { Elem } from "./element";
 
-export function $<T extends TElem = HTMLElement>(
+export function $<T extends Elements = Elements>(
   query: string,
 ): Elem<T> | undefined;
-export function $<T extends TElem = HTMLElement>(element: T): Elem<T>;
-export function $<T extends TElem = HTMLElement>(element: T | string) {
+export function $<T extends Elements = Elements>(element: T): Elem<T>;
+export function $<T extends Elements = Elements>(element: T | string) {
   if (isStr(element)) {
     const QD = document.querySelector(element);
     if (QD) return new Elem<T>(QD as T, element);
@@ -16,10 +17,10 @@ export function $<T extends TElem = HTMLElement>(element: T | string) {
   }
 }
 
-export type _$ = Elem | undefined;
-export type $E<T extends TElem = HTMLElement> = Elem<T>;
+export type _$<T extends Elements = Elements> = Elem<T> | undefined;
+export type $E<T extends Elements = Elements> = Elem<T>;
 
-export class _useElement<T extends TElem = HTMLElement> {
+export class _useElement<T extends Elements = Elements> {
   state = new Stateful<_$>(undefined);
   constructor() {}
   get element(): T | undefined {
@@ -33,6 +34,6 @@ export class _useElement<T extends TElem = HTMLElement> {
   }
 }
 
-export const useRef = () => {
-  return new _useElement();
+export const useRef = <T extends Elements = Elements>() => {
+  return new _useElement<T>();
 };

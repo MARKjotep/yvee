@@ -15,7 +15,7 @@ TYPES
 */
 type X2 = V | V[];
 
-export type X3 = X2 | Stateful<X2>;
+export type X3 = X2 | Stateful<X2> | null | undefined;
 
 export type CSSinT = {
   [P in keyof CSSStyleDeclaration]?: X3;
@@ -23,30 +23,26 @@ export type CSSinT = {
   [key: string]: X3;
 };
 
-export interface c_events {
-  watch?: (
-    this: Elements,
-    e: Elements,
+export interface c_events<T extends Elements = Elements> {
+  state?: (
+    this: T,
+    e: T,
   ) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-  observe?: (
-    this: Elements,
-    e: Elements,
-  ) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-  ready?: (this: Elements, e: Elements) => void;
-  resize?: (this: Elements, e: UIEvent) => void;
-  beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
-  popstate?: (this: Elements, e: PopStateEvent) => void;
-  winscroll?: (this: Elements, e: Event) => void;
-  winload?: (this: Elements, e: Event) => void;
-  winfocus?: (this: Elements, e: Event) => void;
-  winblur?: (this: Elements, e: Event) => void;
+  ready?: (this: T, e: T) => void;
+  resize?: (this: T, e: UIEvent) => void;
+  beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
+  popstate?: (this: T, e: PopStateEvent) => void;
+  winscroll?: (this: T, e: Event) => void;
+  winload?: (this: T, e: Event) => void;
+  winfocus?: (this: T, e: Event) => void;
+  winblur?: (this: T, e: Event) => void;
 }
 
 type XU4 = V | undefined | XU4[];
 
 export interface baseAttr {
-  style?: CSSinT;
-  on?: events;
+  style?: CSSinT | string;
+  on?: events<any>;
   id?: string;
   class?: XU4 | Stateful<X2>;
   ref?: _useElement;

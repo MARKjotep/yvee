@@ -44,7 +44,7 @@ declare namespace is {
 }
 
 type V = string | number | boolean;
-type obj<T> = Record<string, T>;
+type obj$1<T> = Record<string, T>;
 
 /**
  * A custom Map implementation that provides additional utility methods for working with objects and maps.
@@ -119,7 +119,7 @@ declare class Meta {
     themeColor(color: string): this;
     openGraph(og: Omit<OG, "card">): this;
     twitter(og: OG): this;
-    and(metas: meta$1<string>[]): this;
+    push(metas: meta$1<string>[]): void;
     private set meta(value);
 }
 
@@ -145,9 +145,9 @@ type link<T> = {
     crossorigin?: T;
 };
 type impmap = {
-    imports?: obj<string>;
-    scopes?: obj<string>;
-    integrity?: obj<string>;
+    imports?: obj$1<string>;
+    scopes?: obj$1<string>;
+    integrity?: obj$1<string>;
 };
 type script<T> = {
     async?: T;
@@ -192,7 +192,7 @@ type CSSinT$1 = {
 type headType = Mapper<keyof head, any>;
 declare class htmlHead {
     lang: string;
-    protected htmlHead: headType;
+    htmlHead: headType;
     head: (heads?: headAttr) => void;
     constructor();
 }
@@ -229,7 +229,7 @@ declare class __ {
     static randFrom(arr: any[] | Object): any;
     static randomAZ: () => string;
     static makeID: (length: number) => string;
-    static class(a: obj<any>, classes: string[]): void;
+    static class(a: obj$1<any>, classes: string[]): void;
     static get O(): {
         vals: {
             <T>(o: {
@@ -260,9 +260,11 @@ declare class __ {
     static get return(): typeof returner;
     static sleep: (ms?: number) => Promise<unknown>;
     static get screen(): "xs" | "sm" | "smd" | "md" | "lg" | "xl" | "xxl" | undefined;
+    bytes(bytes: number): string;
 }
 declare class returner {
-    static array(val: any): any[];
+    static arr(val: any): any[];
+    static num(val: any, iferr?: any): number;
 }
 
 declare class CATT {
@@ -300,7 +302,7 @@ declare class eStream {
     stream: EventSource;
     url: string;
     constructor(eurl: string, withCredentials: boolean);
-    on(event: obj<(a: MessageEvent) => void>): this;
+    on(event: obj$1<(a: MessageEvent) => void>): this;
 }
 declare function eventStream(url: string, withCredentials?: boolean): eStream;
 
@@ -317,7 +319,7 @@ declare class storageInterface {
     key: string;
     func: (() => any) | null;
     storage: Storage;
-    constructor(item: obj<() => any> | string, _type?: "local" | "session");
+    constructor(item: obj$1<() => any> | string, _type?: "local" | "session");
     get as(): __I;
     get value(): string | null;
     get save(): void;
@@ -329,23 +331,23 @@ declare class storageInterface {
  * Local Storage
  */
 declare const local: {
-    get: (item: obj<() => any> | string) => storageInterface;
+    get: (item: obj$1<() => any> | string) => storageInterface;
 };
 
 /**
  * Session Storage
  */
 declare const session: {
-    get: (item: obj<() => any> | string) => storageInterface;
+    get: (item: obj$1<() => any> | string) => storageInterface;
 };
 
 type kf = KeyframeAnimationOptions;
-type KFType = (CSSinT | obj<V>)[] | CSSinT | obj<V>;
+type KFType = (CSSinT | obj$1<V>)[] | CSSinT | obj$1<V>;
 declare class anim {
     private e;
     opt: kf;
     constructor(e: Elem);
-    animate(keyframes: CSSinT[] | CSSinT, options?: kf): Elem<HTMLElement>;
+    animate(keyframes: CSSinT[] | CSSinT, options?: kf): Elem<Elements>;
     get slide(): {
         left: (options?: kf) => anim;
         right: (options?: kf) => anim;
@@ -359,7 +361,7 @@ declare class anim {
     bounce(sVal?: number, opt?: kf): this;
 }
 
-declare class Eget<T extends TElem = HTMLElement> {
+declare class Eget<T extends Elements = Elements> {
     e: T;
     query?: string | undefined;
     constructor(e: T, query?: string | undefined);
@@ -369,7 +371,7 @@ declare class Eget<T extends TElem = HTMLElement> {
         has: (attr: string) => boolean;
         get: (attr: string) => string | null;
         del: (attr: string) => Eget;
-        set: (attrs: obj<any>) => Eget;
+        set: (attrs: obj$1<any>) => Eget;
     };
     get children(): Elem<T>[];
     get click(): this;
@@ -386,7 +388,7 @@ declare class Eget<T extends TElem = HTMLElement> {
     get rect(): DOMRect;
     get remove_element(): this;
     get style(): {
-        set: (style: CSSinT | obj<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<HTMLElement>;
+        set: (style: CSSinT | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<Elements>;
         get: (prop: keyof CSSStyleDeclaration | string) => string;
         del: (...props: (keyof CSSStyleDeclaration | string)[]) => void;
     };
@@ -402,9 +404,8 @@ declare class Eget<T extends TElem = HTMLElement> {
     set value(vl: any);
 }
 
-type TElem = HTMLElement & InstanceType<typeof Element>;
 type fn<E, T> = (e?: E) => T;
-declare class Elem<T extends TElem = HTMLElement> extends Eget {
+declare class Elem<T extends Elements = Elements> extends Eget<T> {
     constructor(e: T, query?: string);
     add(...className: string[]): this;
     remove(...className: string[]): this;
@@ -426,18 +427,18 @@ declare class Elem<T extends TElem = HTMLElement> extends Eget {
     animate(keyframes: KFType, onComplete?: fn<any, void>): this;
 }
 
-declare function $<T extends TElem = HTMLElement>(query: string): Elem<T> | undefined;
-declare function $<T extends TElem = HTMLElement>(element: T): Elem<T>;
-type _$ = Elem | undefined;
-type $E<T extends TElem = HTMLElement> = Elem<T>;
-declare class _useElement<T extends TElem = HTMLElement> {
-    state: Stateful<_$>;
+declare function $<T extends Elements = Elements>(query: string): Elem<T> | undefined;
+declare function $<T extends Elements = Elements>(element: T): Elem<T>;
+type _$<T extends Elements = Elements> = Elem<T> | undefined;
+type $E<T extends Elements = Elements> = Elem<T>;
+declare class _useElement<T extends Elements = Elements> {
+    state: Stateful<_$<Elements>>;
     constructor();
     get element(): T | undefined;
     set element(elem: T);
-    get $(): _$;
+    get $(): _$<Elements>;
 }
-declare const useRef: () => _useElement<HTMLElement>;
+declare const useRef: <T extends Elements = Elements>() => _useElement<T>;
 
 declare class doc<T extends {
     args?: Record<string, any>;
@@ -457,22 +458,22 @@ declare class doc<T extends {
     body?(): Promise<Dom> | Dom;
     loader(): Promise<any[]>;
     getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
-    set data(data: obj<any>);
+    set data(data: obj$1<any>);
     get data(): T["data"];
 }
 
-declare class websocket<T = Record<string, string>> {
+declare class websocket<T = Record<string, any>> {
     path: string;
-    args: T;
+    protected args: T;
     ws: WebSocket;
     static route: string;
     isConnected: Stateful<boolean>;
     data: T;
     constructor(path: string, args?: T);
-    open(event: Event): Promise<void> | void;
-    message(event: MessageEvent): Promise<void> | void;
-    close(event: CloseEvent): Promise<void> | void;
-    error(event: Event): Promise<void> | void;
+    protected open(event: Event): Promise<void> | void;
+    protected message(event: MessageEvent): Promise<void> | void;
+    protected close(event: CloseEvent): Promise<void> | void;
+    protected error(event: Event): Promise<void> | void;
     get connect(): this;
     get reconnect(): this;
     get disconnect(): this;
@@ -487,28 +488,17 @@ declare class websocket<T = Record<string, string>> {
     set send(message: string | ArrayBufferLike | Blob | ArrayBufferView);
 }
 declare class socket {
-    private yra;
-    constructor(yra: Pager);
+    protected yvee: Pager;
+    constructor(yvee: Pager);
     load(_path: string): Promise<websocket<{}> | undefined>;
     unload(_path: string): void;
 }
 
-declare function pushHistory(path?: string, title?: string): void;
-
-interface routerCfg {
-    classes?: string | string[];
-    id?: string;
-    base?: string;
-}
-interface yveeCfg extends routerCfg {
-    pushState?: boolean;
-}
 declare class Pager extends minClient {
     protected config: routerCfg;
-    protected unload: boolean;
     protected hook?: () => void;
     protected root: Stateful<ctx[]>;
-    protected socket: socket;
+    socket: socket;
     id: string;
     path: Stateful<string>;
     lastPath: Stateful<string>;
@@ -536,6 +526,17 @@ declare class Pager extends minClient {
         done: boolean;
     }>;
 }
+
+declare function pushHistory(path?: string, title?: string): void;
+
+interface routerCfg {
+    classes?: string | string[];
+    id?: string;
+    base?: string;
+}
+interface yveeCfg extends routerCfg {
+    pushState?: boolean;
+}
 declare class Yvee extends Pager {
     protected config: yveeCfg;
     protected isYvee: boolean;
@@ -543,12 +544,16 @@ declare class Yvee extends Pager {
     constructor(config?: yveeCfg, events?: events);
 }
 declare const Routes: (fn: (Yvee: Yvee) => void) => (Yvee: Yvee) => void;
-declare function Render(App: Yvee, DOM: () => Dom): Promise<({ path, data, status, attr, }: {
-    path: string;
-    data?: Record<string, string>;
-    status?: number;
-    attr?: string;
-}) => Promise<string>>;
+interface headAttrPlus {
+    route?: string;
+    index?: string;
+    id?: string;
+    bodyattr?: obj$1<V>;
+    data?: Record<string, any> | (() => Promise<Record<string, any>> | Record<string, any>);
+}
+type headFN<T = {}> = (a: Record<string, any> & T) => Promise<headAttr> | headAttr;
+declare function Render<T = {}>(DOM: DomFN<T>, head?: headAttr | headFN<T>, cfg?: headAttrPlus): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
+declare function Render<T = {}>(DOM: DomFN<T>, App: Yvee): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
 
 declare class ClientPath extends MinStorage {
     id: string;
@@ -579,14 +584,14 @@ declare class minClient extends htmlHead {
     protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
 }
 
-type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
+type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap] | SVGElementTagNameMap[keyof SVGElementTagNameMap];
 
 type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
 interface stateCFG {
     id?: string;
     init?: boolean;
 }
-declare function observer<T extends any[]>(callback: hookFN<T>, statefuls: [...{
+declare function StateHook<T extends any[]>(callback: hookFN<T>, statefuls: [...{
     [K in keyof T]: Stateful<T[K]>;
 }], { id, init }?: stateCFG): () => void;
 
@@ -610,28 +615,27 @@ declare class Stateful<T> extends EventTarget {
 declare function State<T>(value: T): Stateful<T>;
 
 type X2 = V | V[];
-type X3 = X2 | Stateful<X2>;
+type X3 = X2 | Stateful<X2> | null | undefined;
 type CSSinT = {
     [P in keyof CSSStyleDeclaration]?: X3;
 } & {
     [key: string]: X3;
 };
-interface c_events {
-    watch?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-    observe?: (this: Elements, e: Elements) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-    ready?: (this: Elements, e: Elements) => void;
-    resize?: (this: Elements, e: UIEvent) => void;
-    beforeunload?: (this: Elements, e: BeforeUnloadEvent) => void;
-    popstate?: (this: Elements, e: PopStateEvent) => void;
-    winscroll?: (this: Elements, e: Event) => void;
-    winload?: (this: Elements, e: Event) => void;
-    winfocus?: (this: Elements, e: Event) => void;
-    winblur?: (this: Elements, e: Event) => void;
+interface c_events<T extends Elements = Elements> {
+    state?: (this: T, e: T) => [(...args: any[]) => void, Stateful<any>[], boolean?];
+    ready?: (this: T, e: T) => void;
+    resize?: (this: T, e: UIEvent) => void;
+    beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
+    popstate?: (this: T, e: PopStateEvent) => void;
+    winscroll?: (this: T, e: Event) => void;
+    winload?: (this: T, e: Event) => void;
+    winfocus?: (this: T, e: Event) => void;
+    winblur?: (this: T, e: Event) => void;
 }
 type XU4 = V | undefined | XU4[];
 interface baseAttr {
-    style?: CSSinT;
-    on?: events;
+    style?: CSSinT | string;
+    on?: events<any>;
     id?: string;
     class?: XU4 | Stateful<X2>;
     ref?: _useElement;
@@ -651,17 +655,20 @@ declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: 
 declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
 
 declare global {
-    type events = {
-        [P in keyof GlobalEventHandlersEventMap]?: (this: Elements, e: GlobalEventHandlersEventMap[P]) => void;
-    } & c_events;
+    type events<T extends Elements = Elements> = {
+        [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
+    } & c_events<T>;
     type attr = baseAttr | obj<X3>;
     type ctx = V | Dom | Stateful<V | Dom> | ctx[];
     type obj<T> = Record<string, T>;
-    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
+    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom | Promise<Dom>;
     const BASE_STRING: string;
     namespace JSX {
         type Element = Dom;
         interface IntrinsicElements {
+            link: attr;
+            base: attr;
+            meta: attr;
             p: attr;
             br: attr;
             hr: attr;
@@ -829,5 +836,10 @@ declare global {
     }
 }
 declare const resolvePath: (base: string, relative: string) => string;
+interface RendererCFG {
+    path: string;
+    data?: Record<string, any>;
+    status?: number;
+}
 
-export { $, type $E, Dom, Meta, Pager, Render, Routes, State, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, observer, pushHistory, resolvePath, session, useRef, websocket };
+export { $, type $E, Dom, Meta, Pager, Render, type RendererCFG, Routes, State, StateHook, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, pushHistory, resolvePath, session, useRef, websocket };

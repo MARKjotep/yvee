@@ -5,14 +5,7 @@ import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
 
-let lastHistory = "";
-
-export async function processHead(
-  this: Pager,
-  GH: headType,
-  lang: string,
-  unload: boolean = false,
-) {
+export async function processHead(this: Pager, GH: headType, lang: string) {
   const toUnload: (() => void)[] = [];
 
   if (isNotWindow) return [];
@@ -23,37 +16,33 @@ export async function processHead(
 
   if (pushState) {
     const npath = this.path.value;
+    const lst = this.lastPath.value;
 
-    if (lastHistory !== npath) {
-      if (!lastHistory.startsWith(npath)) {
+    if (lst !== npath) {
+      if (!lst.startsWith(npath)) {
         pushHistory(npath, ttle);
       } else if (npath === this.base) {
         pushHistory(npath, ttle);
       } else {
         pushHistory(npath, ttle);
       }
-      lastHistory = npath;
     }
   }
 
-  if (this.isYvee) {
-    document.title = ttle;
-  }
-
   // base
-  if (unload) {
+  if (this.isYvee) {
     document.documentElement.lang = lang;
+    document.title = ttle;
     // Title
-
     toUnload.push(...BASE(GH.get("base")));
     //  meta
     toUnload.push(...META(GH.get("meta")));
   }
   // link
 
-  toUnload.push(...(await LINK(this.id, GH.get("link"), unload)));
+  toUnload.push(...(await LINK(this.id, GH.get("link"), this.isYvee)));
 
-  toUnload.push(...(await SCRPT(this.id, GH.get("script"), unload)));
+  toUnload.push(...(await SCRPT(this.id, GH.get("script"), this.isYvee)));
 
   return toUnload;
 }

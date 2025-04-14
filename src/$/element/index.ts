@@ -1,11 +1,12 @@
 import { isFN, oAss } from "../../@";
+import { Elements } from "../../storage";
 import { kf, KFType } from "./anim";
 import { Eget } from "./getset";
 
-export type TElem = HTMLElement & InstanceType<typeof Element>;
+// export type TElem = HTMLElement & InstanceType<typeof Element>;
 type fn<E, T> = (e?: E) => T;
 
-export class Elem<T extends TElem = HTMLElement> extends Eget {
+export class Elem<T extends Elements = Elements> extends Eget<T> {
   constructor(e: T, query?: string) {
     super(e, query);
   }

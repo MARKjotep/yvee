@@ -3,7 +3,9 @@ export { eventStream } from "./estream";
 export { local } from "./local";
 export { session } from "./session";
 
-export type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap];
+export type Elements =
+  | HTMLElementTagNameMap[keyof HTMLElementTagNameMap]
+  | SVGElementTagNameMap[keyof SVGElementTagNameMap];
 
 const ElementIds: Mapper<string, Elements> = new Mapper();
 

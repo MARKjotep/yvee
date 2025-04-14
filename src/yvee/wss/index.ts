@@ -1,21 +1,23 @@
-import { Pager } from "..";
-import { Mapper, obj } from "../../@";
+import { Pager } from "../pager";
+import { isNotWindow, isWindow, Mapper, obj } from "../../@";
 import { State } from "../../stateful";
 
 //
-export class websocket<T = Record<string, string>> {
+export class websocket<T = Record<string, any>> {
   declare public ws: WebSocket;
   static route: string = "/";
   public isConnected = State(false);
   public data: T = {} as T;
   constructor(
     public path: string,
-    public args: T = {} as T,
-  ) {}
-  open(event: Event): Promise<void> | void {}
-  message(event: MessageEvent): Promise<void> | void {}
-  close(event: CloseEvent): Promise<void> | void {}
-  error(event: Event): Promise<void> | void {}
+    protected args: T = {} as T,
+  ) {
+    this.data = args;
+  }
+  protected open(event: Event): Promise<void> | void {}
+  protected message(event: MessageEvent): Promise<void> | void {}
+  protected close(event: CloseEvent): Promise<void> | void {}
+  protected error(event: Event): Promise<void> | void {}
 
   get connect() {
     //
@@ -66,18 +68,21 @@ export class websocket<T = Record<string, string>> {
     return this.ws?.readyState ?? 3;
   }
   set send(message: string | ArrayBufferLike | Blob | ArrayBufferView) {
-    this.ws.send(message);
+    if (this.isConnected.value) {
+      this.ws.send(message);
+    } else throw new Error(`websocket path ${this.path} not connected`);
   }
 }
 
 const websockets: Mapper<string, websocket> = new Mapper();
 
 export class socket {
-  constructor(private yra: Pager) {}
+  constructor(protected yvee: Pager) {}
   //
   async load(_path: string) {
+    if (isNotWindow) return;
     if (!websockets.has(_path)) {
-      const [clientP, args] = await this.yra["loadWSS"](_path);
+      const [clientP, args] = await this.yvee["loadWSS"](_path);
       if (!clientP) return;
       const { cls, path, id } = clientP;
       const client = new cls(path, args).connect;
@@ -89,6 +94,7 @@ export class socket {
     return socket;
   }
   unload(_path: string) {
+    if (isNotWindow) return;
     if (websockets.has(_path)) {
       const socket = websockets.get(_path);
       if (!socket) return;

@@ -12,9 +12,9 @@ import {
   objectUdpated,
 } from "../@";
 import { Elements, getElementById } from "../storage";
-import { stateHook, observer, hookFN, hookM, handleHooks } from "./hook";
+import { StateHook, hookFN, hookM, handleHooks } from "./hook";
 
-export { stateHook, observer };
+export { StateHook };
 type statesM<T> = Mapper<string, (this: Elements, arg: T) => any>;
 
 export type statefulValue<T extends any[]> = {

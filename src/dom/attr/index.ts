@@ -48,7 +48,9 @@ export class ATTR {
       } else if (v instanceof Stateful) {
         const entry = pre ? `${pre}_${k}` : k;
         //
-        catt.states.push(v.call(Callback(k, pre), entry));
+        catt.states.push(
+          v.call(Callback(k, pre) as (this: Elements, arg: any) => void, entry),
+        );
 
         processValue(k, v.value);
         //
@@ -60,7 +62,6 @@ export class ATTR {
         catt.attr_push(k, attr_value(v), pre);
       }
     };
-
     oItems(attr).forEach(([k, v]) => {
       if (k === "ref") {
         if (v instanceof _useElement) {

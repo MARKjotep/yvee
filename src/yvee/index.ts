@@ -1,3 +1,4 @@
+import { RendererCFG } from "..";
 import { $, _$ } from "../$";
 import {
   head,
@@ -15,104 +16,22 @@ import {
   isNotWindow,
   log,
   isArr,
+  isFN,
+  htmlHead,
+  matchPath,
+  V,
+  getAttr,
 } from "../@";
-import { dom, frag, Dom, CSSinT } from "../dom";
-import { CTX, processCTX } from "../dom/context";
+import { processCTX } from "../dom/context";
 import { CATT, Wizard } from "../oz";
-import { State, Stateful, stateHook } from "../stateful";
-import { minClient } from "../storage";
-import { defaultError, doc } from "./body";
-import { processHead, pushHistory } from "./head";
+import { State } from "../stateful";
 import { HTML } from "./html";
-import { socket } from "./wss";
+import { Pager, routeHeads } from "./pager";
 
 export { doc } from "./body";
 export { websocket } from "./wss";
 export { pushHistory } from "./head";
-
-function HREF(
-  a: attr & {
-    href: string;
-    topRef?: Stateful<_$>;
-    top?: number | (() => number);
-  },
-  D: ctx[],
-  path: Stateful<string>,
-  last: Stateful<string>,
-) {
-  const { on, top: _tp, topRef, ..._a } = a;
-  const _e: events = {
-    ...((on as events) ?? {}),
-    click(e) {
-      e.preventDefault();
-      const _E = $(this);
-      const PT = _E.path;
-
-      last.value = path.value;
-      path.value = PT;
-
-      //
-      const HS = _E.hash;
-      if (HS) {
-        const _HS = $(HS);
-        let top = window.scrollY;
-        if (_HS) {
-          top += _HS.rect.top;
-        }
-        if (topRef) {
-          top -= topRef?.value?.e.offsetHeight || 0;
-        }
-        if (_tp) {
-          if (typeof _tp === "number") {
-            top -= _tp;
-          } else {
-            top -= _tp();
-          }
-        }
-        window.scrollTo({
-          top,
-          behavior: "smooth",
-        });
-
-        pushHistory(PT + HS);
-      } else if (last.value === path.value) {
-        window.scrollTo({
-          top: _E.rect.top || 0,
-          behavior: "smooth",
-        });
-        pushHistory(window.location.pathname);
-      }
-    },
-  };
-  return dom("a", { ..._a, on: { ..._e } }, ...D);
-}
-
-function MAIN(r: Pager, a: attr, isYvee: boolean) {
-  const { classes } = r["config"];
-  const { on: __, ...aa } = a;
-  //
-  const _e: events = {
-    ...((a.on as events) ?? {}),
-    ...(isYvee && {
-      popstate(e) {
-        const targ = e.target as Window;
-        const tloc = targ.location.pathname;
-        r.path.value = tloc;
-      },
-    }),
-    ...{
-      element(e: any) {
-        r.mainElement = this as HTMLElement;
-      },
-    },
-  };
-
-  return dom(
-    "div",
-    { ...aa, ...(classes && { class: classes }), on: _e },
-    r["root"] as any,
-  );
-}
+export { Pager } from "./pager";
 
 export interface routerCfg {
   classes?: string | string[];
@@ -122,261 +41,6 @@ export interface routerCfg {
 
 export interface yveeCfg extends routerCfg {
   pushState?: boolean;
-}
-
-let routeHeads = new Mapper<string, headType>();
-
-export class Pager extends minClient {
-  protected unload: boolean = false;
-  protected hook?: () => void;
-  protected root = State<ctx[]>([]);
-  protected socket: socket;
-  id: string = makeID(4);
-  path = State("");
-  lastPath = State("");
-  loading = State(false);
-  mainElement?: HTMLElement;
-  A: (
-    a: attr & {
-      href: string;
-      topRef?: Stateful<_$>;
-      top?: number | (() => number);
-    },
-    ...D: ctx[]
-  ) => Dom;
-  Main: (a: attr) => Dom;
-  load: (path?: string, data?: obj<string>) => Promise<this>;
-  matchPath: (str: string) => boolean;
-  protected isYvee = false;
-  constructor(
-    protected config: routerCfg = {},
-    events: events = {},
-  ) {
-    super(config.base ?? "");
-    this.socket = new socket(this);
-    //
-    if (config.id) {
-      this.id = config.id;
-    }
-    this.A = (a: attr & { href: string }, ...D: ctx[]) => {
-      if (this.base) {
-        if (!a.href.startsWith(this.base)) {
-          a.href = this._base(a.href);
-        }
-      }
-      return HREF(a, D, this.path, this.lastPath);
-    };
-    this.Main = (a: attr) => {
-      if (oLen(events)) {
-        if (!a.on) {
-          a.on = events;
-        } else {
-          oAss(a.on, events);
-        }
-      }
-      return MAIN(this, a, this.isYvee);
-    };
-    this.load = async (path?: string, data: obj<string> = {}) => {
-      if (this.hook) this.hook();
-      if (path) {
-        this.path.value = path;
-        this.lastPath.value = path;
-        try {
-          await this.render(path, 404, data);
-          this.hooker();
-        } catch (e) {
-          log.e = ["render error", { error: "Pager loader" }];
-        }
-      }
-      return this;
-    };
-
-    this.matchPath = (str: string): boolean => {
-      const BK = this._base(str);
-      const PT = this.path.value;
-      const BS = this.base;
-
-      if (PT === BK) {
-        return true;
-      } else {
-        const PTR = PT.replace(BS, "");
-        const BKR = BK.replace(BS, "");
-        if (BKR) {
-          if (PTR.startsWith(BKR)) {
-            return true;
-          }
-        } else {
-          if (!PT) {
-            return true;
-          }
-        }
-      }
-      return false;
-    };
-  }
-  protected hooker() {
-    const RTscrolls: obj<number> = {};
-    const YRAscrolls: obj<number> = {};
-    let lastURL = this.path.value;
-    if (this.hook) this.hook();
-
-    this.hook = stateHook(
-      async (nav) => {
-        //
-        YRAscrolls[lastURL] = window.scrollY;
-        RTscrolls[lastURL] = this.mainElement?.scrollTop ?? 0;
-
-        if ((await this.render(nav, 404)).done) {
-          const scrl = YRAscrolls[nav] ?? 0;
-          if (scrl) {
-            window.scrollTo({ top: scrl, behavior: "instant" });
-          }
-          const RTscrl = RTscrolls[nav] ?? 0;
-          if (RTscrl) {
-            this.mainElement?.scrollTo({
-              top: RTscrl,
-              behavior: "instant",
-            });
-          }
-
-          lastURL = nav;
-        }
-      },
-      [this.path],
-      { id: "router" },
-    );
-  }
-
-  protected async class(
-    this: Pager,
-    _path: string,
-    _error: number,
-    isError: boolean = false,
-  ) {
-    const [clientP, args] = await this.getPath(_path);
-    if (clientP && !isError) {
-      const { cls, id } = clientP;
-      return new cls(_path, args, id);
-    } else {
-      return await loadERROR.call(this, _path, 404);
-    }
-  }
-
-  protected async fetch(CL?: doc<{}>) {
-    if (CL) {
-      try {
-        if (CL.fetch) {
-          const dt = await CL.fetch();
-          if (isPlainObject(dt) && oLen(dt)) {
-            CL.data = dt;
-          }
-        }
-      } catch (e) {
-        log.e = ["class fetch", { error: "fetch" }];
-      }
-    }
-  }
-
-  protected async processHead(CL?: doc<{}>, head: headAttr = {}) {
-    const headAttrs = CL
-      ? await this.processClassHead(CL, head)
-      : await this.processDefaultHead(head);
-
-    return headAttrs;
-  }
-
-  private async processClassHead(CL: doc<{}>, head: headAttr) {
-    if (CL.head) {
-      await CL.head();
-    }
-    return CL.getHeadAttr(head, this.htmlHead);
-  }
-
-  private async processDefaultHead(head: headAttr) {
-    const rh = new _htmlHead();
-    if (oLen(head)) rh.head = head;
-    rh.head.map(this.htmlHead);
-    return rh.head;
-  }
-
-  async render(
-    _path: string,
-    _error: number = 404,
-    data: obj<string> = {},
-    head: headAttr = {},
-    isClient = true,
-    isError = false,
-  ) {
-    const CL = await this.class(_path, _error ?? getErrorCode(), isError);
-    CL.data = data;
-
-    await this.fetch(CL);
-
-    const heads = await this.processHead(CL, head);
-    //
-    if (isNotWindow) {
-      routeHeads.set(this.id, heads);
-    }
-
-    if (!CL) {
-      return {
-        lang: this.lang,
-        heads,
-        done: false,
-      };
-    }
-
-    let DOM = [];
-
-    this.loading.value = true;
-
-    if (this.unload) {
-      DOM = await CL.loader();
-    }
-
-    let unloader: (() => void)[] = [];
-
-    if (isClient) {
-      unloader = await processHead.call(
-        this,
-        heads,
-        CL?.lang || this.lang,
-        this.unload,
-      );
-    }
-
-    if (!this.unload) {
-      DOM = await CL.loader();
-      unloader.forEach((un) => un());
-    }
-
-    if (this.unload) {
-      unloader.forEach((un) => un());
-    }
-
-    //
-    if (DOM.length) {
-      this.root.value = DOM;
-    } else {
-      await this.render(_path, _error, data, head, isClient, true);
-    }
-
-    this.loading.value = false;
-
-    return { heads, lang: CL.lang ?? this.lang, done: true };
-  }
-}
-
-async function loadERROR(this: Pager, _path: string, _error: number) {
-  const [clientP, args] = await this.loadError(_error ?? 0);
-  if (clientP) {
-    const { cls, id } = clientP;
-    return new cls(_path, args, id, _error);
-  } else {
-    const ndoc = new defaultError(_path, args, makeID(5));
-    ndoc.title = `error ${_error}`;
-    return ndoc;
-  }
 }
 
 export const YveePath = State("");
@@ -391,13 +55,6 @@ export class Yvee extends Pager {
     super(config, events);
     //
     this.path = YveePath;
-
-    this.head({
-      meta: [
-        { charset: "utf-8" },
-        { name: "viewport", content: "width=device-width, initial-scale=1.0" },
-      ],
-    });
 
     this.load = async (path?: string, data: obj<string> = {}) => {
       if (isWindow) {
@@ -421,12 +78,11 @@ export class Yvee extends Pager {
   }
 }
 
-function getErrorCode() {
-  if (isWindow) {
-    return parseInt($(`meta[name="error-code"]`)?.attr.get("content") ?? "404");
-  }
-  return 404;
-}
+export const Routes = (fn: (Yvee: Yvee) => void) => {
+  return (Yvee: Yvee) => {
+    fn(Yvee);
+  };
+};
 
 function getMetaYvee() {
   if (isWindow) {
@@ -435,8 +91,21 @@ function getMetaYvee() {
   return "";
 }
 
-const addMeta = (_hds: headAttr, path: string, status?: number) => {
+const addMeta = (
+  _hds: headAttr,
+  path: string,
+  status?: number,
+  addYvee: boolean = false,
+) => {
   const mt = [];
+
+  // Add viewport
+  mt.push({ charset: "utf-8" });
+  mt.push({
+    name: "viewport",
+    content: "width=device-width, initial-scale=1.0",
+  });
+
   if (status) {
     switch (status) {
       case 404:
@@ -446,20 +115,28 @@ const addMeta = (_hds: headAttr, path: string, status?: number) => {
         break;
     }
   }
-  mt.push({ name: "yvee", content: path });
+  if (addYvee) {
+    mt.push({ name: "yvee", content: path });
+  }
 
-  _hds.meta = mt;
+  if (_hds.meta) {
+    if (isArr(_hds.meta)) {
+      _hds.meta.unshift(...mt);
+    } else {
+      _hds.meta.push(mt);
+    }
+  } else {
+    _hds.meta = mt;
+  }
 };
 
-// type RouteType = (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-export const Routes = (fn: (Yvee: Yvee) => void) => {
-  return (Yvee: Yvee) => {
-    fn(Yvee);
-  };
-};
-
-const getCTX = (id: string, DOM: () => Dom, inner: string[] = []) => {
-  const DM = DOM();
+const getCTX = async (
+  id: string,
+  DOM: DomFN<any>,
+  data = {},
+  inner: string[] = [],
+) => {
+  const DM = await DOM(data);
   const IR = isArr(DM) ? DM : [DM];
   const CTT = new CATT(id, new idm(id));
   IR.forEach((fr) => {
@@ -469,60 +146,159 @@ const getCTX = (id: string, DOM: () => Dom, inner: string[] = []) => {
   return CTT.OZ;
 };
 
-export async function Render(App: Yvee, DOM: () => Dom) {
+interface headAttrPlus {
+  route?: string;
+  index?: string;
+  id?: string;
+  bodyattr?: obj<V>;
+  data?:
+    | Record<string, any>
+    | (() => Promise<Record<string, any>> | Record<string, any>);
+}
+
+type headFN<T = {}> = (
+  a: Record<string, any> & T,
+) => Promise<headAttr> | headAttr;
+
+export async function Render<T = {}>(
+  DOM: DomFN<T>,
+  head?: headAttr | headFN<T>,
+  cfg?: headAttrPlus,
+): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
+export async function Render<T = {}>(
+  DOM: DomFN<T>,
+  App: Yvee,
+): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
+
+export async function Render<T = {}>(
+  DOM: DomFN<T>,
+  YHead?: Yvee | headAttr | headFN<T>,
+  cfg: headAttrPlus = {},
+) {
+  //
+  const { bodyattr = {}, id, route, index, data } = cfg;
   if (isWindow) {
-    await App.load();
+    let _data: Record<string, string> = {};
     const bodyElement = document.body.id;
-    const OZ = getCTX(bodyElement, DOM);
+    if (YHead) {
+      if (YHead instanceof Yvee) {
+        await YHead.load();
+      } else {
+        if (data) {
+          if (isFN(data)) {
+            _data = await data();
+          } else {
+            _data = data;
+          }
+        }
+        if (route) {
+          //
+
+          let wlen = window.location.pathname;
+          if (route.length > 1 && route.slice(-1) !== "/") {
+            wlen = wlen.replace(/^\/|\/$/g, "");
+          }
+
+          oAss(_data, matchPath(wlen, route));
+        }
+      }
+    }
+    const OZ = await getCTX(bodyElement, DOM, _data);
     Wizard.push(OZ);
     requestAnimationFrame(() => {
       Wizard.stage;
     });
   }
 
-  return async ({
-    path,
-    data = {},
-    status = 200,
-    attr = "",
-  }: {
-    path: string;
-    data?: Record<string, string>;
-    status?: number;
-    attr?: string;
-  }) => {
+  return async ({ path, data = {}, status = 200 }: RendererCFG) => {
     //
+    let _ID = makeID(4);
+    let _HD: headType = new Mapper();
+    let _hds: headAttr = {};
 
-    const { base } = App;
+    _hds.base = [
+      {
+        href: "/",
+        target: "_self",
+      },
+    ];
 
-    const _hds: headAttr = {
-      base: [
+    if (id) _ID = id;
+    if (bodyattr.id) _ID = bodyattr.id.toString();
+
+    let _lang = "en";
+
+    if (YHead instanceof Yvee) {
+      const { base, path: pt, id, lang } = YHead;
+
+      _hds.base = [
         {
           href: base === "/" ? base : `${base}/`,
           target: "_blank",
         },
-      ],
-      script: [
-        {
+      ];
+
+      if (_hds.script) {
+        _hds.script.push({
           type: "module",
-          src: `index.js`,
-        },
-      ],
-    };
+          src: "index.js",
+        });
+      } else {
+        _hds.script = [
+          {
+            type: "module",
+            src: "index.js",
+          },
+        ];
+      }
 
-    addMeta(_hds, path, status);
+      pt.value = path;
+      addMeta(_hds, path, status, true);
+      const { heads } = await YHead.render(path, status, data, _hds, false);
 
-    App.path.value = path;
+      routeHeads.values().forEach((rr) => {
+        oAss(heads.init("link", {}), rr.get("link") ?? {});
+      });
 
-    const { lang, heads } = await App.render(path, status, data, _hds, false);
+      _ID = id;
+      _HD = heads;
+      _lang = lang;
+    } else {
+      let pt = (path === "/" ? path : path + "/") + "index.js";
+      if (index) {
+        pt = index + "/index.js";
+      }
 
-    routeHeads.values().forEach((rr) => {
-      oAss(heads.init("link", {}), rr.get("link") ?? {});
-    });
+      if (_hds.script) {
+        _hds.script.push({
+          type: "module",
+          src: pt,
+        });
+      } else {
+        _hds.script = [
+          {
+            type: "module",
+            src: pt,
+          },
+        ];
+      }
+
+      if (route) {
+        oAss(data, matchPath(path, route));
+      }
+
+      oAss(_hds, isFN(YHead) ? await YHead(data as any) : YHead);
+
+      addMeta(_hds, path, status);
+
+      const rh = new htmlHead();
+      rh.head(_hds);
+      _HD = rh.htmlHead;
+    }
 
     const INNR: string[] = [];
-    getCTX(App.id, DOM, INNR);
+    await getCTX(_ID, DOM, data, INNR);
 
-    return new HTML(lang, heads).body(INNR.join(""), App.id, attr);
+    return new HTML(_lang, _HD).body(INNR.join(""), _ID, getAttr(bodyattr));
   };
 }

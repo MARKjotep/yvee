@@ -38,7 +38,6 @@ export class doc<
     if (this.import) {
       try {
         const cimp = (await this.import) as { default?: (args: any) => any };
-
         if (cimp.default) {
           this.import = await cimp.default({ ...this.args, ...this.data });
         } else {
@@ -47,6 +46,7 @@ export class doc<
       } catch (error) {
         log.e = ["import", { error: "loader" }];
         this.import = undefined;
+        return [];
       }
     }
 

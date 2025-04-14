@@ -1,13 +1,14 @@
-import { Elem, TElem } from ".";
+import { Elem } from ".";
 import { $ } from "..";
 import { idm, isFN, isNum, obj, oItems, V } from "../../@";
 import { attr_value, CSSinT } from "../../dom";
 import { Dom } from "../../dom";
 import { processCTXStateful } from "../../dom/context";
 import { CATT, OZ, Wizard } from "../../oz";
+import { Elements } from "../../storage";
 import { anim } from "./anim";
 
-export class Eget<T extends TElem = HTMLElement> {
+export class Eget<T extends Elements = Elements> {
   constructor(
     public e: T,
     public query?: string,
@@ -53,7 +54,7 @@ export class Eget<T extends TElem = HTMLElement> {
     return Array.from(this.e.children).map((a) => $(a as T));
   }
   get click() {
-    this.e.click();
+    (this.e as HTMLElement).click();
     return this;
   }
   get delete() {
@@ -78,7 +79,7 @@ export class Eget<T extends TElem = HTMLElement> {
     return this.e.innerHTML;
   }
   get offsetParent(): Elem | undefined {
-    let prtn = this.e.offsetParent;
+    let prtn = (this.e as HTMLElement).offsetParent;
     if (prtn) {
       return new Elem(prtn as HTMLElement);
     }

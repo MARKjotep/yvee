@@ -5,7 +5,7 @@ import { Elements } from "./storage";
 
 export { __, log, Meta, cssLoader, addCSS } from "./@";
 export { $, useRef } from "./$";
-export { State, Stateful, observer } from "./stateful";
+export { State, Stateful, StateHook } from "./stateful";
 export {
   Yvee,
   Pager,
@@ -23,16 +23,16 @@ export type { _$, $E } from "./$";
 export type { headAttr } from "./@";
 
 declare global {
-  type events = {
+  type events<T extends Elements = Elements> = {
     [P in keyof GlobalEventHandlersEventMap]?: (
-      this: Elements,
+      this: T,
       e: GlobalEventHandlersEventMap[P],
     ) => void;
-  } & c_events;
+  } & c_events<T>;
   type attr = baseAttr | obj<X3>;
   type ctx = V | Dom | Stateful<V | Dom> | ctx[];
   type obj<T> = Record<string, T>;
-  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
+  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom | Promise<Dom>;
 
   const BASE_STRING: string;
 
@@ -40,6 +40,11 @@ declare global {
     type Element = Dom;
 
     interface IntrinsicElements {
+      // Head -----
+      link: attr;
+      base: attr;
+      meta: attr;
+
       // Basic ----------------------------------
       p: attr;
       br: attr;
@@ -225,3 +230,9 @@ declare global {
 export const resolvePath = (base: string, relative: string) => {
   return `${base.replace(/\/+$/, "")}/${relative.replace(/^\.\/+/, "")}`;
 };
+
+export interface RendererCFG {
+  path: string;
+  data?: Record<string, any>;
+  status?: number;
+}

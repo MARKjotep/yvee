@@ -1,6 +1,6 @@
 import { $ } from "../$";
 import { Singleton } from "../@";
-import { State, Stateful, stateHook } from "../stateful";
+import { State, Stateful, StateHook } from "../stateful";
 import { local } from "../storage";
 
 // @Singleton

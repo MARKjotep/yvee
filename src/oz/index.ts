@@ -94,8 +94,7 @@ export class OZ {
             this.windowEvents.init(tp, new Mapper()).set(id, event);
 
             break;
-          case "observe":
-          case "watch":
+          case "state":
             const [cb, statefuls, ini] = event.apply(E, [E]) as watchType;
 
             const sst = isArr(statefuls) ? statefuls : [statefuls];
@@ -107,7 +106,7 @@ export class OZ {
 
             sst.forEach((st) =>
               keyInMapArray<(() => void)[]>(id, this.resetST).push(
-                st.call(handler, id + "_watch")(id),
+                st.call(handler, id + "_state")(id),
               ),
             );
 
