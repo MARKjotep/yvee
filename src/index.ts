@@ -1,10 +1,10 @@
-import { obj, V } from "./@";
+import { isNotWindow, obj, V } from "./@";
 import { Dom, baseAttr, c_events, X3 } from "./dom";
 import { Stateful } from "./stateful";
 import { Elements } from "./storage";
 
 export { __, log, Meta, cssLoader, addCSS } from "./@";
-export { $, useRef } from "./$";
+export { $, useRef, Ref } from "./$";
 export { State, Stateful, StateHook } from "./stateful";
 export {
   Yvee,
@@ -23,7 +23,7 @@ export type { _$, $E } from "./$";
 export type { headAttr } from "./@";
 
 declare global {
-  type events<T extends Elements = Elements> = {
+  type events<T extends Elements = HTMLElement> = {
     [P in keyof GlobalEventHandlersEventMap]?: (
       this: T,
       e: GlobalEventHandlersEventMap[P],
@@ -32,7 +32,7 @@ declare global {
   type attr = baseAttr | obj<X3>;
   type ctx = V | Dom | Stateful<V | Dom> | ctx[];
   type obj<T> = Record<string, T>;
-  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom | Promise<Dom>;
+  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
 
   const BASE_STRING: string;
 
@@ -231,8 +231,19 @@ export const resolvePath = (base: string, relative: string) => {
   return `${base.replace(/\/+$/, "")}/${relative.replace(/^\.\/+/, "")}`;
 };
 
-export interface RendererCFG {
+export interface renderConfig {
+  path: string;
+  status: number;
+  base: string;
+}
+
+export interface serverRender {
   path: string;
   data?: Record<string, any>;
   status?: number;
 }
+
+export const IfClient = <T>(fn: () => T) => {
+  if (isNotWindow) return undefined;
+  return fn();
+};

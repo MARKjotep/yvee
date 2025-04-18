@@ -2,7 +2,6 @@ declare const isFN: (v: any) => v is Function;
 declare const isAsync: (v: any) => v is Function;
 declare const isPromise: (v: any) => v is Function;
 declare const isNumber: (value: any) => boolean;
-declare const isDict: (val: any) => boolean;
 declare const isPlainObject: (value: any) => boolean;
 declare const isArraybuff: (val: any) => val is string | ArrayBuffer | Uint8Array<ArrayBufferLike>;
 declare const isClassOrId: (k: string) => boolean;
@@ -25,7 +24,6 @@ declare const is_isAsync: typeof isAsync;
 declare const is_isBool: typeof isBool;
 declare const is_isClassOrId: typeof isClassOrId;
 declare const is_isDefined: typeof isDefined;
-declare const is_isDict: typeof isDict;
 declare const is_isFN: typeof isFN;
 declare const is_isInt: typeof isInt;
 declare const is_isNotNull: typeof isNotNull;
@@ -40,7 +38,7 @@ declare const is_isStr: typeof isStr;
 declare const is_isUndefined: typeof isUndefined;
 declare const is_isWindow: typeof isWindow;
 declare namespace is {
-  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isDict as isDict, is_isFN as isFN, is_isInt as isInt, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isFN as isFN, is_isInt as isInt, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
 }
 
 type V = string | number | boolean;
@@ -261,10 +259,18 @@ declare class __ {
     static sleep: (ms?: number) => Promise<unknown>;
     static get screen(): "xs" | "sm" | "smd" | "md" | "lg" | "xl" | "xxl" | undefined;
     bytes(bytes: number): string;
+    static format(val: any): Formatteer;
 }
 declare class returner {
     static arr(val: any): any[];
     static num(val: any, iferr?: any): number;
+}
+declare class Formatteer {
+    val: any;
+    constructor(val: any);
+    get px(): string;
+    get rem(): string;
+    get pr(): string;
 }
 
 declare class CATT {
@@ -315,14 +321,14 @@ declare class __I {
     get bool(): boolean | null;
     get json(): any | null;
 }
-declare class storageInterface {
+type storeValTypes = keyof __I;
+declare class storageInterface<T> {
     key: string;
-    func: (() => any) | null;
+    state: Stateful<T> | null;
     storage: Storage;
-    constructor(item: obj$1<() => any> | string, _type?: "local" | "session");
+    constructor(item: obj$1<Stateful<T>> | string, _type?: "local" | "session", init?: storeValTypes);
     get as(): __I;
     get value(): string | null;
-    get save(): void;
     set set(val: any);
     get remove(): void;
 }
@@ -331,14 +337,15 @@ declare class storageInterface {
  * Local Storage
  */
 declare const local: {
-    get: (item: obj$1<() => any> | string) => storageInterface;
+    get: <T>(item: obj$1<Stateful<T>> | string) => storageInterface<T>;
+    init: <T>(item: obj$1<Stateful<T>>, as: storeValTypes) => storageInterface<T>;
 };
 
 /**
  * Session Storage
  */
 declare const session: {
-    get: (item: obj$1<() => any> | string) => storageInterface;
+    get: <T>(item: obj$1<Stateful<T>> | string) => storageInterface<T>;
 };
 
 type kf = KeyframeAnimationOptions;
@@ -347,7 +354,7 @@ declare class anim {
     private e;
     opt: kf;
     constructor(e: Elem);
-    animate(keyframes: CSSinT[] | CSSinT, options?: kf): Elem<Elements>;
+    animate(keyframes: CSSinT[] | CSSinT, options?: kf): Elem<HTMLElement>;
     get slide(): {
         left: (options?: kf) => anim;
         right: (options?: kf) => anim;
@@ -361,7 +368,7 @@ declare class anim {
     bounce(sVal?: number, opt?: kf): this;
 }
 
-declare class Eget<T extends Elements = Elements> {
+declare class Eget<T extends Elements = HTMLElement> {
     e: T;
     query?: string | undefined;
     constructor(e: T, query?: string | undefined);
@@ -370,8 +377,8 @@ declare class Eget<T extends Elements = Elements> {
     get attr(): {
         has: (attr: string) => boolean;
         get: (attr: string) => string | null;
-        del: (attr: string) => Eget;
-        set: (attrs: obj$1<any>) => Eget;
+        del: (attr: string) => Eget<T>;
+        set: (attrs: obj$1<any>) => Eget<T>;
     };
     get children(): Elem<T>[];
     get click(): this;
@@ -388,7 +395,7 @@ declare class Eget<T extends Elements = Elements> {
     get rect(): DOMRect;
     get remove_element(): this;
     get style(): {
-        set: (style: CSSinT | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<Elements>;
+        set: (style: CSSinT | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<HTMLElement>;
         get: (prop: keyof CSSStyleDeclaration | string) => string;
         del: (...props: (keyof CSSStyleDeclaration | string)[]) => void;
     };
@@ -405,16 +412,16 @@ declare class Eget<T extends Elements = Elements> {
 }
 
 type fn<E, T> = (e?: E) => T;
-declare class Elem<T extends Elements = Elements> extends Eget<T> {
+declare class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     constructor(e: T, query?: string);
     add(...className: string[]): this;
     remove(...className: string[]): this;
     toggle(className: string | fn<any, string>, force?: boolean): this;
     has(e: any | null): boolean;
     insert(position: InsertPosition): {
-        HTML: (...text: string[]) => Elem;
-        element: (...elem: HTMLElement[]) => Elem;
-        text: (this: Elem, ...text: string[]) => Elem;
+        HTML: (...text: string[]) => Elem<T>;
+        element: (...elem: HTMLElement[]) => Elem<T>;
+        text: (this: Elem<T>, ...text: string[]) => Elem<T>;
     };
     is(tp: {
         dom?: string;
@@ -422,23 +429,28 @@ declare class Elem<T extends Elements = Elements> extends Eget<T> {
     }): boolean;
     on(event: keyof events, handler: (e?: any) => void, useCapture?: boolean): this;
     remove_on(event: keyof DocumentEventMap, handler: EventListenerOrEventListenerObject, useCapture?: boolean): this;
-    timed(fn: (ee?: Elem) => void, timeout?: number): this;
+    timed(fn: (ee?: Elem<T>) => void, timeout?: number): this;
     animate(keyframes: KFType, options?: kf, onComplete?: fn<any, void>): this;
     animate(keyframes: KFType, onComplete?: fn<any, void>): this;
 }
 
-declare function $<T extends Elements = Elements>(query: string): Elem<T> | undefined;
-declare function $<T extends Elements = Elements>(element: T): Elem<T>;
-type _$<T extends Elements = Elements> = Elem<T> | undefined;
-type $E<T extends Elements = Elements> = Elem<T>;
-declare class _useElement<T extends Elements = Elements> {
-    state: Stateful<_$<Elements>>;
+interface CLI {
+    id?: string;
+    class?: string;
+}
+declare function $<T extends Elements = HTMLElement>(query: CLI): Elem<T> | undefined;
+declare function $<T extends Elements = HTMLElement>(query: string): Elem<T> | undefined;
+declare function $<T extends Elements = HTMLElement>(element: T): Elem<T>;
+type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
+type $E<T extends Elements = HTMLElement> = Elem<T>;
+declare class Ref<T extends Elements = HTMLElement> {
+    state: Stateful<_$<T>>;
     constructor();
     get element(): T | undefined;
-    set element(elem: T);
-    get $(): _$<Elements>;
+    set element(elem: T | undefined);
+    get $(): _$<T>;
 }
-declare const useRef: <T extends Elements = Elements>() => _useElement<T>;
+declare const useRef: <T extends Elements = HTMLElement>() => Ref<T>;
 
 declare class doc<T extends {
     args?: Record<string, any>;
@@ -546,14 +558,16 @@ declare class Yvee extends Pager {
 declare const Routes: (fn: (Yvee: Yvee) => void) => (Yvee: Yvee) => void;
 interface headAttrPlus {
     route?: string;
+    base?: string;
     index?: string;
     id?: string;
     bodyattr?: obj$1<V>;
     data?: Record<string, any> | (() => Promise<Record<string, any>> | Record<string, any>);
 }
 type headFN<T = {}> = (a: Record<string, any> & T) => Promise<headAttr> | headAttr;
-declare function Render<T = {}>(DOM: DomFN<T>, head?: headAttr | headFN<T>, cfg?: headAttrPlus): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
-declare function Render<T = {}>(DOM: DomFN<T>, App: Yvee): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
+type ND<T = Record<string, any>> = (a: renderConfig & T) => Dom | Promise<Dom>;
+declare function Render<T = Record<string, any>>(DOM: ND<T>, head?: headAttr | headFN<T>, cfg?: headAttrPlus): Promise<({ path, data, status }: serverRender) => Promise<string>>;
+declare function Render<T = Record<string, any>>(DOM: ND<T>, App: Yvee): Promise<({ path, data, status }: serverRender) => Promise<string>>;
 
 declare class ClientPath extends MinStorage {
     id: string;
@@ -612,7 +626,7 @@ declare class Stateful<T> extends EventTarget {
     call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
     hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
 }
-declare function State<T>(value: T): Stateful<T>;
+declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
 
 type X2 = V | V[];
 type X3 = X2 | Stateful<X2> | null | undefined;
@@ -621,7 +635,7 @@ type CSSinT = {
 } & {
     [key: string]: X3;
 };
-interface c_events<T extends Elements = Elements> {
+interface c_events<T extends Elements = HTMLElement> {
     state?: (this: T, e: T) => [(...args: any[]) => void, Stateful<any>[], boolean?];
     ready?: (this: T, e: T) => void;
     resize?: (this: T, e: UIEvent) => void;
@@ -638,7 +652,7 @@ interface baseAttr {
     on?: events<any>;
     id?: string;
     class?: XU4 | Stateful<X2>;
-    ref?: _useElement;
+    ref?: Ref;
 }
 declare class Dom {
     tag: string;
@@ -655,13 +669,13 @@ declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: 
 declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
 
 declare global {
-    type events<T extends Elements = Elements> = {
+    type events<T extends Elements = HTMLElement> = {
         [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
     } & c_events<T>;
     type attr = baseAttr | obj<X3>;
     type ctx = V | Dom | Stateful<V | Dom> | ctx[];
     type obj<T> = Record<string, T>;
-    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom | Promise<Dom>;
+    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
     const BASE_STRING: string;
     namespace JSX {
         type Element = Dom;
@@ -836,10 +850,16 @@ declare global {
     }
 }
 declare const resolvePath: (base: string, relative: string) => string;
-interface RendererCFG {
+interface renderConfig {
+    path: string;
+    status: number;
+    base: string;
+}
+interface serverRender {
     path: string;
     data?: Record<string, any>;
     status?: number;
 }
+declare const IfClient: <T>(fn: () => T) => T | undefined;
 
-export { $, type $E, Dom, Meta, Pager, Render, type RendererCFG, Routes, State, StateHook, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, pushHistory, resolvePath, session, useRef, websocket };
+export { $, type $E, Dom, IfClient, Meta, Pager, Ref, Render, Routes, State, StateHook, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, pushHistory, type renderConfig, resolvePath, type serverRender, session, useRef, websocket };

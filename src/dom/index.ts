@@ -5,7 +5,7 @@ import { CTX } from "./context";
 import { Stateful } from "../stateful";
 import { Elements } from "../storage";
 import { hookFN } from "../stateful/hook";
-import { _useElement } from "../$";
+import { Ref } from "../$";
 
 export { attr_value } from "./attr";
 /*
@@ -23,7 +23,7 @@ export type CSSinT = {
   [key: string]: X3;
 };
 
-export interface c_events<T extends Elements = Elements> {
+export interface c_events<T extends Elements = HTMLElement> {
   state?: (
     this: T,
     e: T,
@@ -45,7 +45,7 @@ export interface baseAttr {
   on?: events<any>;
   id?: string;
   class?: XU4 | Stateful<X2>;
-  ref?: _useElement;
+  ref?: Ref;
 }
 
 export class Dom {

@@ -1,8 +1,17 @@
-import { isArr, isBool, isDict, isFN, isObj, ngify, oItems, V } from "../../@";
+import {
+  isArr,
+  isBool,
+  isFN,
+  isObj,
+  isPlainObject,
+  ngify,
+  oItems,
+  V,
+} from "../../@";
 import { Elements } from "../../storage";
 import { CATT } from "../../oz";
 import { Stateful } from "../../stateful";
-import { _useElement } from "../../$";
+import { Ref } from "../../$";
 
 /*
 -------------------------
@@ -13,7 +22,7 @@ export const attr_value = (v: any): string => {
   if (isArr(v)) {
     return v.filter((f) => f !== undefined).join(" ");
   } else if (isObj(v)) {
-    if (isDict(v)) {
+    if (isPlainObject(v)) {
       return ngify(v);
     }
   } else if (isFN(v)) {
@@ -55,7 +64,7 @@ export class ATTR {
         processValue(k, v.value);
         //
       } else if (isObj(v)) {
-        if (isDict(v) && !pre) {
+        if (isPlainObject(v) && !pre) {
           this.get(catt, v, k);
         }
       } else {
@@ -64,7 +73,7 @@ export class ATTR {
     };
     oItems(attr).forEach(([k, v]) => {
       if (k === "ref") {
-        if (v instanceof _useElement) {
+        if (v instanceof Ref) {
           catt.events.obj({
             element() {
               v.element = this;

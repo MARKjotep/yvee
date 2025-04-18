@@ -1,39 +1,58 @@
-import { isStr } from "../@";
+import { isPlainObject, isStr, oItems } from "../@";
 import { Stateful } from "../stateful";
 import { Elements } from "../storage";
 import { Elem } from "./element";
 
-export function $<T extends Elements = Elements>(
+// type CLorID = { id: string } | { class: string };
+interface CLI {
+  id?: string;
+  class?: string;
+}
+export function $<T extends Elements = HTMLElement>(
+  query: CLI,
+): Elem<T> | undefined;
+export function $<T extends Elements = HTMLElement>(
   query: string,
 ): Elem<T> | undefined;
-export function $<T extends Elements = Elements>(element: T): Elem<T>;
-export function $<T extends Elements = Elements>(element: T | string) {
+export function $<T extends Elements = HTMLElement>(element: T): Elem<T>;
+export function $<T extends Elements = HTMLElement>(element: T | string | CLI) {
   if (isStr(element)) {
     const QD = document.querySelector(element);
     if (QD) return new Elem<T>(QD as T, element);
     return undefined;
+  } else if (isPlainObject(element)) {
+    //
+    const [[k, v]] = oItems(element as CLI);
+    let prefix = k === "id" ? "#" : ".";
+    let el = `${prefix}${v}`;
+    const QD = document.querySelector(el);
+    if (QD) return new Elem<T>(QD as T, el);
+    return undefined;
   } else {
-    return new Elem<T>(element);
+    return new Elem<T>(element as T);
   }
 }
+export type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
+export type $E<T extends Elements = HTMLElement> = Elem<T>;
 
-export type _$<T extends Elements = Elements> = Elem<T> | undefined;
-export type $E<T extends Elements = Elements> = Elem<T>;
-
-export class _useElement<T extends Elements = Elements> {
-  state = new Stateful<_$>(undefined);
+export class Ref<T extends Elements = HTMLElement> {
+  state = new Stateful<_$<T>>(undefined);
   constructor() {}
   get element(): T | undefined {
     return this.state.value?.e as T;
   }
-  set element(elem: T) {
-    this.state.value = new Elem(elem);
+  set element(elem: T | undefined) {
+    if (elem) {
+      this.state.value = new Elem<T>(elem);
+    } else {
+      this.state.value = undefined;
+    }
   }
   get $() {
     return this.state.value;
   }
 }
 
-export const useRef = <T extends Elements = Elements>() => {
-  return new _useElement<T>();
+export const useRef = <T extends Elements = HTMLElement>() => {
+  return new Ref<T>();
 };

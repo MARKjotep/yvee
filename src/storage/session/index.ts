@@ -1,9 +1,11 @@
 import { obj } from "../../@";
+import { Stateful } from "../../stateful";
 import { storageInterface } from "../util";
 
 /**
  * Session Storage
  */
 export const session = {
-  get: (item: obj<() => any> | string) => new storageInterface(item, "session"),
+  get: <T>(item: obj<Stateful<T>> | string) =>
+    new storageInterface<T>(item, "session"),
 };

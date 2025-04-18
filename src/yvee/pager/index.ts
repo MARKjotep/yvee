@@ -118,11 +118,11 @@ async function loadERROR(this: Pager, _path: string, _error: number) {
   }
 }
 
-function getErrorCode() {
+export function getErrorCode() {
   if (isWindow) {
-    return parseInt($(`meta[name="error-code"]`)?.attr.get("content") ?? "404");
+    return parseInt($(`meta[name="error"]`)?.attr.get("content") ?? "200");
   }
-  return 404;
+  return 200;
 }
 
 export class Pager extends minClient {

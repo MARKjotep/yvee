@@ -6,7 +6,7 @@ import { Eget } from "./getset";
 // export type TElem = HTMLElement & InstanceType<typeof Element>;
 type fn<E, T> = (e?: E) => T;
 
-export class Elem<T extends Elements = Elements> extends Eget<T> {
+export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
   constructor(e: T, query?: string) {
     super(e, query);
   }
@@ -34,19 +34,19 @@ export class Elem<T extends Elements = Elements> extends Eget<T> {
   }
   insert(position: InsertPosition) {
     return {
-      HTML: (...text: string[]): Elem => {
+      HTML: (...text: string[]): Elem<T> => {
         text.forEach((tt) => {
           this.e.insertAdjacentHTML(position, tt);
         });
         return this;
       },
-      element: (...elem: HTMLElement[]): Elem => {
+      element: (...elem: HTMLElement[]): Elem<T> => {
         elem.forEach((tt) => {
           this.e.insertAdjacentElement(position, tt as any);
         });
         return this;
       },
-      text: function (this: Elem, ...text: string[]): Elem {
+      text: function (this: Elem<T>, ...text: string[]): Elem<T> {
         text.forEach((tt) => {
           this.e.insertAdjacentText(position, tt);
         });
@@ -98,7 +98,7 @@ export class Elem<T extends Elements = Elements> extends Eget<T> {
     this.e.removeEventListener(event, handler, useCapture);
     return this;
   }
-  timed(fn: (ee?: Elem) => void, timeout = 250) {
+  timed(fn: (ee?: Elem<T>) => void, timeout = 250) {
     setTimeout(() => fn(this), timeout);
     return this;
   }

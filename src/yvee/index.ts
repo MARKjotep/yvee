@@ -1,4 +1,4 @@
-import { RendererCFG } from "..";
+import { serverRender, Dom, renderConfig } from "..";
 import { $, _$ } from "../$";
 import {
   head,
@@ -7,7 +7,6 @@ import {
   headAttr,
   oLen,
   obj,
-  isPlainObject,
   makeID,
   isWindow,
   oAss,
@@ -26,7 +25,7 @@ import { processCTX } from "../dom/context";
 import { CATT, Wizard } from "../oz";
 import { State } from "../stateful";
 import { HTML } from "./html";
-import { Pager, routeHeads } from "./pager";
+import { getErrorCode, Pager, routeHeads } from "./pager";
 
 export { doc } from "./body";
 export { websocket } from "./wss";
@@ -109,7 +108,7 @@ const addMeta = (
   if (status) {
     switch (status) {
       case 404:
-        mt.push({ name: "error-code", content: status.toString() });
+        mt.push({ name: "error", content: status.toString() });
         break;
       default:
         break;
@@ -132,7 +131,7 @@ const addMeta = (
 
 const getCTX = async (
   id: string,
-  DOM: DomFN<any>,
+  DOM: ND<any>,
   data = {},
   inner: string[] = [],
 ) => {
@@ -148,6 +147,7 @@ const getCTX = async (
 
 interface headAttrPlus {
   route?: string;
+  base?: string;
   index?: string;
   id?: string;
   bodyattr?: obj<V>;
@@ -160,23 +160,25 @@ type headFN<T = {}> = (
   a: Record<string, any> & T,
 ) => Promise<headAttr> | headAttr;
 
-export async function Render<T = {}>(
-  DOM: DomFN<T>,
+type ND<T = Record<string, any>> = (a: renderConfig & T) => Dom | Promise<Dom>;
+
+export async function Render<T = Record<string, any>>(
+  DOM: ND<T>,
   head?: headAttr | headFN<T>,
   cfg?: headAttrPlus,
-): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
-export async function Render<T = {}>(
-  DOM: DomFN<T>,
+): Promise<({ path, data, status }: serverRender) => Promise<string>>;
+export async function Render<T = Record<string, any>>(
+  DOM: ND<T>,
   App: Yvee,
-): Promise<({ path, data, status }: RendererCFG) => Promise<string>>;
+): Promise<({ path, data, status }: serverRender) => Promise<string>>;
 
-export async function Render<T = {}>(
-  DOM: DomFN<T>,
+export async function Render<T = Record<string, any>>(
+  DOM: ND<T>,
   YHead?: Yvee | headAttr | headFN<T>,
   cfg: headAttrPlus = {},
 ) {
   //
-  const { bodyattr = {}, id, route, index, data } = cfg;
+  const { bodyattr = {}, id, route, base = "", index, data } = cfg;
   if (isWindow) {
     let _data: Record<string, string> = {};
     const bodyElement = document.body.id;
@@ -191,10 +193,14 @@ export async function Render<T = {}>(
             _data = data;
           }
         }
+        let wlen = window.location.pathname;
+        oAss(_data, {
+          path: wlen,
+          status: getErrorCode(),
+        });
+
         if (route) {
           //
-
-          let wlen = window.location.pathname;
           if (route.length > 1 && route.slice(-1) !== "/") {
             wlen = wlen.replace(/^\/|\/$/g, "");
           }
@@ -210,18 +216,11 @@ export async function Render<T = {}>(
     });
   }
 
-  return async ({ path, data = {}, status = 200 }: RendererCFG) => {
+  return async ({ path, data = {}, status = 200 }: serverRender) => {
     //
     let _ID = makeID(4);
     let _HD: headType = new Mapper();
     let _hds: headAttr = {};
-
-    _hds.base = [
-      {
-        href: "/",
-        target: "_self",
-      },
-    ];
 
     if (id) _ID = id;
     if (bodyattr.id) _ID = bodyattr.id.toString();
@@ -241,13 +240,13 @@ export async function Render<T = {}>(
       if (_hds.script) {
         _hds.script.push({
           type: "module",
-          src: "index.js",
+          src: "./index.js",
         });
       } else {
         _hds.script = [
           {
             type: "module",
-            src: "index.js",
+            src: "./index.js",
           },
         ];
       }
@@ -264,21 +263,31 @@ export async function Render<T = {}>(
       _HD = heads;
       _lang = lang;
     } else {
-      let pt = (path === "/" ? path : path + "/") + "index.js";
+      let pt = path === "/" ? path : `${path}/`;
       if (index) {
-        pt = index + "/index.js";
+        pt = `${index}/`;
       }
+      if (base) {
+        pt = `${base}${pt}`;
+      }
+
+      _hds.base = [
+        {
+          href: pt,
+          target: "_self",
+        },
+      ];
 
       if (_hds.script) {
         _hds.script.push({
           type: "module",
-          src: pt,
+          src: "./index.js",
         });
       } else {
         _hds.script = [
           {
             type: "module",
-            src: pt,
+            src: "./index.js",
           },
         ];
       }
@@ -286,6 +295,7 @@ export async function Render<T = {}>(
       if (route) {
         oAss(data, matchPath(path, route));
       }
+      oAss(data, { status, path, base });
 
       oAss(_hds, isFN(YHead) ? await YHead(data as any) : YHead);
 

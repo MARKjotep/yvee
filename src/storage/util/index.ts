@@ -1,4 +1,5 @@
-import { isNumber, obj, oItems } from "../../@";
+import { isNumber, isObj, log, ngify, obj, oItems } from "../../@";
+import { Stateful, StateHook } from "../../stateful";
 
 class __I {
   constructor(public value: any) {}
@@ -37,23 +38,39 @@ class __I {
   }
 }
 
-export class storageInterface {
+export type storeValTypes = keyof __I;
+
+export class storageInterface<T> {
   key: string;
-  func: (() => any) | null;
+  state: Stateful<T> | null;
   storage: Storage;
   constructor(
-    item: obj<() => any> | string,
+    item: obj<Stateful<T>> | string,
     _type: "local" | "session" = "local",
+    init?: storeValTypes,
   ) {
+    this.storage = _type == "local" ? localStorage : sessionStorage;
+
     if (typeof item == "object") {
       const [k, v] = oItems(item)[0];
       this.key = k;
-      this.func = v;
+      this.state = v;
+      if (init) {
+        const vval = this.as[init];
+        this.state.value = vval;
+      }
+      // watch the state changes
+      StateHook(
+        (st) => {
+          this.set = st;
+        },
+        [this.state],
+        { id: this.key },
+      );
     } else {
       this.key = item;
-      this.func = null;
+      this.state = null;
     }
-    this.storage = _type == "local" ? localStorage : sessionStorage;
   }
   get as() {
     return new __I(this.storage.getItem(this.key));
@@ -61,19 +78,10 @@ export class storageInterface {
   get value(): string | null {
     return this.storage.getItem(this.key);
   }
-  get save() {
-    if (this.func) {
-      this.set = this.func();
-    }
 
-    return;
-  }
   set set(val: any) {
-    if (typeof val == "object") {
-      this.storage.setItem(this.key, JSON.stringify(val));
-    } else {
-      this.storage.setItem(this.key, String(val));
-    }
+    const _val = isObj(val) ? ngify(val) : String(val);
+    this.storage.setItem(this.key, _val);
   }
   get remove() {
     this.storage.removeItem(this.key);

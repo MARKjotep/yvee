@@ -57,7 +57,7 @@ export class Stateful<T> extends EventTarget {
   set value(newValue: T) {
     //
 
-    if (isNull(newValue) || isUndefined(newValue)) return;
+    // if (isNull(newValue) || isUndefined(newValue)) return;
 
     if (isPlainObject(this._value) || isArr(this._value)) {
       const changes = compareObjects(this._value as object, newValue);
@@ -123,6 +123,6 @@ export class Stateful<T> extends EventTarget {
   }
 }
 
-export function State<T>(value: T) {
-  return new Stateful(value);
+export function State<T>(value: T, options?: AddEventListenerOptions) {
+  return new Stateful(value, options);
 }

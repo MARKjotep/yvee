@@ -1,9 +1,13 @@
 import { obj } from "../../@";
-import { storageInterface } from "../util";
+import { Stateful } from "../../stateful";
+import { storageInterface, storeValTypes } from "../util";
 
 /**
  * Local Storage
  */
 export const local = {
-  get: (item: obj<() => any> | string) => new storageInterface(item),
+  get: <T>(item: obj<Stateful<T>> | string) =>
+    new storageInterface<T>(item, "local"),
+  init: <T>(item: obj<Stateful<T>>, as: storeValTypes) =>
+    new storageInterface<T>(item, "local", as),
 };

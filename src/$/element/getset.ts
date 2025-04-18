@@ -1,6 +1,6 @@
 import { Elem } from ".";
 import { $ } from "..";
-import { idm, isFN, isNum, obj, oItems, V } from "../../@";
+import { idm, isFN, isNum, obj, oItems, reCamel, V } from "../../@";
 import { attr_value, CSSinT } from "../../dom";
 import { Dom } from "../../dom";
 import { processCTXStateful } from "../../dom/context";
@@ -8,7 +8,7 @@ import { CATT, OZ, Wizard } from "../../oz";
 import { Elements } from "../../storage";
 import { anim } from "./anim";
 
-export class Eget<T extends Elements = Elements> {
+export class Eget<T extends Elements = HTMLElement> {
   constructor(
     public e: T,
     public query?: string,
@@ -34,12 +34,12 @@ export class Eget<T extends Elements = Elements> {
       get: (attr: string): string | null => {
         return lat.getAttribute(attr);
       },
-      del: (attr: string): Eget => {
+      del: (attr: string): Eget<T> => {
         lat.removeAttribute(attr);
 
         return this;
       },
-      set: (attrs: obj<any>): Eget => {
+      set: (attrs: obj<any>): Eget<T> => {
         for (const ats in attrs) {
           let aat = attrs[ats];
           if (attrs[ats] !== undefined) {
@@ -141,11 +141,14 @@ export class Eget<T extends Elements = Elements> {
         return TT;
       },
       get: (prop: keyof CSSStyleDeclaration | string) => {
-        return CC.getPropertyValue(prop.toString());
+        //
+        const rc = reCamel(String(prop));
+        return CC.getPropertyValue(rc);
       },
       del: (...props: (keyof CSSStyleDeclaration | string)[]) => {
         props.forEach((pr) => {
-          CC.removeProperty(pr.toString());
+          const rc = reCamel(String(pr));
+          CC.removeProperty(rc);
         });
       },
     };
