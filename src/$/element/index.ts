@@ -12,8 +12,11 @@ export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
   }
   add(...className: string[]) {
     this.e.classList.add(...className.map((cn) => cn.replace(/[^\w-]/, "")));
-
-    return this;
+    return () => {
+      this.e.classList.remove(
+        ...className.map((cn) => cn.replace(/[^\w-]/, "")),
+      );
+    };
   }
   remove(...className: string[]) {
     this.e.classList.remove(...className.map((cn) => cn.replace(/[^\w-]/, "")));
@@ -23,15 +26,17 @@ export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
   toggle(className: string | fn<any, string>, force?: boolean) {
     let lt: string =
       typeof className != "string" ? className.apply(this) : className;
-    const TC = this.e.classList;
-    lt.split(" ").forEach((tg) => {
-      TC.toggle(tg, force);
-    });
-    return this;
+    return this.e.classList.toggle(lt, force);
   }
-  has(e: any | null) {
+  hasNode(e: Node) {
     return this.e.contains(e);
   }
+  has(...classes: string[]) {
+    const classList = this.e.classList;
+
+    return classes.every((t) => classList.contains(t));
+  }
+
   insert(position: InsertPosition) {
     return {
       HTML: (...text: string[]): Elem<T> => {
@@ -55,7 +60,7 @@ export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     };
   }
   is(tp: { dom?: string; class?: string | string[] }): boolean {
-    const clist = this.e.classList.value.split(" ");
+    const classList = this.e.classList;
     const dom_name = this.e.tagName.toLocaleLowerCase();
     let yes: boolean = true;
     let isdom = true;
@@ -67,10 +72,10 @@ export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     if (tp.class) {
       if (Array.isArray(tp.class)) {
         tp.class.forEach((t) => {
-          yes = yes ? clist.includes(t) : false;
+          yes = yes ? classList.contains(t) : false;
         });
       } else {
-        yes = yes ? clist.includes(tp.class) : false;
+        yes = yes ? classList.contains(tp.class) : false;
       }
     }
     return yes && isdom;

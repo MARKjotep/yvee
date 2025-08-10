@@ -287,6 +287,7 @@ export class Pager extends minClient {
     if (CL.head) {
       await CL.head();
     }
+
     return CL.getHeadAttr(head, this.htmlHead);
   }
 
@@ -311,6 +312,7 @@ export class Pager extends minClient {
     await this.fetch(CL);
 
     const heads = await this.processHead(CL, head);
+
     //
     if (isNotWindow) {
       routeHeads.set(this.id, heads);

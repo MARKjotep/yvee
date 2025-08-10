@@ -29,10 +29,11 @@ export async function processHead(this: Pager, GH: headType, lang: string) {
     }
   }
 
+  ttle && (document.title = ttle);
   // base
   if (this.isYvee) {
     document.documentElement.lang = lang;
-    document.title = ttle;
+
     // Title
     toUnload.push(...BASE(GH.get("base")));
     //  meta

@@ -2,6 +2,7 @@ declare const isFN: (v: any) => v is Function;
 declare const isAsync: (v: any) => v is Function;
 declare const isPromise: (v: any) => v is Function;
 declare const isNumber: (value: any) => boolean;
+declare const isObject: (val: any) => val is Record<string, any>;
 declare const isPlainObject: (value: any) => boolean;
 declare const isArraybuff: (val: any) => val is string | ArrayBuffer | Uint8Array<ArrayBufferLike>;
 declare const isClassOrId: (k: string) => boolean;
@@ -32,13 +33,35 @@ declare const is_isNull: typeof isNull;
 declare const is_isNum: typeof isNum;
 declare const is_isNumber: typeof isNumber;
 declare const is_isObj: typeof isObj;
+declare const is_isObject: typeof isObject;
 declare const is_isPlainObject: typeof isPlainObject;
 declare const is_isPromise: typeof isPromise;
 declare const is_isStr: typeof isStr;
 declare const is_isUndefined: typeof isUndefined;
 declare const is_isWindow: typeof isWindow;
 declare namespace is {
-  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isFN as isFN, is_isInt as isInt, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+  export {
+    is_isArr as isArr,
+    is_isArraybuff as isArraybuff,
+    is_isAsync as isAsync,
+    is_isBool as isBool,
+    is_isClassOrId as isClassOrId,
+    is_isDefined as isDefined,
+    is_isFN as isFN,
+    is_isInt as isInt,
+    is_isNotNull as isNotNull,
+    is_isNotWindow as isNotWindow,
+    is_isNull as isNull,
+    is_isNum as isNum,
+    is_isNumber as isNumber,
+    is_isObj as isObj,
+    is_isObject as isObject,
+    is_isPlainObject as isPlainObject,
+    is_isPromise as isPromise,
+    is_isStr as isStr,
+    is_isUndefined as isUndefined,
+    is_isWindow as isWindow,
+  };
 }
 
 type V = string | number | boolean;
@@ -216,18 +239,36 @@ declare class Storage$1<T extends MinStorage> {
     get(path: string): [T | undefined, Record<string, string>];
 }
 
+declare class Time {
+    date: Date;
+    constructor(dateMS?: number);
+    delta(date2?: number | null, _Date?: boolean): number | Date;
+    timed(time?: {
+        year?: number;
+        month?: number;
+        day?: number;
+        hour?: number;
+        minute?: number;
+        second?: number;
+    }): Date;
+    static delta(date1: number, date2?: number | null): number;
+    static local(date: number): string;
+    static get now(): number;
+}
+
 declare class __ {
     static rand(min?: number, max?: number): number;
     static fill(count: number, fill?: any): any[];
     static new({ dom, id, inner, }: {
-        dom: keyof HTMLElementTagNameMap;
+        dom: keyof HTMLElementTagNameMap | keyof SVGElementTagNameMap;
         id?: string;
         inner?: any;
     }): HTMLElement;
     static randFrom(arr: any[] | Object): any;
+    static randArray<T>(arr?: T[], length?: number, unique?: boolean): T[];
     static randomAZ: () => string;
     static makeID: (length: number) => string;
-    static class(a: obj$1<any>, classes: string[]): void;
+    static class(a: obj$1<any>, ...classes: string[]): void;
     static get O(): {
         vals: {
             <T>(o: {
@@ -262,8 +303,10 @@ declare class __ {
     static format(val: any): Formatteer;
 }
 declare class returner {
-    static arr(val: any): any[];
+    static arr<T = string>(val?: any): T[];
     static num(val: any, iferr?: any): number;
+    static str(val: any): string;
+    static arr2obj(val: any[], switched?: boolean): any;
 }
 declare class Formatteer {
     val: any;
@@ -302,6 +345,13 @@ declare class OZ {
     get processWindowEvents(): this;
     reset(id: string[]): this;
     RPS(oz?: this): this;
+}
+
+declare class ATTR {
+    attr: attr;
+    constructor(attr?: attr);
+    get(catt: CATT, attr?: attr, pre?: string): void;
+    unload<T>(x: string): T | undefined;
 }
 
 declare class eStream {
@@ -414,10 +464,11 @@ declare class Eget<T extends Elements = HTMLElement> {
 type fn<E, T> = (e?: E) => T;
 declare class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     constructor(e: T, query?: string);
-    add(...className: string[]): this;
+    add(...className: string[]): () => void;
     remove(...className: string[]): this;
-    toggle(className: string | fn<any, string>, force?: boolean): this;
-    has(e: any | null): boolean;
+    toggle(className: string | fn<any, string>, force?: boolean): boolean;
+    hasNode(e: Node): boolean;
+    has(...classes: string[]): boolean;
     insert(position: InsertPosition): {
         HTML: (...text: string[]) => Elem<T>;
         element: (...elem: HTMLElement[]) => Elem<T>;
@@ -438,8 +489,8 @@ interface CLI {
     id?: string;
     class?: string;
 }
-declare function $<T extends Elements = HTMLElement>(query: CLI): Elem<T> | undefined;
-declare function $<T extends Elements = HTMLElement>(query: string): Elem<T> | undefined;
+declare function $<T extends Elements = HTMLElement, P extends Elements = HTMLElement>(query: CLI, parent?: P): Elem<T> | undefined;
+declare function $<T extends Elements = HTMLElement, P extends Elements = HTMLElement>(query: string, parent?: P): Elem<T> | undefined;
 declare function $<T extends Elements = HTMLElement>(element: T): Elem<T>;
 type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
 type $E<T extends Elements = HTMLElement> = Elem<T>;
@@ -564,7 +615,7 @@ interface headAttrPlus {
     bodyattr?: obj$1<V>;
     data?: Record<string, any> | (() => Promise<Record<string, any>> | Record<string, any>);
 }
-type headFN<T = {}> = (a: Record<string, any> & T) => Promise<headAttr> | headAttr;
+type headFN<T = Record<string, any>> = (a: renderConfig & T) => Promise<headAttr> | headAttr;
 type ND<T = Record<string, any>> = (a: renderConfig & T) => Dom | Promise<Dom>;
 declare function Render<T = Record<string, any>>(DOM: ND<T>, head?: headAttr | headFN<T>, cfg?: headAttrPlus): Promise<({ path, data, status }: serverRender) => Promise<string>>;
 declare function Render<T = Record<string, any>>(DOM: ND<T>, App: Yvee): Promise<({ path, data, status }: serverRender) => Promise<string>>;
@@ -613,13 +664,15 @@ type statefulValue<T extends any[]> = {
     [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
 };
 declare class Stateful<T> extends EventTarget {
-    private options?;
+    private options;
+    private deep;
+    private verify;
     private hooks;
     private states;
     private _value;
     private listening;
     private end?;
-    constructor(value: T, options?: AddEventListenerOptions | undefined);
+    constructor(value: T, options?: AddEventListenerOptions, deep?: boolean, verify?: boolean);
     get value(): T;
     set value(newValue: T);
     get listen(): () => void;
@@ -627,6 +680,10 @@ declare class Stateful<T> extends EventTarget {
     hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
 }
 declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
+/**
+ * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
+ */
+declare function QState<T>(value: T, verify?: boolean): Stateful<T>;
 
 type X2 = V | V[];
 type X3 = X2 | Stateful<X2> | null | undefined;
@@ -652,11 +709,11 @@ interface baseAttr {
     on?: events<any>;
     id?: string;
     class?: XU4 | Stateful<X2>;
-    ref?: Ref;
+    ref?: Ref<any>;
 }
 declare class Dom {
     tag: string;
-    private attr;
+    attr: ATTR;
     private ctx;
     constructor(tag: string, attr?: attr, ...ctx: ctx[]);
     __(pid?: idm): {
@@ -675,6 +732,7 @@ declare global {
     type attr = baseAttr | obj<X3>;
     type ctx = V | Dom | Stateful<V | Dom> | ctx[];
     type obj<T> = Record<string, T>;
+    type dom = Dom;
     type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
     const BASE_STRING: string;
     namespace JSX {
@@ -862,4 +920,5 @@ interface serverRender {
 }
 declare const IfClient: <T>(fn: () => T) => T | undefined;
 
-export { $, type $E, Dom, IfClient, Meta, Pager, Ref, Render, Routes, State, StateHook, Stateful, Yvee, type _$, __, addCSS, cssLoader, doc, dom, eventStream, frag, type headAttr, local, log, pushHistory, type renderConfig, resolvePath, type serverRender, session, useRef, websocket };
+export { $, Dom, IfClient, Meta, Pager, QState, Ref, Render, Routes, State, StateHook, Stateful, Time, Yvee, __, addCSS, cssLoader, doc, dom, eventStream, frag, local, log, pushHistory, resolvePath, session, useRef, websocket };
+export type { $E, Elements, _$, headAttr, renderConfig, serverRender };

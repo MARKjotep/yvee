@@ -1,6 +1,6 @@
 {
   "name": "yvee",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Yvee JS framework",
   "author": "Marky <markjotep@gmail.com>",
   "license": "MIT",
@@ -27,8 +27,8 @@
   "homepage": "https://github.com/MARKjotep/yvee#readme",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^4.34.8",
-    "rollup-plugin-dts": "^6.1.1"
+    "rollup": "^4.46.2",
+    "rollup-plugin-dts": "^6.2.1"
   },
   "peerDependencies": {
     "typescript": "^5.7.3"

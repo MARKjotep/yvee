@@ -8,16 +8,23 @@ interface CLI {
   id?: string;
   class?: string;
 }
-export function $<T extends Elements = HTMLElement>(
-  query: CLI,
-): Elem<T> | undefined;
-export function $<T extends Elements = HTMLElement>(
-  query: string,
-): Elem<T> | undefined;
+
+export function $<
+  T extends Elements = HTMLElement,
+  P extends Elements = HTMLElement,
+>(query: CLI, parent?: P): Elem<T> | undefined;
+export function $<
+  T extends Elements = HTMLElement,
+  P extends Elements = HTMLElement,
+>(query: string, parent?: P): Elem<T> | undefined;
 export function $<T extends Elements = HTMLElement>(element: T): Elem<T>;
-export function $<T extends Elements = HTMLElement>(element: T | string | CLI) {
+export function $<
+  T extends Elements = HTMLElement,
+  P extends Elements = HTMLElement,
+>(element: T | string | CLI, parent?: P) {
+  const doc = parent ? parent : document;
   if (isStr(element)) {
-    const QD = document.querySelector(element);
+    const QD = doc.querySelector(element);
     if (QD) return new Elem<T>(QD as T, element);
     return undefined;
   } else if (isPlainObject(element)) {
@@ -25,7 +32,7 @@ export function $<T extends Elements = HTMLElement>(element: T | string | CLI) {
     const [[k, v]] = oItems(element as CLI);
     let prefix = k === "id" ? "#" : ".";
     let el = `${prefix}${v}`;
-    const QD = document.querySelector(el);
+    const QD = doc.querySelector(el);
     if (QD) return new Elem<T>(QD as T, el);
     return undefined;
   } else {

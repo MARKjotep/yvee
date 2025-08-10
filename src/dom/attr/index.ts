@@ -5,6 +5,7 @@ import {
   isObj,
   isPlainObject,
   ngify,
+  oAss,
   oItems,
   V,
 } from "../../@";
@@ -86,5 +87,13 @@ export class ATTR {
         processValue(k, v);
       }
     });
+  }
+  unload<T>(x: string): T | undefined {
+    let ATX = undefined;
+    if (x in this.attr) {
+      ATX = this.attr[x as keyof attr];
+      delete this.attr[x as keyof attr];
+    }
+    return ATX as T;
   }
 }

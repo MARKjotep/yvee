@@ -156,8 +156,8 @@ interface headAttrPlus {
     | (() => Promise<Record<string, any>> | Record<string, any>);
 }
 
-type headFN<T = {}> = (
-  a: Record<string, any> & T,
+type headFN<T = Record<string, any>> = (
+  a: renderConfig & T,
 ) => Promise<headAttr> | headAttr;
 
 type ND<T = Record<string, any>> = (a: renderConfig & T) => Dom | Promise<Dom>;
@@ -181,6 +181,7 @@ export async function Render<T = Record<string, any>>(
   const { bodyattr = {}, id, route, base = "", index, data } = cfg;
   if (isWindow) {
     let _data: Record<string, string> = {};
+    let wlen = window.location.pathname;
     const bodyElement = document.body.id;
     if (YHead) {
       if (YHead instanceof Yvee) {
@@ -193,20 +194,19 @@ export async function Render<T = Record<string, any>>(
             _data = data;
           }
         }
-        let wlen = window.location.pathname;
-        oAss(_data, {
-          path: wlen,
-          status: getErrorCode(),
-        });
 
         if (route) {
           //
           if (route.length > 1 && route.slice(-1) !== "/") {
             wlen = wlen.replace(/^\/|\/$/g, "");
           }
-
           oAss(_data, matchPath(wlen, route));
         }
+
+        oAss(_data, {
+          path: wlen,
+          status: getErrorCode(),
+        });
       }
     }
     const OZ = await getCTX(bodyElement, DOM, _data);

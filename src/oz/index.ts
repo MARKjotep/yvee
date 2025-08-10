@@ -99,6 +99,8 @@ export class OZ {
 
             const sst = isArr(statefuls) ? statefuls : [statefuls];
 
+            if (!sst.length) break;
+
             const smap = () => sst.map((st) => st.value);
             const handler = () => cb(...smap());
 

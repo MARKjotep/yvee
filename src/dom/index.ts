@@ -1,8 +1,8 @@
-import { idm, isFN, readOnly, V } from "../@";
+import { idm, isFN, log, readOnly, V } from "../@";
 import { ATTR } from "./attr";
 import { CATT } from "../oz";
 import { CTX } from "./context";
-import { Stateful } from "../stateful";
+import { State, Stateful } from "../stateful";
 import { Elements } from "../storage";
 import { hookFN } from "../stateful/hook";
 import { Ref } from "../$";
@@ -45,11 +45,11 @@ export interface baseAttr {
   on?: events<any>;
   id?: string;
   class?: XU4 | Stateful<X2>;
-  ref?: Ref;
+  ref?: Ref<any>;
 }
 
 export class Dom {
-  declare private attr: ATTR;
+  declare attr: ATTR;
   declare private ctx: CTX;
   constructor(
     public tag: string,
@@ -82,6 +82,7 @@ export function dom(
   // Process the ctx here to lessen the time -- convert them all to flat array?
   //
   if (isFN(tag)) {
+    log.i = tag;
     return tag(attr ?? {}, ...ctx);
   }
   // if ctx is array, flatten or use rest operator

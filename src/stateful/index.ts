@@ -46,7 +46,9 @@ export class Stateful<T> extends EventTarget {
 
   constructor(
     value: T,
-    private options?: AddEventListenerOptions,
+    private options: AddEventListenerOptions = {},
+    private deep: boolean = true,
+    private verify: boolean = true,
   ) {
     super();
     this._value = value;
@@ -56,6 +58,18 @@ export class Stateful<T> extends EventTarget {
   }
   set value(newValue: T) {
     //
+    if (!this.verify) {
+      this._value = newValue;
+      this.dispatchEvent(new CustomEvent("updated", { detail: this._value }));
+      return;
+    }
+
+    if (!this.deep) {
+      if (this._value === newValue) return;
+      this._value = newValue;
+      this.dispatchEvent(new CustomEvent("updated", { detail: this._value }));
+      return;
+    }
 
     // if (isNull(newValue) || isUndefined(newValue)) return;
 
@@ -123,6 +137,13 @@ export class Stateful<T> extends EventTarget {
   }
 }
 
-export function State<T>(value: T, options?: AddEventListenerOptions) {
-  return new Stateful(value, options);
+export function State<T>(value: T, options: AddEventListenerOptions = {}) {
+  return new Stateful(value, options, true);
+}
+
+/**
+ * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
+ */
+export function QState<T>(value: T, verify: boolean = false) {
+  return new Stateful(value, {}, false, verify);
 }
