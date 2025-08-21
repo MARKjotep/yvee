@@ -1,77 +1,72 @@
-import { idm, isFN, log, readOnly, V } from "../@";
-import { ATTR } from "./attr";
-import { CATT } from "../oz";
-import { CTX } from "./context";
-import { State, Stateful } from "../stateful";
-import { Elements } from "../storage";
-import { hookFN } from "../stateful/hook";
-import { Ref } from "../$";
+import { idm, isFN, V } from "../@";
+import { CATT } from "./cat";
+import { Stateful } from "../stateful";
+import { Elements } from "./$";
+import {
+  ATTR,
+  c_events,
+  EAttr,
+  ElementAttributes,
+  SVGAttributes,
+} from "./attr";
+import { CTX } from "./ctx";
+import { OZ } from "./oz";
 
-export { attr_value } from "./attr";
+export * from "./$";
+export * from "./oz";
+export * from "./cat";
+
+export type { aAttr } from "./attr";
+
 /*
 -------------------------
-TYPES
+
 -------------------------
 */
-type X2 = V | V[];
 
-export type X3 = X2 | Stateful<X2> | null | undefined;
-
-export type CSSinT = {
-  [P in keyof CSSStyleDeclaration]?: X3;
-} & {
-  [key: string]: X3;
-};
-
-export interface c_events<T extends Elements = HTMLElement> {
-  state?: (
-    this: T,
-    e: T,
-  ) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-  ready?: (this: T, e: T) => void;
-  resize?: (this: T, e: UIEvent) => void;
-  beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
-  popstate?: (this: T, e: PopStateEvent) => void;
-  winscroll?: (this: T, e: Event) => void;
-  winload?: (this: T, e: Event) => void;
-  winfocus?: (this: T, e: Event) => void;
-  winblur?: (this: T, e: Event) => void;
+export async function MainDom(
+  root: Stateful<any[]>,
+  id: string,
+  _class?: string | string[],
+) {
+  const MMD = new idm(id);
+  const ROOT = dom("main", { class: _class }, root);
+  return renderDom(ROOT, MMD);
 }
 
-type XU4 = V | undefined | XU4[];
-
-export interface baseAttr {
-  style?: CSSinT | string;
-  on?: events<any>;
+export interface renderedDom {
+  ctx: string;
+  oz: OZ;
   id?: string;
-  class?: XU4 | Stateful<X2>;
-  ref?: Ref<any>;
+}
+
+export function renderDom(
+  Dom: dom,
+  pid: idm | string = new idm(),
+): renderedDom {
+  const { tag, attr, ctx } = Dom;
+
+  const _pid = pid instanceof idm ? pid : new idm(pid);
+  const id = _pid.mid;
+  const catt = new CATT(id, _pid);
+  const _attr = new ATTR(attr);
+  const _ctx = new CTX(tag, ctx);
+
+  _attr.get(catt);
+
+  return {
+    ctx: _ctx.get(catt),
+    oz: catt.OZ.set(catt),
+    id: catt.id,
+  };
 }
 
 export class Dom {
-  declare attr: ATTR;
-  declare private ctx: CTX;
   constructor(
     public tag: string,
-    attr: attr = {},
-    ...ctx: ctx[]
-  ) {
-    readOnly(this, {
-      attr: new ATTR(attr),
-      ctx: new CTX(tag, ctx),
-    });
-  }
-  __(pid = new idm()) {
-    const id = pid.mid;
-    const catt = new CATT(id, pid);
-    this.attr.get(catt);
-
-    return {
-      ctx: this.ctx.get(catt),
-      oz: catt.OZ.set(catt),
-      id: catt.id,
-    };
-  }
+    public attr: attr,
+    public ctx: ctx[],
+  ) {}
 }
 
 export function dom(
@@ -79,21 +74,31 @@ export function dom(
   attr: attr | null = {},
   ...ctx: ctx[]
 ) {
-  // Process the ctx here to lessen the time -- convert them all to flat array?
-  //
   if (isFN(tag)) {
-    log.i = tag;
     return tag(attr ?? {}, ...ctx);
   }
-  // if ctx is array, flatten or use rest operator
   return new Dom(tag, attr ?? {}, ctx);
 }
 
-export const frag = (attr: attr, ...dom: Dom[]): Dom[] => dom;
+export const frag = (attr: attr, ...ctx: Dom[]): Dom => new Dom("", {}, ctx);
 
-/*
-  -------------------------
-  
-  -------------------------
-  */
-//
+declare global {
+  type events<T extends Elements = HTMLElement> = {
+    [P in keyof GlobalEventHandlersEventMap]?: (
+      this: T,
+      e: GlobalEventHandlersEventMap[P],
+    ) => void;
+  } & c_events<T>;
+  type DVal<T = V | V[]> = T | Stateful<T> | undefined;
+  type dom = Dom;
+  type ctx<T = DVal | dom> = T | Stateful<T> | ctx[];
+  type obj<T> = Record<string, T>;
+  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => dom;
+  type attr = EAttr;
+
+  namespace JSX {
+    type Element = dom;
+
+    interface IntrinsicElements extends ElementAttributes, SVGAttributes {}
+  }
+}

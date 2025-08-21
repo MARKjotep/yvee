@@ -1,9 +1,15 @@
+type ModuleLike = {
+    [Symbol.toStringTag]: "Module";
+    default?: unknown;
+    [key: string]: unknown;
+};
 declare const isFN: (v: any) => v is Function;
 declare const isAsync: (v: any) => v is Function;
 declare const isPromise: (v: any) => v is Function;
 declare const isNumber: (value: any) => boolean;
 declare const isObject: (val: any) => val is Record<string, any>;
 declare const isPlainObject: (value: any) => boolean;
+declare const isModule: (obj: any) => obj is ModuleLike;
 declare const isArraybuff: (val: any) => val is string | ArrayBuffer | Uint8Array<ArrayBufferLike>;
 declare const isClassOrId: (k: string) => boolean;
 declare const isBool: (v: any) => v is boolean;
@@ -19,6 +25,7 @@ declare const isInt: (str: string) => boolean;
 declare const isWindow: boolean;
 declare const isNotWindow: boolean;
 
+type is_ModuleLike = ModuleLike;
 declare const is_isArr: typeof isArr;
 declare const is_isArraybuff: typeof isArraybuff;
 declare const is_isAsync: typeof isAsync;
@@ -27,6 +34,7 @@ declare const is_isClassOrId: typeof isClassOrId;
 declare const is_isDefined: typeof isDefined;
 declare const is_isFN: typeof isFN;
 declare const is_isInt: typeof isInt;
+declare const is_isModule: typeof isModule;
 declare const is_isNotNull: typeof isNotNull;
 declare const is_isNotWindow: typeof isNotWindow;
 declare const is_isNull: typeof isNull;
@@ -40,32 +48,15 @@ declare const is_isStr: typeof isStr;
 declare const is_isUndefined: typeof isUndefined;
 declare const is_isWindow: typeof isWindow;
 declare namespace is {
-  export {
-    is_isArr as isArr,
-    is_isArraybuff as isArraybuff,
-    is_isAsync as isAsync,
-    is_isBool as isBool,
-    is_isClassOrId as isClassOrId,
-    is_isDefined as isDefined,
-    is_isFN as isFN,
-    is_isInt as isInt,
-    is_isNotNull as isNotNull,
-    is_isNotWindow as isNotWindow,
-    is_isNull as isNull,
-    is_isNum as isNum,
-    is_isNumber as isNumber,
-    is_isObj as isObj,
-    is_isObject as isObject,
-    is_isPlainObject as isPlainObject,
-    is_isPromise as isPromise,
-    is_isStr as isStr,
-    is_isUndefined as isUndefined,
-    is_isWindow as isWindow,
-  };
+  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isFN as isFN, is_isInt as isInt, is_isModule as isModule, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isObject as isObject, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
+  export type { is_ModuleLike as ModuleLike };
 }
+
+declare const IfClient: <T>(fn: () => T) => T | undefined;
 
 type V = string | number | boolean;
 type obj$1<T> = Record<string, T>;
+type maybePromise<T> = Promise<T> | T;
 
 /**
  * A custom Map implementation that provides additional utility methods for working with objects and maps.
@@ -85,13 +76,6 @@ declare class log {
     static set i(a: any);
     static set e(a: any);
     static set w(a: any);
-}
-declare class idm {
-    _c: number;
-    _id: string;
-    constructor(mid?: string);
-    get id(): string;
-    get mid(): string;
 }
 
 interface metaViewport {
@@ -194,31 +178,37 @@ interface headAttr {
     link?: link<string>[];
     script?: script<string | boolean>[];
     css?: string[] | string;
+    js?: string[] | string;
     description?: string;
 }
-declare class head implements headAttr {
+declare abstract class head implements headAttr {
     title?: string;
     description?: string;
-    base?: base<string>[];
+    css?: string[] | string;
+    js?: string[] | string;
     meta?: meta<string>[] | Meta;
     link?: link<string>[];
     script?: script<string | boolean>[];
-    css?: string[] | string;
 }
-type CSSinT$1 = {
+type CSSinT = {
     [P in keyof CSSStyleDeclaration]?: V;
 } & {
     [key: string]: V;
 };
-type headType = Mapper<keyof head, any>;
+type headType = Mapper<keyof headAttr, any>;
+interface hHeadCFG {
+    initial?: headType;
+    mark?: boolean;
+    push?: obj$1<any>;
+}
 declare class htmlHead {
     lang: string;
     htmlHead: headType;
-    head: (heads?: headAttr) => void;
-    constructor();
+    head: (heads?: Omit<headAttr, "base">) => void;
+    constructor({ mark, push }?: hHeadCFG);
 }
-declare const cssLoader: (vv: link<string>) => Promise<unknown> | undefined;
-declare function addCSS(selector: string, rules?: CSSinT$1): void;
+declare const cssLoader: (vv: link<string>) => Promise<HTMLLinkElement | undefined>;
+declare function addCSS(selector: string, rules?: CSSinT): void;
 
 declare class MinStorage {
     readonly path: string;
@@ -231,12 +221,13 @@ declare class MinStorage {
  * string | int | float | file | uuid
  * - /path/\<string:hell>
  */
-declare class Storage$1<T extends MinStorage> {
+declare class Storage<T extends MinStorage> {
     private _storage;
     private CC;
     constructor();
     set(min: T): void;
     get(path: string): [T | undefined, Record<string, string>];
+    keys(): MapIterator<string>;
 }
 
 declare class Time {
@@ -316,95 +307,566 @@ declare class Formatteer {
     get pr(): string;
 }
 
-declare class CATT {
-    xid: string;
-    IDM: idm;
-    map: Mapper<string, string[]>;
-    states: ((id: string) => () => void)[];
-    events: Mapper<string, (...arg: any) => any>;
-    OZ: OZ;
-    constructor(xid: string, IDM?: idm, _OZ?: OZ);
-    attr_push(key: string, val: any, pre?: string): void;
-    get attr(): string;
-    set id(id: string);
-    get id(): string | undefined;
+type hookFN<T extends any[]> = (...args: statefulValue<T>) => maybePromise<void>;
+interface stateCFG {
+    id?: string;
+    init?: boolean;
 }
+declare function StateHook<T extends any[]>(callback: hookFN<T>, statefuls: [...{
+    [K in keyof T]: Stateful<T[K]>;
+}], { id, init }?: stateCFG): Promise<() => void>;
 
-declare class OZ {
-    private events;
+type statefulValue<T extends any[]> = {
+    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
+};
+declare class Stateful<T> extends EventTarget {
+    private options;
+    private deep;
+    private verify;
+    private hooks;
     private states;
-    private winStates;
-    private windowEvents;
-    private resetST;
-    private resetEV;
-    constructor();
-    get keys(): string[];
-    set(catt: CATT): this;
-    push(_OZ: this): this;
-    get stage(): this;
-    get processWindowEvents(): this;
-    reset(id: string[]): this;
-    RPS(oz?: this): this;
+    private _value;
+    private listening;
+    private end?;
+    constructor(value: T, options?: AddEventListenerOptions, deep?: boolean, verify?: boolean);
+    get value(): T;
+    set value(newValue: T);
+    get listen(): () => void;
+    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
+    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
 }
-
-declare class ATTR {
-    attr: attr;
-    constructor(attr?: attr);
-    get(catt: CATT, attr?: attr, pre?: string): void;
-    unload<T>(x: string): T | undefined;
-}
-
-declare class eStream {
-    stream: EventSource;
-    url: string;
-    constructor(eurl: string, withCredentials: boolean);
-    on(event: obj$1<(a: MessageEvent) => void>): this;
-}
-declare function eventStream(url: string, withCredentials?: boolean): eStream;
-
-declare class __I {
-    value: any;
-    constructor(value: any);
-    get str(): string | null;
-    get int(): number | null;
-    get float(): number | null;
-    get bool(): boolean | null;
-    get json(): any | null;
-}
-type storeValTypes = keyof __I;
-declare class storageInterface<T> {
-    key: string;
-    state: Stateful<T> | null;
-    storage: Storage;
-    constructor(item: obj$1<Stateful<T>> | string, _type?: "local" | "session", init?: storeValTypes);
-    get as(): __I;
-    get value(): string | null;
-    set set(val: any);
-    get remove(): void;
-}
-
+declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
 /**
- * Local Storage
+ * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
  */
-declare const local: {
-    get: <T>(item: obj$1<Stateful<T>> | string) => storageInterface<T>;
-    init: <T>(item: obj$1<Stateful<T>>, as: storeValTypes) => storageInterface<T>;
+declare function QState<T>(value: T, verify?: boolean): Stateful<T>;
+
+type CSSStyle = {
+    [P in keyof CSSStyleDeclaration]?: DVal;
+} & {
+    [key: string]: DVal;
 };
 
-/**
- * Session Storage
- */
-declare const session: {
-    get: <T>(item: obj$1<Stateful<T>> | string) => storageInterface<T>;
-};
+interface c_events<T extends Elements = HTMLElement> {
+    state?: (this: T, e: T) => [(...args: any[]) => void, Stateful<any>[], boolean?];
+    ready?: (this: T, e: T) => void;
+    resize?: (this: T, e: UIEvent) => void;
+    beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
+    popstate?: (this: T, e: PopStateEvent) => void;
+    winscroll?: (this: T, e: Event) => void;
+    winload?: (this: T, e: Event) => void;
+    winfocus?: (this: T, e: Event) => void;
+    winblur?: (this: T, e: Event) => void;
+}
+
+interface EAttr<T = DVal> {
+    [key: string]: any;
+    [key: `data-${string}`]: T | any;
+    accesskey?: T;
+    autocapitalize?: T;
+    class?: T;
+    on?: events<any>;
+    contenteditable?: T;
+    dir?: T;
+    draggable?: T;
+    hidden?: T;
+    id?: T;
+    itemprop?: T;
+    lang?: T;
+    role?: T;
+    slot?: T;
+    spellcheck?: T;
+    style?: CSSStyle | string;
+    tabindex?: T;
+    title?: T;
+    translate?: T;
+}
+interface ElementAttributes {
+    link: linkAttr;
+    base: baseAttr;
+    meta: metaAttr;
+    p: EAttr;
+    br: EAttr;
+    hr: EAttr;
+    h: EAttr;
+    cmnt: EAttr;
+    root: EAttr;
+    div: EAttr;
+    span: EAttr;
+    header: EAttr;
+    hgroup: EAttr;
+    footer: EAttr;
+    main: EAttr;
+    section: EAttr;
+    search: EAttr;
+    article: EAttr;
+    aside: EAttr;
+    details: detailsAttr;
+    dialog: dialogAttr;
+    summary: EAttr;
+    data: dataAttr;
+    noscript: EAttr;
+    object: objectAttr;
+    param: paramAttr;
+    script: scriptAttr;
+    a: aAttr;
+    nav: EAttr;
+    style: styleAttr;
+    audio: audioAttr;
+    video: videoAttr;
+    source: sourceAttr;
+    track: trackAttr;
+    img: imgAttr;
+    map: mapAttr;
+    area: areaAttr;
+    canvas: canvasAttr;
+    figcaption: EAttr;
+    figure: EAttr;
+    picture: EAttr;
+    iframe: iframeAttr;
+    form: formAttr;
+    input: inputAttr;
+    textarea: textareaAttr;
+    button: buttonAttr;
+    select: selectAttr;
+    optgroup: optgroupAttr;
+    option: optionAttr;
+    label: labelAttr;
+    fieldset: fieldsetAttr;
+    legend: EAttr;
+    datalist: EAttr;
+    table: EAttr;
+    caption: EAttr;
+    th: thAttr;
+    tr: EAttr;
+    td: tdAttr;
+    thead: EAttr;
+    tbody: EAttr;
+    tfoot: EAttr;
+    col: colAttr;
+    colgroup: colgroupAttr;
+    b: EAttr;
+    i: EAttr;
+    q: qAttr;
+    s: EAttr;
+    u: EAttr;
+    em: EAttr;
+    rp: EAttr;
+    del: delAttr;
+    dfn: EAttr;
+    ins: insAttr;
+    kbd: EAttr;
+    pre: EAttr;
+    sub: EAttr;
+    sup: EAttr;
+    var: EAttr;
+    wbr: EAttr;
+    cite: EAttr;
+    time: timeAttr;
+    abbr: EAttr;
+    code: EAttr;
+    mark: EAttr;
+    samp: EAttr;
+    meter: meterAttr;
+    small: EAttr;
+    strong: EAttr;
+    address: EAttr;
+    progress: progressAttr;
+    template: EAttr;
+    blockquote: blockquoteAttr;
+    menu: menuAttr;
+    ul: EAttr;
+    ol: olAttr;
+    li: liAttr;
+    dl: EAttr;
+    dt: EAttr;
+    dd: EAttr;
+    h1: EAttr;
+    h2: EAttr;
+    h3: EAttr;
+    h4: EAttr;
+    h5: EAttr;
+    h6: EAttr;
+}
+interface SVGAttributes {
+    svg: EAttr;
+    path: EAttr;
+    circle: EAttr;
+    animate: EAttr;
+    animateMotion: EAttr;
+    animateTransform: EAttr;
+    clipPath: EAttr;
+    defs: EAttr;
+    desc: EAttr;
+    ellipse: EAttr;
+    feBlend: EAttr;
+    feColorMatrix: EAttr;
+    feComponentTransfer: EAttr;
+    feComposite: EAttr;
+    feConvolveMatrix: EAttr;
+    feDiffuseLighting: EAttr;
+    feDisplacementMap: EAttr;
+    feDistantLight: EAttr;
+    feDropShadow: EAttr;
+    feFlood: EAttr;
+    feFuncA: EAttr;
+    feFuncB: EAttr;
+    feFuncG: EAttr;
+    feFuncR: EAttr;
+    feGaussianBlur: EAttr;
+    feImage: EAttr;
+    feMerge: EAttr;
+    feMergeNode: EAttr;
+    feMorphology: EAttr;
+    feOffset: EAttr;
+    fePointLight: EAttr;
+    feSpecularLighting: EAttr;
+    feSpotLight: EAttr;
+    feTile: EAttr;
+    feTurbulence: EAttr;
+    filter: EAttr;
+    foreignObject: EAttr;
+    g: EAttr;
+    image: EAttr;
+    line: EAttr;
+    linearGradient: EAttr;
+    marker: EAttr;
+    mask: EAttr;
+    metadata: EAttr;
+    mpath: EAttr;
+    pattern: EAttr;
+    polygon: EAttr;
+    polyline: EAttr;
+    radialGradient: EAttr;
+    rect: EAttr;
+    set: EAttr;
+    stop: EAttr;
+    symbol: EAttr;
+    text: EAttr;
+    textPath: EAttr;
+    title: EAttr;
+    tspan: EAttr;
+    use: EAttr;
+    view: EAttr;
+}
+interface aAttr<T = DVal> extends EAttr {
+    download?: T;
+    href?: T;
+    hreflang?: T;
+    media?: T;
+    ping?: T;
+    referrerpolicy?: T;
+    rel?: T;
+    shape?: T;
+    target?: T;
+}
+interface areaAttr<T = DVal> extends EAttr {
+    alt?: T;
+    coords?: T;
+    download?: T;
+    href?: T;
+    media?: T;
+    ping?: T;
+    referrerpolicy?: T;
+    rel?: T;
+    shape?: T;
+    target?: T;
+}
+interface audioAttr<T = DVal> extends EAttr {
+    autoplay?: T;
+    controls?: T;
+    crossorigin?: T;
+    loop?: T;
+    muted?: T;
+    preload?: T;
+    src?: T;
+}
+interface baseAttr<T = DVal> extends EAttr {
+    href?: T;
+    target?: T;
+}
+interface blockquoteAttr<T = DVal> extends EAttr {
+    cite?: T;
+}
+interface buttonAttr<T = DVal> extends EAttr {
+    disabled?: T;
+    form?: T;
+    formaction?: T;
+    formenctype?: T;
+    formmethod?: T;
+    formnovalidate?: T;
+    formtarget?: T;
+    name?: T;
+    type?: T;
+    value?: T;
+}
+interface canvasAttr<T = DVal> extends EAttr {
+    height?: T;
+    width?: T;
+}
+interface colAttr<T = DVal> extends EAttr {
+    span?: T;
+}
+interface colgroupAttr<T = DVal> extends EAttr {
+    span?: T;
+}
+interface dataAttr<T = DVal> extends EAttr {
+    value?: T;
+}
+interface delAttr<T = DVal> extends EAttr {
+    cite?: T;
+    datetime?: T;
+}
+interface detailsAttr<T = DVal> extends EAttr {
+    open?: T;
+}
+interface dialogAttr<T = DVal> extends EAttr {
+    open?: T;
+}
+interface fieldsetAttr<T = DVal> extends EAttr {
+    disabled?: T;
+    form?: T;
+    name?: T;
+}
+interface formAttr<T = DVal> extends EAttr {
+    accept?: T;
+    "accept-charset"?: T;
+    action?: T;
+    autocomplete?: T;
+    enctype?: T;
+    method?: T;
+    name?: T;
+    novalidate?: T;
+    target?: T;
+}
+interface iframeAttr<T = DVal> extends EAttr {
+    allow?: T;
+    csp?: T;
+    loading?: T;
+    name?: T;
+    height?: T;
+    referrerpolicy?: T;
+    sandbox?: T;
+    src?: T;
+    srcdoc?: T;
+    width?: T;
+}
+interface imgAttr<T = DVal> extends EAttr {
+    alt?: T;
+    crossorigin?: T;
+    decoding?: T;
+    ismap?: T;
+    loading?: T;
+    height?: T;
+    referrerpolicy?: T;
+    sizes?: T;
+    src?: T;
+    srcset?: T;
+    usemap?: T;
+    width?: T;
+}
+interface inputAttr<T = DVal> extends EAttr {
+    accept?: T;
+    alt?: T;
+    autocomplete?: T;
+    capture?: T;
+    checked?: T;
+    dirname?: T;
+    disabled?: T;
+    form?: T;
+    formaction?: T;
+    formenctype?: T;
+    formmethod?: T;
+    formnovalidate?: T;
+    formtarget?: T;
+    list?: T;
+    max?: T;
+    maxlength?: T;
+    minlength?: T;
+    min?: T;
+    multiple?: T;
+    name?: T;
+    pattern?: T;
+    placeholder?: T;
+    height?: T;
+    readonly?: T;
+    required?: T;
+    size?: T;
+    src?: T;
+    step?: T;
+    type?: T;
+    usemap?: T;
+    value?: T;
+    width?: T;
+}
+interface insAttr<T = DVal> extends EAttr {
+    cite?: T;
+    datetime?: T;
+}
+interface labelAttr<T = DVal> extends EAttr {
+    for?: T;
+    form?: T;
+}
+interface liAttr<T = DVal> extends EAttr {
+    value?: T;
+}
+interface linkAttr<T = DVal> extends EAttr {
+    as?: T;
+    crossorigin?: T;
+    href?: T;
+    hreflang?: T;
+    integrity?: T;
+    media?: T;
+    referrerpolicy?: T;
+    rel?: T;
+    sizes?: T;
+    type?: T;
+}
+interface mapAttr<T = DVal> extends EAttr {
+    name?: T;
+}
+interface menuAttr<T = DVal> extends EAttr {
+    type?: T;
+}
+interface metaAttr<T = DVal> extends EAttr {
+    charset?: T;
+    content?: T;
+    "http-equiv"?: T;
+    name?: T;
+}
+interface meterAttr<T = DVal> extends EAttr {
+    form?: T;
+    high?: T;
+    low?: T;
+    max?: T;
+    min?: T;
+    optimum?: T;
+    value?: T;
+}
+interface objectAttr<T = DVal> extends EAttr {
+    data?: T;
+    form?: T;
+    name?: T;
+    height?: T;
+    type?: T;
+    usemap?: T;
+    width?: T;
+}
+interface olAttr<T = DVal> extends EAttr {
+    reversed?: T;
+    start?: T;
+    type?: T;
+}
+interface optgroupAttr<T = DVal> extends EAttr {
+    disabled?: T;
+    label?: T;
+}
+interface optionAttr<T = DVal> extends EAttr {
+    disabled?: T;
+    label?: T;
+    selected?: T;
+    value?: T;
+}
+interface paramAttr<T = DVal> extends EAttr {
+    name?: T;
+    value?: T;
+}
+interface progressAttr<T = DVal> extends EAttr {
+    form?: T;
+    max?: T;
+    value?: T;
+}
+interface qAttr<T = DVal> extends EAttr {
+    cite?: T;
+}
+interface scriptAttr<T = DVal> extends EAttr {
+    async?: T;
+    crossorigin?: T;
+    defer?: T;
+    integrity?: T;
+    referrerpolicy?: T;
+    src?: T;
+    type?: T;
+}
+interface selectAttr<T = DVal> extends EAttr {
+    autocomplete?: T;
+    disabled?: T;
+    form?: T;
+    multiple?: T;
+    name?: T;
+    required?: T;
+    size?: T;
+}
+interface sourceAttr<T = DVal> extends EAttr {
+    media?: T;
+    sizes?: T;
+    src?: T;
+    srcset?: T;
+    type?: T;
+}
+interface styleAttr<T = DVal> extends EAttr {
+    media?: T;
+    type?: T;
+}
+interface tdAttr<T = DVal> extends EAttr {
+    colspan?: T;
+    headers?: T;
+    rowspan?: T;
+}
+interface textareaAttr<T = DVal> extends EAttr {
+    autocomplete?: T;
+    cols?: T;
+    dirname?: T;
+    disabled?: T;
+    enterkeyhint?: T;
+    form?: T;
+    inputmode?: T;
+    maxlength?: T;
+    minlength?: T;
+    name?: T;
+    placeholder?: T;
+    readonly?: T;
+    required?: T;
+    rows?: T;
+    wrap?: T;
+}
+interface thAttr<T = DVal> extends EAttr {
+    colspan?: T;
+    headers?: T;
+    rowspan?: T;
+    scope?: T;
+}
+interface timeAttr<T = DVal> extends EAttr {
+    datetime?: T;
+}
+interface trackAttr<T = DVal> extends EAttr {
+    default?: T;
+    kind?: T;
+    label?: T;
+    src?: T;
+    srclang?: T;
+}
+interface videoAttr<T = DVal> extends EAttr {
+    autoplay?: T;
+    controls?: T;
+    crossorigin?: T;
+    loop?: T;
+    muted?: T;
+    playsinline?: T;
+    height?: T;
+    poster?: T;
+    preload?: T;
+    src?: T;
+    width?: T;
+}
 
 type kf = KeyframeAnimationOptions;
-type KFType = (CSSinT | obj$1<V>)[] | CSSinT | obj$1<V>;
+type KFType = (CSSStyle | obj$1<V>)[] | CSSStyle | obj$1<V>;
 declare class anim {
     private e;
     opt: kf;
     constructor(e: Elem);
-    animate(keyframes: CSSinT[] | CSSinT, options?: kf): Elem<HTMLElement>;
+    animate(keyframes: CSSStyle[] | CSSStyle, options?: kf): Elem<HTMLElement>;
     get slide(): {
         left: (options?: kf) => anim;
         right: (options?: kf) => anim;
@@ -445,7 +907,7 @@ declare class Eget<T extends Elements = HTMLElement> {
     get rect(): DOMRect;
     get remove_element(): this;
     get style(): {
-        set: (style: CSSinT | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<HTMLElement>;
+        set: (style: CSSStyle | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<HTMLElement>;
         get: (prop: keyof CSSStyleDeclaration | string) => string;
         del: (...props: (keyof CSSStyleDeclaration | string)[]) => void;
     };
@@ -485,6 +947,7 @@ declare class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     animate(keyframes: KFType, onComplete?: fn<any, void>): this;
 }
 
+type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap] | SVGElementTagNameMap[keyof SVGElementTagNameMap];
 interface CLI {
     id?: string;
     class?: string;
@@ -503,33 +966,87 @@ declare class Ref<T extends Elements = HTMLElement> {
 }
 declare const useRef: <T extends Elements = HTMLElement>() => Ref<T>;
 
-declare class doc<T extends {
-    args?: Record<string, any>;
-    data?: Record<string, any>;
-} = Record<string, any>> extends head {
+declare class Dom {
+    tag: string;
+    attr: attr;
+    ctx: ctx[];
+    constructor(tag: string, attr: attr, ctx: ctx[]);
+}
+declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
+declare const frag: (attr: attr, ...ctx: Dom[]) => Dom;
+declare global {
+    type events<T extends Elements = HTMLElement> = {
+        [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
+    } & c_events<T>;
+    type DVal<T = V | V[]> = T | Stateful<T> | undefined;
+    type dom = Dom;
+    type ctx<T = DVal | dom> = T | Stateful<T> | ctx[];
+    type obj<T> = Record<string, T>;
+    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => dom;
+    type attr = EAttr;
+    namespace JSX {
+        type Element = dom;
+        interface IntrinsicElements extends ElementAttributes, SVGAttributes {
+        }
+    }
+}
+
+interface docObj {
+    args?: obj<any>;
+    data?: obj<any>;
+}
+declare class doc<T extends docObj = obj<obj<any>>> extends head {
     path: string;
+    data: T["data"];
     args: T["args"];
-    id: string;
-    status: number;
-    lang?: string;
-    import?: any;
-    _data: T["data"];
-    static route: string;
-    constructor(path: string, args: T["args"] | undefined, id: string, status?: number);
-    fetch?(): Promise<Record<string, any>>;
-    head?(): Promise<void> | void;
-    body?(): Promise<Dom> | Dom;
-    loader(): Promise<any[]>;
-    getHeadAttr(head?: headAttr, ...toMap: headType[]): headType;
-    set data(data: obj$1<any>);
-    get data(): T["data"];
+    importArgs: any[];
+    fetch?(): maybePromise<obj<any>>;
+    head?(): maybePromise<void>;
+    body?(): maybePromise<any>;
+}
+
+type ExtraState = Record<string, unknown>;
+type HistoryData<S extends ExtraState = ExtraState> = (S & {
+    path: string;
+}) | null;
+type ChangeHandler<S extends ExtraState> = (path: string, state: HistoryData<S>) => void;
+declare class PathHistory<S extends ExtraState = ExtraState> {
+    private onChange?;
+    private popListener?;
+    constructor(path?: Stateful<string>, onChange?: ChangeHandler<S>);
+    /** Current path (pathname + search + hash) */
+    path(): string;
+    /** Current state object */
+    state(): HistoryData<S>;
+    /** Navigate to a new path using pushState (no-op if same as current) */
+    navigate(path: string, state?: S, title?: string): void;
+    /** Replace current entry using replaceState (no-op if same as current) */
+    replace(path: string, state?: S, title?: string): void;
+    back(): void;
+    forward(): void;
+    /** Remove listeners */
+    destroy(): void;
+    private resolve;
+    private samePath;
+    private assertClient;
+}
+
+interface contentObj {
+    args?: obj<any>;
+    data?: obj<any>;
+}
+declare class content<T extends contentObj = obj<obj<string>>> {
+    path: string;
+    data: T["data"];
+    args: T["args"];
+    body?(): maybePromise<any>;
 }
 
 declare class websocket<T = Record<string, any>> {
     path: string;
     protected args: T;
+    route: string;
     ws: WebSocket;
-    static route: string;
     isConnected: Stateful<boolean>;
     data: T;
     constructor(path: string, args?: T);
@@ -551,374 +1068,101 @@ declare class websocket<T = Record<string, any>> {
     set send(message: string | ArrayBufferLike | Blob | ArrayBufferView);
 }
 declare class socket {
-    protected yvee: Pager;
-    constructor(yvee: Pager);
-    load(_path: string): Promise<websocket<{}> | undefined>;
+    protected yvee: Yvee;
+    constructor(yvee: Yvee);
+    load(_path: string): Promise<websocket<Record<string, any>> | undefined>;
     unload(_path: string): void;
 }
 
-declare class Pager extends minClient {
-    protected config: routerCfg;
-    protected hook?: () => void;
-    protected root: Stateful<ctx[]>;
-    socket: socket;
+declare class BasePath<T> extends MinStorage {
+    cls: T;
+    constructor(path: string, cls: T);
+}
+declare class ClientPath extends BasePath<typeof doc<{}>> {
+}
+declare class SocketPath extends BasePath<typeof websocket> {
+}
+declare class MainStorage<T extends InstanceType<typeof BasePath>> {
+    storage: Storage<T>;
+    error: Storage<T>;
+}
+declare class Stormy extends MainStorage<ClientPath> {
+    wss: Storage<SocketPath>;
+    setRoute(path: string, _doc: typeof doc<{}>): void;
+    getRoute(path: string, error?: number): doc<{}>;
+    setWss(path: string): void;
+    getWss(path: string): [SocketPath | undefined, Record<string, string>];
+    setError(code: number, _doc: typeof doc<{}>): void;
+    getError(code?: number): [ClientPath | undefined, Record<string, string>];
+}
+declare class TabPath extends BasePath<typeof content<{}>> {
+}
+declare class miniStormy extends MainStorage<TabPath> {
+    setRoute(path: string, _doc: typeof content<{}>): void;
+    getRoute(path: string, error?: number): content<{}>;
+    setWss(path: string): void;
+    getWss(path: string): void;
+    setError(code: number, _doc: typeof doc<{}>): void;
+    getError(code?: number): [TabPath | undefined, Record<string, string>];
+}
+
+declare class Router extends htmlHead {
+    storage: Stormy;
+    protected base: string;
+    constructor(base?: string, index?: string);
+    route<Q extends typeof doc<{}>>(path: string): (f: Q) => Q;
+}
+
+interface mtab {
+    tab: string;
+}
+declare class minElements$1 {
     id: string;
     path: Stateful<string>;
-    lastPath: Stateful<string>;
-    loading: Stateful<boolean>;
-    mainElement?: HTMLElement;
-    A: (a: attr & {
-        href: string;
-        topRef?: Stateful<_$>;
-        top?: number | (() => number);
-    }, ...D: ctx[]) => Dom;
-    Main: (a: attr) => Dom;
-    load: (path?: string, data?: obj<string>) => Promise<this>;
-    matchPath: (str: string) => boolean;
-    protected isYvee: boolean;
-    constructor(config?: routerCfg, events?: events);
-    protected hooker(): void;
-    protected class(this: Pager, _path: string, _error: number, isError?: boolean): Promise<doc<{}>>;
-    protected fetch(CL?: doc<{}>): Promise<void>;
-    protected processHead(CL?: doc<{}>, head?: headAttr): Promise<headType>;
-    private processClassHead;
-    private processDefaultHead;
-    render(_path: string, _error?: number, data?: obj<string>, head?: headAttr, isClient?: boolean, isError?: boolean): Promise<{
-        lang: string;
-        heads: headType;
-        done: boolean;
-    }>;
+    _root: Stateful<any[]>;
+    Main(a: attr): Dom;
+    Button(a: attr & mtab, ...ctx: ctx[]): Dom;
+}
+declare class Tabs extends minElements$1 {
+    storage: miniStormy;
+    constructor();
+    tab<Q extends typeof content<{}>>(path: string): (f: Q) => Q;
+    load(tab: string, data?: obj<string>): Promise<void>;
 }
 
-declare function pushHistory(path?: string, title?: string): void;
-
-interface routerCfg {
-    classes?: string | string[];
+interface renderConfig {
+    class?: string | string[];
     id?: string;
-    base?: string;
+    data?: any;
+    isDev?: boolean;
 }
-interface yveeCfg extends routerCfg {
-    pushState?: boolean;
-}
-declare class Yvee extends Pager {
-    protected config: yveeCfg;
-    protected isYvee: boolean;
-    protected unload: boolean;
-    constructor(config?: yveeCfg, events?: events);
-}
-declare const Routes: (fn: (Yvee: Yvee) => void) => (Yvee: Yvee) => void;
-interface headAttrPlus {
-    route?: string;
+interface _Yvee {
     base?: string;
     index?: string;
-    id?: string;
-    bodyattr?: obj$1<V>;
-    data?: Record<string, any> | (() => Promise<Record<string, any>> | Record<string, any>);
+    history?: boolean;
 }
-type headFN<T = Record<string, any>> = (a: renderConfig & T) => Promise<headAttr> | headAttr;
-type ND<T = Record<string, any>> = (a: renderConfig & T) => Dom | Promise<Dom>;
-declare function Render<T = Record<string, any>>(DOM: ND<T>, head?: headAttr | headFN<T>, cfg?: headAttrPlus): Promise<({ path, data, status }: serverRender) => Promise<string>>;
-declare function Render<T = Record<string, any>>(DOM: ND<T>, App: Yvee): Promise<({ path, data, status }: serverRender) => Promise<string>>;
-
-declare class ClientPath extends MinStorage {
+declare class minElements extends Router {
+    protected pushHistory: boolean;
     id: string;
-    cls: typeof doc<{}>;
-    constructor(path: string, id: string, cls: typeof doc<{}>);
-}
-declare class SocketPath extends MinStorage {
-    id: string;
-    cls: typeof websocket<{}>;
-    constructor(path: string, id: string, cls: typeof websocket<{}>);
-}
-declare class minClient extends htmlHead {
-    protected storage: Storage$1<ClientPath>;
-    protected errorStorage: Storage$1<ClientPath>;
-    protected wssStorage: Storage$1<SocketPath>;
-    /** --------------------
-     * string | int | float | file | uuid
-     * - /url/\<string:hell>
-     */
-    route: (path: string) => <Q extends typeof doc<{}>>(f: Q) => Q;
-    error: (...codes: number[]) => <Q extends typeof doc<{}>>(f: Q) => Q;
-    wss: (path: string) => <Q extends typeof websocket<{}>>(f: Q) => Q;
-    base: string;
-    constructor(base?: string);
-    protected _base(str: string): string;
-    protected getPath(path: string): Promise<[ClientPath | undefined, Record<string, string>]>;
-    protected loadError(code: number): Promise<[ClientPath | undefined, Record<string, string>]>;
-    protected loadWSS(path: string): Promise<[SocketPath | undefined, Record<string, string>]>;
-}
-
-type Elements = HTMLElementTagNameMap[keyof HTMLElementTagNameMap] | SVGElementTagNameMap[keyof SVGElementTagNameMap];
-
-type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
-interface stateCFG {
-    id?: string;
-    init?: boolean;
-}
-declare function StateHook<T extends any[]>(callback: hookFN<T>, statefuls: [...{
-    [K in keyof T]: Stateful<T[K]>;
-}], { id, init }?: stateCFG): () => void;
-
-type statefulValue<T extends any[]> = {
-    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
-};
-declare class Stateful<T> extends EventTarget {
-    private options;
-    private deep;
-    private verify;
-    private hooks;
-    private states;
-    private _value;
-    private listening;
-    private end?;
-    constructor(value: T, options?: AddEventListenerOptions, deep?: boolean, verify?: boolean);
-    get value(): T;
-    set value(newValue: T);
-    get listen(): () => void;
-    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
-    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
-}
-declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
-/**
- * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
- */
-declare function QState<T>(value: T, verify?: boolean): Stateful<T>;
-
-type X2 = V | V[];
-type X3 = X2 | Stateful<X2> | null | undefined;
-type CSSinT = {
-    [P in keyof CSSStyleDeclaration]?: X3;
-} & {
-    [key: string]: X3;
-};
-interface c_events<T extends Elements = HTMLElement> {
-    state?: (this: T, e: T) => [(...args: any[]) => void, Stateful<any>[], boolean?];
-    ready?: (this: T, e: T) => void;
-    resize?: (this: T, e: UIEvent) => void;
-    beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
-    popstate?: (this: T, e: PopStateEvent) => void;
-    winscroll?: (this: T, e: Event) => void;
-    winload?: (this: T, e: Event) => void;
-    winfocus?: (this: T, e: Event) => void;
-    winblur?: (this: T, e: Event) => void;
-}
-type XU4 = V | undefined | XU4[];
-interface baseAttr {
-    style?: CSSinT | string;
-    on?: events<any>;
-    id?: string;
-    class?: XU4 | Stateful<X2>;
-    ref?: Ref<any>;
-}
-declare class Dom {
-    tag: string;
-    attr: ATTR;
-    private ctx;
-    constructor(tag: string, attr?: attr, ...ctx: ctx[]);
-    __(pid?: idm): {
-        ctx: string;
-        oz: OZ;
-        id: string | undefined;
-    };
-}
-declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
-declare const frag: (attr: attr, ...dom: Dom[]) => Dom[];
-
-declare global {
-    type events<T extends Elements = HTMLElement> = {
-        [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
-    } & c_events<T>;
-    type attr = baseAttr | obj<X3>;
-    type ctx = V | Dom | Stateful<V | Dom> | ctx[];
-    type obj<T> = Record<string, T>;
-    type dom = Dom;
-    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => Dom;
-    const BASE_STRING: string;
-    namespace JSX {
-        type Element = Dom;
-        interface IntrinsicElements {
-            link: attr;
-            base: attr;
-            meta: attr;
-            p: attr;
-            br: attr;
-            hr: attr;
-            h: attr;
-            cmnt: attr;
-            root: attr;
-            html: attr;
-            body: attr;
-            div: attr;
-            span: attr;
-            header: attr;
-            hgroup: attr;
-            footer: attr;
-            main: attr;
-            section: attr;
-            search: attr;
-            article: attr;
-            aside: attr;
-            details: attr;
-            dialog: attr;
-            summary: attr;
-            data: attr;
-            noscript: attr;
-            object: attr;
-            param: attr;
-            script: attr;
-            a: attr;
-            nav: attr;
-            style: attr;
-            audio: attr;
-            video: attr;
-            source: attr;
-            track: attr;
-            img: attr;
-            map: attr;
-            area: attr;
-            canvas: attr;
-            figcaption: attr;
-            figure: attr;
-            picture: attr;
-            iframe: attr;
-            form: attr;
-            input: attr;
-            textarea: attr;
-            button: attr;
-            select: attr;
-            optgroup: attr;
-            option: attr;
-            label: attr;
-            fieldset: attr;
-            legend: attr;
-            datalist: attr;
-            table: attr;
-            caption: attr;
-            th: attr;
-            tr: attr;
-            td: attr;
-            thead: attr;
-            tbody: attr;
-            tfoot: attr;
-            col: attr;
-            colgroup: attr;
-            b: attr;
-            i: attr;
-            q: attr;
-            s: attr;
-            u: attr;
-            em: attr;
-            rp: attr;
-            del: attr;
-            dfn: attr;
-            ins: attr;
-            kbd: attr;
-            pre: attr;
-            sub: attr;
-            sup: attr;
-            var: attr;
-            wbr: attr;
-            cite: attr;
-            time: attr;
-            abbr: attr;
-            code: attr;
-            mark: attr;
-            samp: attr;
-            meter: attr;
-            small: attr;
-            strong: attr;
-            address: attr;
-            progress: attr;
-            template: attr;
-            blockquote: attr;
-            menu: attr;
-            ul: attr;
-            ol: attr;
-            li: attr;
-            dl: attr;
-            dt: attr;
-            dd: attr;
-            h1: attr;
-            h2: attr;
-            h3: attr;
-            h4: attr;
-            h5: attr;
-            h6: attr;
-            svg: attr;
-            path: attr;
-            circle: attr;
-            animate: attr;
-            animateMotion: attr;
-            animateTransform: attr;
-            clipPath: attr;
-            defs: attr;
-            desc: attr;
-            ellipse: attr;
-            feBlend: attr;
-            feColorMatrix: attr;
-            feComponentTransfer: attr;
-            feComposite: attr;
-            feConvolveMatrix: attr;
-            feDiffuseLighting: attr;
-            feDisplacementMap: attr;
-            feDistantLight: attr;
-            feDropShadow: attr;
-            feFlood: attr;
-            feFuncA: attr;
-            feFuncB: attr;
-            feFuncG: attr;
-            feFuncR: attr;
-            feGaussianBlur: attr;
-            feImage: attr;
-            feMerge: attr;
-            feMergeNode: attr;
-            feMorphology: attr;
-            feOffset: attr;
-            fePointLight: attr;
-            feSpecularLighting: attr;
-            feSpotLight: attr;
-            feTile: attr;
-            feTurbulence: attr;
-            filter: attr;
-            foreignObject: attr;
-            g: attr;
-            image: attr;
-            line: attr;
-            linearGradient: attr;
-            marker: attr;
-            mask: attr;
-            metadata: attr;
-            mpath: attr;
-            pattern: attr;
-            polygon: attr;
-            polyline: attr;
-            radialGradient: attr;
-            rect: attr;
-            set: attr;
-            stop: attr;
-            symbol: attr;
-            text: attr;
-            textPath: attr;
-            title: attr;
-            tspan: attr;
-            use: attr;
-            view: attr;
-        }
-    }
-}
-declare const resolvePath: (base: string, relative: string) => string;
-interface renderConfig {
-    path: string;
-    status: number;
-    base: string;
+    data: obj<any>;
+    path: Stateful<string>;
+    protected _root: Stateful<any[]>;
+    constructor(base?: string, index?: string, pushHistory?: boolean);
+    Main(a: attr): Dom;
+    A(a: aAttr, ...ctx: ctx[]): Dom;
 }
 interface serverRender {
     path: string;
+    error?: number;
     data?: Record<string, any>;
-    status?: number;
 }
-declare const IfClient: <T>(fn: () => T) => T | undefined;
+declare class Yvee extends minElements {
+    yvee: Yvee;
+    constructor({ base, history, index }?: _Yvee);
+    render(x?: renderConfig): Promise<(() => void) | (({ path, data, error }: serverRender) => Promise<string>)>;
+    private init;
+}
+declare const Routes: (fn: (route: Yvee["route"]) => void) => (route: Yvee["route"]) => void;
 
-export { $, Dom, IfClient, Meta, Pager, QState, Ref, Render, Routes, State, StateHook, Stateful, Time, Yvee, __, addCSS, cssLoader, doc, dom, eventStream, frag, local, log, pushHistory, resolvePath, session, useRef, websocket };
-export type { $E, Elements, _$, headAttr, renderConfig, serverRender };
+export { $, IfClient, Meta, PathHistory, QState, Ref, Routes, State, StateHook, Stateful, Tabs, Time, Yvee, __, addCSS, content, cssLoader, doc, dom, frag, log, socket, useRef, websocket };
+export type { $E, Elements, _$, aAttr, headAttr, maybePromise, serverRender };

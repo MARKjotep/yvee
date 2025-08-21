@@ -1,4 +1,4 @@
-import { getHead, headType, log, makeID } from "../../@";
+import { getHead, headType, makeID } from "../../@";
 
 export class HTML {
   lang: string;
@@ -13,7 +13,7 @@ export class HTML {
     return [
       `<!DOCTYPE html><html lang="${this.lang}">`,
       `<head>${this.head}</head>`,
-      `<body id="${id ?? makeID(5)}"${attr ? " " + attr : ""}>${ctx}</body>`,
+      `<body id="${id}"${attr ? " " + attr : ""}>${ctx}</body>`,
       "</html>",
     ].join("");
   }

@@ -1,11 +1,11 @@
-import { Pager } from "../pager";
-import { isNotWindow, isWindow, Mapper, obj } from "../../@";
+import { Yvee } from "..";
+import { isNotWindow, isWindow, Mapper, oAss, obj } from "../../@";
 import { State } from "../../stateful";
 
 //
 export class websocket<T = Record<string, any>> {
+  route: string = "/";
   declare public ws: WebSocket;
-  static route: string = "/";
   public isConnected = State(false);
   public data: T = {} as T;
   constructor(
@@ -77,14 +77,14 @@ export class websocket<T = Record<string, any>> {
 const websockets: Mapper<string, websocket> = new Mapper();
 
 export class socket {
-  constructor(protected yvee: Pager) {}
+  constructor(protected yvee: Yvee) {}
   //
   async load(_path: string) {
     if (isNotWindow) return;
     if (!websockets.has(_path)) {
-      const [clientP, args] = await this.yvee["loadWSS"](_path);
+      const [clientP, args] = this.yvee.storage.getWss(_path);
       if (!clientP) return;
-      const { cls, path, id } = clientP;
+      const { cls, path } = clientP;
       const client = new cls(path, args).connect;
       websockets.set(_path, client);
       return client;

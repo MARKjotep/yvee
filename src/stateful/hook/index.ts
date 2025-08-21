@@ -1,7 +1,9 @@
 import { Stateful, statefulValue } from "..";
-import { isNotWindow, Mapper } from "../../@";
+import { isNotWindow, Mapper, maybePromise } from "../../@";
 
-export type hookFN<T extends any[]> = (...args: statefulValue<T>) => void;
+export type hookFN<T extends any[]> = (
+  ...args: statefulValue<T>
+) => maybePromise<void>;
 export type hookM<T extends any[]> = Mapper<string, hookFN<T>>;
 /*
   -------------------------
@@ -13,17 +15,17 @@ interface stateCFG {
   init?: boolean;
 }
 
-export function StateHook<T extends any[]>(
+export async function StateHook<T extends any[]>(
   callback: hookFN<T>,
   statefuls: [...{ [K in keyof T]: Stateful<T[K]> }],
   { id = "stateHook", init }: stateCFG = {},
 ) {
-  if (isNotWindow) return () => {};
+  // if (isNotWindow) return () => {};
   const hooks: (() => void)[] = [];
 
   const smap = () => statefuls.map((st) => st.value);
-  const handler = () => {
-    callback(...(smap() as statefulValue<T>));
+  const handler = async () => {
+    await callback(...(smap() as statefulValue<T>));
   };
 
   //
@@ -31,7 +33,7 @@ export function StateHook<T extends any[]>(
     hooks.push(hook.hook(handler)(id));
   });
 
-  if (init) handler();
+  if (init) await handler();
   //
   return () => {
     hooks.forEach((unhook) => unhook());
