@@ -1,4 +1,4 @@
-import { idm, isFN, V } from "../@";
+import { idm, isFN, log, maybePromise, V } from "../@";
 import { CATT } from "./cat";
 import { Stateful } from "../stateful";
 import { Elements } from "./$";
@@ -16,7 +16,7 @@ export * from "./$";
 export * from "./oz";
 export * from "./cat";
 
-export type { aAttr } from "./attr";
+export type { aAttr, buttonAttr } from "./attr";
 
 /*
 -------------------------
@@ -24,14 +24,8 @@ export type { aAttr } from "./attr";
 -------------------------
 */
 
-export async function MainDom(
-  root: Stateful<any[]>,
-  id: string,
-  _class?: string | string[],
-) {
-  const MMD = new idm(id);
-  const ROOT = dom("main", { class: _class }, root);
-  return renderDom(ROOT, MMD);
+export async function MainDom(_dom: Dom, id: string) {
+  return await renderDom(_dom, new idm(id));
 }
 
 export interface renderedDom {
@@ -40,10 +34,10 @@ export interface renderedDom {
   id?: string;
 }
 
-export function renderDom(
+export async function renderDom(
   Dom: dom,
   pid: idm | string = new idm(),
-): renderedDom {
+): Promise<renderedDom> {
   const { tag, attr, ctx } = Dom;
 
   const _pid = pid instanceof idm ? pid : new idm(pid);
@@ -55,7 +49,7 @@ export function renderDom(
   _attr.get(catt);
 
   return {
-    ctx: _ctx.get(catt),
+    ctx: await _ctx.get(catt),
     oz: catt.OZ.set(catt),
     id: catt.id,
   };
@@ -69,18 +63,19 @@ export class Dom {
   ) {}
 }
 
-export function dom(
-  tag: string | ((attr: attr, ...ctx: ctx[]) => Dom),
+export async function dom(
+  tag: string | ((attr: attr, ...ctx: ctx[]) => maybePromise<Dom>),
   attr: attr | null = {},
   ...ctx: ctx[]
 ) {
   if (isFN(tag)) {
-    return tag(attr ?? {}, ...ctx);
+    return await tag(attr ?? {}, ...ctx);
   }
   return new Dom(tag, attr ?? {}, ctx);
 }
 
-export const frag = (attr: attr, ...ctx: Dom[]): Dom => new Dom("", {}, ctx);
+export const frag = async (attr: attr, ...ctx: Dom[]): Promise<Dom> =>
+  new Dom("", {}, ctx);
 
 declare global {
   type events<T extends Elements = HTMLElement> = {
@@ -93,11 +88,11 @@ declare global {
   type dom = Dom;
   type ctx<T = DVal | dom> = T | Stateful<T> | ctx[];
   type obj<T> = Record<string, T>;
-  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => dom;
+  type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => maybePromise<dom>;
   type attr = EAttr;
 
   namespace JSX {
-    type Element = dom;
+    type Element = maybePromise<dom>;
 
     interface IntrinsicElements extends ElementAttributes, SVGAttributes {}
   }

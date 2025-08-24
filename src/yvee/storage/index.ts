@@ -39,7 +39,9 @@ export class Stormy extends MainStorage<ClientPath> {
     const CLS = new routeStored.cls();
     return oAss(CLS, { args });
   }
-  setWss(path: string) {}
+  setWss(path: string, _wss: typeof websocket) {
+    this.wss.set(new SocketPath(path, _wss));
+  }
   getWss(path: string) {
     return this.wss.get(path);
   }
@@ -73,7 +75,7 @@ export class miniStormy extends MainStorage<TabPath> {
   getWss(path: string) {
     // return this.wssStorage.get(path);
   }
-  setError(code: number, _doc: typeof doc<{}>) {
+  setError(code: number, _doc: typeof content<{}>) {
     this.error.set(new TabPath(code.toString(), _doc));
   }
   getError(code: number = 404) {

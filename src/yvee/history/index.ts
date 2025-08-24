@@ -1,3 +1,4 @@
+import { isWindow, log } from "../../@";
 import { State, Stateful } from "../../stateful";
 
 // browser-path-history.ts
@@ -15,8 +16,11 @@ export class PathHistory<S extends ExtraState = ExtraState> {
   private onChange?: ChangeHandler<S>;
   private popListener?: (e: PopStateEvent) => void;
 
-  constructor(path: Stateful<string> = State(""), onChange?: ChangeHandler<S>) {
-    this.assertClient();
+  constructor(
+    path: Stateful<string> = State(""),
+    isDev: boolean = false,
+    onChange?: ChangeHandler<S>,
+  ) {
     this.onChange = onChange;
 
     this.onChange?.(
@@ -30,23 +34,28 @@ export class PathHistory<S extends ExtraState = ExtraState> {
         (e.state as HistoryData<S>) ??
         ({ path: this.path() } as HistoryData<S>);
       //
-      path.value = state?.path || path.value;
+      let loc = state?.path;
+      if (isDev && loc) {
+        loc = loc === "/" ? loc : loc.replace(/\/+$/g, "");
+      }
+
+      path.value = loc || path.value;
 
       this.onChange?.(this.path(), state);
     };
-    window.addEventListener("popstate", this.popListener);
+    if (isWindow) {
+      window.addEventListener("popstate", this.popListener);
+    }
   }
 
   /** Current path (pathname + search + hash) */
   path(): string {
-    this.assertClient();
     const { pathname, search, hash } = window.location;
     return `${pathname}${search}${hash}`;
   }
 
   /** Current state object */
   state(): HistoryData<S> {
-    this.assertClient();
     return (
       (window.history.state as HistoryData<S>) ??
       ({ path: this.path() } as HistoryData<S>)
@@ -55,11 +64,11 @@ export class PathHistory<S extends ExtraState = ExtraState> {
 
   /** Navigate to a new path using pushState (no-op if same as current) */
   navigate(path: string, state?: S, title = ""): void {
-    this.assertClient();
     const target = this.resolve(path);
     const current = this.path();
 
     // Don't push if path is effectively the same
+
     if (this.samePath(current, target)) return;
 
     const data: HistoryData<S> = { ...(state as S), path: target };
@@ -71,7 +80,6 @@ export class PathHistory<S extends ExtraState = ExtraState> {
 
   /** Replace current entry using replaceState (no-op if same as current) */
   replace(path: string, state?: S, title = ""): void {
-    this.assertClient();
     const target = this.resolve(path);
     const current = this.path();
 
@@ -83,12 +91,10 @@ export class PathHistory<S extends ExtraState = ExtraState> {
   }
 
   back(): void {
-    this.assertClient();
     window.history.back();
   }
 
   forward(): void {
-    this.assertClient();
     window.history.forward();
   }
 
@@ -108,16 +114,5 @@ export class PathHistory<S extends ExtraState = ExtraState> {
 
   private samePath(a: string, b: string): boolean {
     return a === b;
-  }
-
-  private assertClient() {
-    if (
-      typeof window === "undefined" ||
-      typeof window.history === "undefined"
-    ) {
-      throw new Error(
-        "BrowserPathHistory must be used in a client/browser environment.",
-      );
-    }
   }
 }

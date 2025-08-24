@@ -1,4 +1,14 @@
-import { idm, isArr, isAsync, isFN, isObj, isPromise, ngify, V } from "../../@";
+import {
+  idm,
+  isArr,
+  isAsync,
+  isFN,
+  isObj,
+  isPromise,
+  log,
+  ngify,
+  V,
+} from "../../@";
 import { Wizard } from "../oz";
 import { Stateful } from "../../stateful";
 import { dom, Dom, Elements, renderDom } from "..";
@@ -33,34 +43,40 @@ function escapeHTML(input: string) {
     .replace(/'/g, "&#039;");
 }
 
-const ctx_value = (cc: any, catt: CATT): string => {
+const ctx_value = async (cc: any, catt: CATT): Promise<string> => {
+  cc = await Promise.resolve(cc);
+
   if (isArr(cc)) {
-    return cc.map((c) => ctx_value(c, catt)).join("");
+    const results: string[] = [];
+    for (const c of cc) {
+      results.push(await ctx_value(c, catt));
+    }
+    return results.join("");
   } else if (cc instanceof Dom) {
-    const { ctx, oz } = renderDom(cc, catt.IDM);
+    const { ctx, oz } = await renderDom(cc, catt.IDM);
     catt.OZ.push(oz);
     return ctx;
   } else if (isObj(cc)) {
     return ngify(cc);
   } else if (isFN(cc)) {
-    return ctx_value((cc as any)(), catt);
+    return await ctx_value((cc as any)(), catt);
   } else if (cc !== undefined && cc !== null) {
     return escapeHTML(cc);
   }
   return "";
 };
 
-export const processCTXStateful = (value: any, xid?: string) => {
+export const processCTXStateful = async (value: any, xid?: string) => {
   const ndm = new idm(xid);
   const catt = new CATT(ndm.id, ndm);
-  const ctx = ctx_value(value, catt);
+  const ctx = await ctx_value(value, catt);
   return { ctx, catt };
 };
 
-function Callback(this: Elements, arg: ctx) {
+async function Callback(this: Elements, arg: ctx) {
   const elementId = this.id;
   if (elementId) {
-    const { ctx, catt } = processCTXStateful(arg, elementId);
+    const { ctx, catt } = await processCTXStateful(arg, elementId);
     if (this.innerHTML !== ctx) {
       this.innerHTML = ctx;
 
@@ -69,23 +85,23 @@ function Callback(this: Elements, arg: ctx) {
   }
 }
 
-export const processCTX = (
+export const processCTX = async (
   v: ctx,
   len: number,
   catt: CATT,
   inner: string[] = [],
 ) => {
   if (isArr(v)) {
-    v.forEach((vv) => {
-      processCTX(vv, v.length, catt, inner);
-    });
+    for (const vv of v) {
+      await processCTX(vv, v.length, catt, inner);
+    }
   } else if (v instanceof Stateful) {
     if (len > 1) {
-      processCTX(dom("div", {}, v), len, catt, inner);
+      await processCTX(await dom("div", {}, v), len, catt, inner);
     } else {
       const VL = v.value;
       const entry = VL instanceof Dom ? "dom" : "ctx";
-      const { ctx, catt: _ct } = processCTXStateful(VL, catt.xid + "-0");
+      const { ctx, catt: _ct } = await processCTXStateful(VL, catt.xid + "-0");
       catt.xid = _ct.xid;
 
       inner.push(ctx);
@@ -94,7 +110,7 @@ export const processCTX = (
       catt.states.push(v.call(Callback, entry));
     }
   } else {
-    inner.push(ctx_value(v, catt));
+    inner.push(await ctx_value(v, catt));
   }
 };
 
@@ -109,14 +125,18 @@ export class CTX {
     this.closing = selfClosing ? "" : `</${tag}>`;
   }
 
-  private process(catt: CATT, ctx: any[] = this.ctx, inner: string[] = []) {
-    ctx.forEach((ct) => {
-      processCTX(ct, ctx.length, catt, inner);
-    });
+  private async process(
+    catt: CATT,
+    ctx: any[] = this.ctx,
+    inner: string[] = [],
+  ) {
+    for (const ct of ctx) {
+      await processCTX(await Promise.resolve(ct), ctx.length, catt, inner);
+    }
     return inner.join("");
   }
-  get(catt: CATT) {
-    const ctx = this.process(catt);
+  async get(catt: CATT) {
+    const ctx = await this.process(catt);
 
     if (!this.tag) return ctx;
 

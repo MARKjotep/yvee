@@ -1,7 +1,7 @@
 import { bind, isWindow, log, makeID, oAss } from "../@";
-import type { headType } from "../@";
+import type { headType, maybePromise } from "../@";
 import { $, dom, MainDom, renderedDom, Wizard } from "../dom";
-import type { aAttr } from "../dom";
+import type { aAttr, Dom } from "../dom";
 import { State, Stateful, StateHook } from "../stateful";
 import { doc, docLoader, headLoader } from "./doc";
 import { PathHistory } from "./history";
@@ -18,47 +18,6 @@ export interface renderConfig {
   class?: string | string[];
   id?: string;
   data?: any;
-  isDev?: boolean;
-}
-
-interface _Yvee {
-  base?: string;
-  index?: string;
-  history?: boolean;
-}
-
-class minElements extends Router {
-  id: string;
-  data: obj<any>;
-  path: Stateful<string>;
-  protected _root: Stateful<any[]>;
-  constructor(
-    base: string = "/",
-    index: string = "",
-    protected pushHistory: boolean = false,
-  ) {
-    super(base, index);
-    this.id = makeID(6);
-    this.path = State("/");
-    this._root = State([]);
-    this.data = {};
-  }
-  @bind Main(a: attr) {
-    return dom("main", {}, this._root);
-  }
-  @bind A(a: aAttr, ...ctx: ctx[]) {
-    const { on, ..._a } = a;
-    const _path = this.path;
-    const _e: events = {
-      ...(on || {}),
-      click(e) {
-        e.preventDefault();
-        const href = $(this).path;
-        _path.value = href;
-      },
-    };
-    return dom("a", { on: _e, ..._a }, ...ctx);
-  }
 }
 
 export interface serverRender {
@@ -67,25 +26,39 @@ export interface serverRender {
   data?: Record<string, any>;
 }
 
-export class Yvee extends minElements {
-  declare yvee: Yvee;
-  constructor({ base, history, index }: _Yvee = {}) {
-    super(base, index, history);
+interface _Yvee {
+  base?: string;
+  index?: string;
+  history?: boolean;
+  isDev?: boolean;
+}
 
+export class Yvee extends Router {
+  declare yvee: Yvee;
+  private isDev: boolean;
+  history: PathHistory;
+  constructor({ base, history, index, isDev = false }: _Yvee = {}) {
+    super(base, index, history);
     const TH = this;
+    this.isDev = isDev;
+    this.history = new PathHistory(this.path, this.isDev);
     oAss(this, {
       get yvee() {
         return TH;
       },
     });
   }
+  @bind Main(main?: (root: Stateful<any[]>) => maybePromise<dom>) {
+    //
+    this._main = main;
+  }
   @bind async render(x: renderConfig = {}) {
-    const { id, data, class: _class, isDev = false } = x;
+    const { id, data, class: _class } = x;
 
     if (isWindow) {
       //
       let winloc = window.location.pathname;
-      if (isDev) {
+      if (this.isDev) {
         winloc = winloc.replace(/\/+$/g, "");
       }
       this.path.value = winloc;
@@ -127,15 +100,15 @@ export class Yvee extends minElements {
   }
   private async init(data = {}) {
     let id = this.id;
-    const _PH = new PathHistory(this.path);
-    //
+
     StateHook(
       async (path) => {
         //
         const [_BODY, _FHEAD] = await forClient.call(this, path, data);
         await headLoader(_FHEAD, id);
         this._root.value = _BODY;
-        this.pushHistory && _PH.navigate(path);
+
+        this.pushHistory && this.history.navigate(path);
       },
       [this.path],
       { id },
@@ -172,14 +145,17 @@ async function HeadAndCTX(
     isServer,
     _error,
   );
+
   this._root.value = _BODY;
 
-  const RND = await MainDom(this._root, this.id, _class);
+  const GM = await this.getMain(_class);
+
+  const RND = await MainDom(await this.getMain(_class), this.id);
   return [_FHEAD, RND];
 }
 
-export const Routes = (fn: (route: Yvee["route"]) => void) => {
+export const Routes = <T>(fn: (route: Yvee["route"]) => T) => {
   return (route: Yvee["route"]) => {
-    fn(route);
+    return fn(route);
   };
 };

@@ -177,21 +177,30 @@ export class Eget<T extends Elements = HTMLElement> {
 
   // edit
   set append(val: any) {
-    const { ctx, oz } = pushDOM(val, dID(this.id));
-    this.e.insertAdjacentHTML("beforeend", ctx);
-    Wizard.RPS(oz);
+    pushDOM(val, dID(this.id)).then((e) => {
+      const { ctx, catt } = e;
+
+      this.e.insertAdjacentHTML("beforeend", ctx);
+      Wizard.RPS(catt.OZ);
+    });
   }
   // edit
   set appendfirst(val: any) {
-    const { ctx, oz } = pushDOM(val, dID(this.id));
-    this.e.insertAdjacentHTML("afterbegin", ctx);
-    Wizard.RPS(oz);
+    pushDOM(val, dID(this.id)).then((e) => {
+      const { ctx, catt } = e;
+
+      this.e.insertAdjacentHTML("afterbegin", ctx);
+      Wizard.RPS(catt.OZ);
+    });
   }
   set inner(val: any) {
-    // get the parent first
-    const { ctx, oz } = pushDOM(val, dID(this.id));
-    this.e.innerHTML = ctx;
-    Wizard.RPS(oz);
+    pushDOM(val, dID(this.id)).then((e) => {
+      const { ctx, catt } = e;
+
+      this.e.innerHTML = ctx;
+
+      Wizard.RPS(catt.OZ);
+    });
   }
   set disabled(vl: boolean) {
     let tval = this.e;
@@ -209,12 +218,9 @@ export class Eget<T extends Elements = HTMLElement> {
   }
 }
 
-const pushDOM = (
-  val: Dom | string,
-  pid?: string,
-): { ctx: string; oz: OZ | undefined } => {
-  const { ctx, catt } = processCTXStateful(val, pid);
-  return { ctx, oz: catt.OZ };
+// { ctx: string; oz: OZ | undefined }
+const pushDOM = (val: Dom | string, pid?: string) => {
+  return processCTXStateful(val, pid);
 };
 
 const dID = (id?: string): string | undefined => (id ? `${id}-0` : id);

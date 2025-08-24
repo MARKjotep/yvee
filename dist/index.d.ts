@@ -259,7 +259,7 @@ declare class __ {
     static randArray<T>(arr?: T[], length?: number, unique?: boolean): T[];
     static randomAZ: () => string;
     static makeID: (length: number) => string;
-    static class(a: obj$1<any>, ...classes: string[]): void;
+    static class(a: obj$1<any>, ...classes: (string | undefined | boolean)[]): void;
     static get O(): {
         vals: {
             <T>(o: {
@@ -288,10 +288,27 @@ declare class __ {
     };
     static get is(): typeof is;
     static get return(): typeof returner;
+    static isHREF(pt: string, hpt: string): boolean;
     static sleep: (ms?: number) => Promise<unknown>;
     static get screen(): "xs" | "sm" | "smd" | "md" | "lg" | "xl" | "xxl" | undefined;
     bytes(bytes: number): string;
     static format(val: any): Formatteer;
+    static compareObjects: <T extends object>(oldObj: T, newObj: T | any) => {
+        added: Record<string, any>;
+        removed: Record<string, any>;
+        modified: Record<string, {
+            old: any;
+            new: any;
+        }>;
+    };
+    static isObjectUdpated: (changes: {
+        added: Record<string, any>;
+        removed: Record<string, any>;
+        modified: Record<string, {
+            old: any;
+            new: any;
+        }>;
+    }) => boolean;
 }
 declare class returner {
     static arr<T = string>(val?: any): T[];
@@ -972,8 +989,8 @@ declare class Dom {
     ctx: ctx[];
     constructor(tag: string, attr: attr, ctx: ctx[]);
 }
-declare function dom(tag: string | ((attr: attr, ...ctx: ctx[]) => Dom), attr?: attr | null, ...ctx: ctx[]): Dom;
-declare const frag: (attr: attr, ...ctx: Dom[]) => Dom;
+declare function dom$1(tag: string | ((attr: attr, ...ctx: ctx[]) => maybePromise<Dom>), attr?: attr | null, ...ctx: ctx[]): Promise<Dom>;
+declare const frag: (attr: attr, ...ctx: Dom[]) => Promise<Dom>;
 declare global {
     type events<T extends Elements = HTMLElement> = {
         [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
@@ -982,10 +999,10 @@ declare global {
     type dom = Dom;
     type ctx<T = DVal | dom> = T | Stateful<T> | ctx[];
     type obj<T> = Record<string, T>;
-    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => dom;
+    type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => maybePromise<dom>;
     type attr = EAttr;
     namespace JSX {
-        type Element = dom;
+        type Element = maybePromise<dom>;
         interface IntrinsicElements extends ElementAttributes, SVGAttributes {
         }
     }
@@ -999,10 +1016,11 @@ declare class doc<T extends docObj = obj<obj<any>>> extends head {
     path: string;
     data: T["data"];
     args: T["args"];
-    importArgs: any[];
+    importArgs: any[] | (() => any[]);
     fetch?(): maybePromise<obj<any>>;
     head?(): maybePromise<void>;
     body?(): maybePromise<any>;
+    static A: (a: aAttr, ...ctx: ctx[]) => Promise<Dom>;
 }
 
 type ExtraState = Record<string, unknown>;
@@ -1013,7 +1031,7 @@ type ChangeHandler<S extends ExtraState> = (path: string, state: HistoryData<S>)
 declare class PathHistory<S extends ExtraState = ExtraState> {
     private onChange?;
     private popListener?;
-    constructor(path?: Stateful<string>, onChange?: ChangeHandler<S>);
+    constructor(path?: Stateful<string>, isDev?: boolean, onChange?: ChangeHandler<S>);
     /** Current path (pathname + search + hash) */
     path(): string;
     /** Current state object */
@@ -1028,7 +1046,6 @@ declare class PathHistory<S extends ExtraState = ExtraState> {
     destroy(): void;
     private resolve;
     private samePath;
-    private assertClient;
 }
 
 interface contentObj {
@@ -1039,7 +1056,11 @@ declare class content<T extends contentObj = obj<obj<string>>> {
     path: string;
     data: T["data"];
     args: T["args"];
+    importArgs: any[] | (() => any[]);
     body?(): maybePromise<any>;
+    static Button: (a: buttonAttr & {
+        tab?: string | string[];
+    }, ...ctx: ctx[]) => Promise<Dom>;
 }
 
 declare class websocket<T = Record<string, any>> {
@@ -1090,7 +1111,7 @@ declare class Stormy extends MainStorage<ClientPath> {
     wss: Storage<SocketPath>;
     setRoute(path: string, _doc: typeof doc<{}>): void;
     getRoute(path: string, error?: number): doc<{}>;
-    setWss(path: string): void;
+    setWss(path: string, _wss: typeof websocket): void;
     getWss(path: string): [SocketPath | undefined, Record<string, string>];
     setError(code: number, _doc: typeof doc<{}>): void;
     getError(code?: number): [ClientPath | undefined, Record<string, string>];
@@ -1102,67 +1123,89 @@ declare class miniStormy extends MainStorage<TabPath> {
     getRoute(path: string, error?: number): content<{}>;
     setWss(path: string): void;
     getWss(path: string): void;
-    setError(code: number, _doc: typeof doc<{}>): void;
+    setError(code: number, _doc: typeof content<{}>): void;
     getError(code?: number): [TabPath | undefined, Record<string, string>];
 }
 
-declare class Router extends htmlHead {
+declare class minElements$1 extends htmlHead {
+    id: string;
+    data: obj<any>;
+    path: Stateful<string>;
+    protected _root: Stateful<any[]>;
+    constructor();
+    A(a: aAttr, ...ctx: ctx[]): Promise<Dom>;
+    protected _main?: (root: Stateful<any[]>) => maybePromise<dom>;
+    protected getMain(_class?: string | string[]): Promise<Dom>;
+}
+
+declare class Router extends minElements$1 {
+    protected pushHistory: boolean;
     storage: Stormy;
     protected base: string;
-    constructor(base?: string, index?: string);
+    constructor(base?: string, index?: string, pushHistory?: boolean);
+    /** --------------------
+     * string | int | float | file | uuid
+     * - /url/\<string:hell>
+     */
     route<Q extends typeof doc<{}>>(path: string): (f: Q) => Q;
+    error<Q extends typeof doc<{}>>(...codes: number[]): (f: Q) => Q;
+    /** --------------------
+     * string | int | float | file | uuid
+     * - /url/\<string:hell>
+     */
+    wss<Q extends typeof websocket>(path: string): (f: Q) => Q;
 }
 
 interface mtab {
-    tab: string;
+    tab?: string | string[];
 }
-declare class minElements$1 {
+declare class minElements {
     id: string;
     path: Stateful<string>;
-    _root: Stateful<any[]>;
-    Main(a: attr): Dom;
-    Button(a: attr & mtab, ...ctx: ctx[]): Dom;
+    protected _root: Stateful<any[]>;
+    Button(a: buttonAttr & mtab, ...ctx: ctx[]): Promise<Dom>;
 }
-declare class Tabs extends minElements$1 {
+interface _Tabs {
+    path?: Stateful<string>;
+}
+declare class Tabs extends minElements {
     storage: miniStormy;
-    constructor();
+    private hasLoaded;
+    constructor({ path }?: _Tabs);
     tab<Q extends typeof content<{}>>(path: string): (f: Q) => Q;
-    load(tab: string, data?: obj<string>): Promise<void>;
+    Main(a: attr & {
+        tab?: string;
+        data?: obj<any>;
+    }): Promise<Dom>;
+    load(tab: string, data?: obj<any>): Promise<void>;
 }
 
 interface renderConfig {
     class?: string | string[];
     id?: string;
     data?: any;
-    isDev?: boolean;
-}
-interface _Yvee {
-    base?: string;
-    index?: string;
-    history?: boolean;
-}
-declare class minElements extends Router {
-    protected pushHistory: boolean;
-    id: string;
-    data: obj<any>;
-    path: Stateful<string>;
-    protected _root: Stateful<any[]>;
-    constructor(base?: string, index?: string, pushHistory?: boolean);
-    Main(a: attr): Dom;
-    A(a: aAttr, ...ctx: ctx[]): Dom;
 }
 interface serverRender {
     path: string;
     error?: number;
     data?: Record<string, any>;
 }
-declare class Yvee extends minElements {
+interface _Yvee {
+    base?: string;
+    index?: string;
+    history?: boolean;
+    isDev?: boolean;
+}
+declare class Yvee extends Router {
     yvee: Yvee;
-    constructor({ base, history, index }?: _Yvee);
+    private isDev;
+    history: PathHistory;
+    constructor({ base, history, index, isDev }?: _Yvee);
+    Main(main?: (root: Stateful<any[]>) => maybePromise<dom>): void;
     render(x?: renderConfig): Promise<(() => void) | (({ path, data, error }: serverRender) => Promise<string>)>;
     private init;
 }
-declare const Routes: (fn: (route: Yvee["route"]) => void) => (route: Yvee["route"]) => void;
+declare const Routes: <T>(fn: (route: Yvee["route"]) => T) => (route: Yvee["route"]) => T;
 
-export { $, IfClient, Meta, PathHistory, QState, Ref, Routes, State, StateHook, Stateful, Tabs, Time, Yvee, __, addCSS, content, cssLoader, doc, dom, frag, log, socket, useRef, websocket };
+export { $, IfClient, Meta, PathHistory, QState, Ref, Routes, State, StateHook, Stateful, Tabs, Time, Yvee, __, addCSS, content, cssLoader, doc, dom$1 as dom, frag, log, socket, useRef, websocket };
 export type { $E, Elements, _$, aAttr, headAttr, maybePromise, serverRender };

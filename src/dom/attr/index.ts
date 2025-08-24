@@ -353,7 +353,7 @@ interface baseAttr<T = DVal> extends EAttr {
 interface blockquoteAttr<T = DVal> extends EAttr {
   cite?: T;
 }
-interface buttonAttr<T = DVal> extends EAttr {
+export interface buttonAttr<T = DVal> extends EAttr {
   disabled?: T;
   form?: T;
   formaction?: T;

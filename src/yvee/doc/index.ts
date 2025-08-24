@@ -14,6 +14,7 @@ import {
   V,
 } from "../../@";
 import { maybePromise } from "../../@";
+import { aAttr, dom } from "../../dom";
 import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
@@ -27,10 +28,13 @@ export class doc<T extends docObj = obj<obj<any>>> extends head {
   path: string = "";
   data: T["data"] = {};
   args: T["args"] = {};
-  importArgs: any[] = [];
+  importArgs: any[] | (() => any[]) = [];
   fetch?(): maybePromise<obj<any>>;
   head?(): maybePromise<void>;
   body?(): maybePromise<any>;
+  static A = (a: aAttr, ...ctx: ctx[]) => {
+    return dom("a", a || {}, ...ctx);
+  };
 }
 
 export async function docLoader(
@@ -41,18 +45,22 @@ export async function docLoader(
   if (!isServer && _doc.fetch) {
     oAss(_doc.data, await _doc.fetch());
   }
-  await _doc.head?.();
+
   return [
-    getBody(await _doc.body?.(), _doc.importArgs),
+    await getBody(await _doc.body?.(), _doc.importArgs),
     getHeads.call(this, _doc),
   ];
 }
 
-export function getBody(v?: any, args: any[] = []): any[] {
+export async function getBody(
+  v?: any,
+  args: any[] | (() => any[]) = [],
+): Promise<any[]> {
   let val: any = v || "";
   if (isModule(v)) {
     const vd = v.default;
-    val = isFN(vd) ? vd.apply({}, args) : vd;
+    const _args = isFN(args) ? args() : args;
+    val = isFN(vd) ? await vd.apply({}, _args) : vd;
   }
   return isArr(val) ? val : [val];
 }
