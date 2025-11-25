@@ -5,6 +5,7 @@ import {
   isNotWindow,
   isPlainObject,
   keyInMap,
+  log,
   Mapper,
   objectUdpated,
 } from "../@";

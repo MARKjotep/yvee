@@ -6,6 +6,8 @@ export type Elements =
   | HTMLElementTagNameMap[keyof HTMLElementTagNameMap]
   | SVGElementTagNameMap[keyof SVGElementTagNameMap];
 
+export type TagNames = keyof HTMLElementTagNameMap | keyof SVGElementTagNameMap;
+
 const ElementIds: Mapper<string, Elements> = new Mapper();
 
 export const getElementById = (key: string): Elements | undefined => {
@@ -73,7 +75,7 @@ export function $<
   }
 }
 export type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
-export type $E<T extends Elements = HTMLElement> = Elem<T>;
+export type $_<T extends Elements = HTMLElement> = Elem<T>;
 
 /*
 -------------------------
@@ -82,7 +84,6 @@ export type $E<T extends Elements = HTMLElement> = Elem<T>;
 */
 export class Ref<T extends Elements = HTMLElement> {
   state = new Stateful<_$<T>>(undefined);
-  constructor() {}
   get element(): T | undefined {
     return this.state.value?.e as T;
   }

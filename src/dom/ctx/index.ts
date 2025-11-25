@@ -11,7 +11,7 @@ import {
 } from "../../@";
 import { Wizard } from "../oz";
 import { Stateful } from "../../stateful";
-import { dom, Dom, Elements, renderDom } from "..";
+import { dom, DOM, Elements, renderDom } from "..";
 import { CATT } from "../cat";
 
 const TAGS = [
@@ -45,18 +45,20 @@ function escapeHTML(input: string) {
 
 const ctx_value = async (cc: any, catt: CATT): Promise<string> => {
   cc = await Promise.resolve(cc);
-
   if (isArr(cc)) {
     const results: string[] = [];
     for (const c of cc) {
       results.push(await ctx_value(c, catt));
     }
     return results.join("");
-  } else if (cc instanceof Dom) {
+  } else if (cc instanceof DOM) {
     const { ctx, oz } = await renderDom(cc, catt.IDM);
     catt.OZ.push(oz);
     return ctx;
   } else if (isObj(cc)) {
+    if (cc instanceof Set) {
+      return [...cc].join(" ");
+    }
     return ngify(cc);
   } else if (isFN(cc)) {
     return await ctx_value((cc as any)(), catt);
@@ -100,7 +102,7 @@ export const processCTX = async (
       await processCTX(await dom("div", {}, v), len, catt, inner);
     } else {
       const VL = v.value;
-      const entry = VL instanceof Dom ? "dom" : "ctx";
+      const entry = VL instanceof DOM ? "dom" : "ctx";
       const { ctx, catt: _ct } = await processCTXStateful(VL, catt.xid + "-0");
       catt.xid = _ct.xid;
 

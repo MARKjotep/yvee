@@ -1,7 +1,7 @@
 import { bind, isWindow, log, makeID, oAss } from "../@";
 import type { headType, maybePromise } from "../@";
 import { $, dom, MainDom, renderedDom, Wizard } from "../dom";
-import type { aAttr, Dom } from "../dom";
+import type { aAttr, DOM } from "../dom";
 import { State, Stateful, StateHook } from "../stateful";
 import { doc, docLoader, headLoader } from "./doc";
 import { PathHistory } from "./history";

@@ -111,6 +111,7 @@ export interface EAttr<T = DVal> {
   autocapitalize?: T;
   class?: T;
   on?: events<any>;
+  ref?: Ref<any>;
   contenteditable?: T;
   dir?: T;
   draggable?: T;

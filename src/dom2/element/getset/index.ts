@@ -1,12 +1,9 @@
-import { Elem } from ".";
-import { $, Elements } from "..";
-import { isFN, isNum, obj, oItems, reCamel, V } from "../../../@";
-import { DOM } from "../..";
-import { anim } from "./anim";
-import { attr_value, CSSStyle } from "../../attr";
-import { OZ, Wizard } from "../../oz";
-import { processCTXStateful } from "../../ctx";
-//
+import { isFunction, isNumber, oItems, reCamel, type V } from "@coff-r/x";
+import { Elem } from "../$";
+import type { Elements } from "../$/types";
+import type { CSSStyle } from "../../attr";
+import { anim } from "../animate";
+
 export class Eget<T extends Elements = HTMLElement> {
   private _parent?: T;
   constructor(
@@ -128,11 +125,11 @@ export class Eget<T extends Elements = HTMLElement> {
           });
         };
 
-        if (isFN(delayOrFN)) {
+        if (isFunction(delayOrFN)) {
           TT.on("transitionend", delayOrFN);
         }
 
-        if (isNum(delayOrFN)) {
+        if (isNumber(delayOrFN)) {
           setTimeout(styler, delayOrFN);
         } else {
           styler();

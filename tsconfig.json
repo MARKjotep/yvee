@@ -1,1 +1,45 @@
-../misc/tsconfig.json
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["ESNext", "DOM"],
+    "rootDir": ".",
+    "strictBindCallApply": true,
+    "noImplicitThis": true,
+    "noImplicitAny": true,
+    "allowJs": true,
+    "checkJs": false,
+    "removeComments": false,
+    "noEmit": true,
+    // @decorators
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "useDefineForClassFields": true,
+    "skipLibCheck": true,
+    "composite": false,
+    //
+
+    "allowSyntheticDefaultImports": true,
+    "allowArbitraryExtensions": true,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "strict": true,
+    "strictPropertyInitialization": true,
+    // ----
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // Modern TS hygiene:
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "@app/*": ["./src/app/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@features/*": ["./src/features/*"]
+    }
+    //
+  },
+  "exclude": ["dist"]
+}

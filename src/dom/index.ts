@@ -1,4 +1,4 @@
-import { idm, isFN, log, maybePromise, V } from "../@";
+import { idm, isFN, log, type maybePromise, type V } from "../@";
 import { CATT } from "./cat";
 import { Stateful } from "../stateful";
 import { Elements } from "./$";
@@ -24,7 +24,7 @@ export type { aAttr, buttonAttr } from "./attr";
 -------------------------
 */
 
-export async function MainDom(_dom: Dom, id: string) {
+export async function MainDom(_dom: DOM, id: string) {
   return await renderDom(_dom, new idm(id));
 }
 
@@ -38,7 +38,7 @@ export async function renderDom(
   Dom: dom,
   pid: idm | string = new idm(),
 ): Promise<renderedDom> {
-  const { tag, attr, ctx } = Dom;
+  const { tag, attr, ctx } = await Promise.resolve(Dom);
 
   const _pid = pid instanceof idm ? pid : new idm(pid);
   const id = _pid.mid;
@@ -55,7 +55,7 @@ export async function renderDom(
   };
 }
 
-export class Dom {
+export class DOM {
   constructor(
     public tag: string,
     public attr: attr,
@@ -64,18 +64,18 @@ export class Dom {
 }
 
 export async function dom(
-  tag: string | ((attr: attr, ...ctx: ctx[]) => maybePromise<Dom>),
+  tag: string | ((attr: attr, ...ctx: ctx[]) => maybePromise<DOM>),
   attr: attr | null = {},
   ...ctx: ctx[]
 ) {
   if (isFN(tag)) {
     return await tag(attr ?? {}, ...ctx);
   }
-  return new Dom(tag, attr ?? {}, ctx);
+  return new DOM(tag, attr ?? {}, ctx);
 }
 
-export const frag = async (attr: attr, ...ctx: Dom[]): Promise<Dom> =>
-  new Dom("", {}, ctx);
+export const frag = async (attr: attr, ...ctx: DOM[]): Promise<DOM> =>
+  new DOM("", {}, ctx);
 
 declare global {
   type events<T extends Elements = HTMLElement> = {
@@ -85,8 +85,8 @@ declare global {
     ) => void;
   } & c_events<T>;
   type DVal<T = V | V[]> = T | Stateful<T> | undefined;
-  type dom = Dom;
-  type ctx<T = DVal | dom> = T | Stateful<T> | ctx[];
+  type dom = DOM;
+  type ctx<T = DVal | dom> = maybePromise<T | Stateful<T> | ctx[]>;
   type obj<T> = Record<string, T>;
   type DomFN<T = {}> = (a: attr & T, ...D: ctx[]) => maybePromise<dom>;
   type attr = EAttr;
