@@ -1,6 +1,6 @@
-import { isFN, oAss } from "../../../@";
-import { $, Elements, TagNames } from "..";
-import { kf, KFType } from "./anim";
+import { isFunction, oAss } from "@coff-r/x";
+import type { $, Elements, TagNames } from "..";
+import type { kf, KFType } from "./anim";
 import { Eget } from "./getset";
 
 // export type TElem = HTMLElement & InstanceType<typeof Element>;
@@ -116,7 +116,7 @@ export class Elem<T extends Elements = HTMLElement> extends Eget<T> {
       fill: "forwards",
     };
 
-    if (isFN(optionsOrOnComplete)) {
+    if (isFunction(optionsOrOnComplete)) {
       onComplete = optionsOrOnComplete;
     } else {
       oAss(opt, optionsOrOnComplete);

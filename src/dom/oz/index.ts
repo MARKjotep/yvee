@@ -1,7 +1,7 @@
-import { isArr, keyInMap, keyInMapArray, Mapper, obj, oItems } from "../../@";
-import { Elements, getElementById, IDNotConnected } from "../$";
-import { Stateful } from "../../stateful";
+import { type Elements, getElementById, IDNotConnected } from "@$";
+import { Stateful } from "@@/stateful";
 import { CATT } from "../cat";
+import { isArray, keyInMap, keyInMapArray, Mapper } from "@coff-r/x";
 
 type windowEvents = Mapper<
   string,
@@ -93,7 +93,7 @@ export class OZ {
           case "state":
             const [cb, statefuls, ini] = event.apply(E, [E]) as watchType;
 
-            const sst = isArr(statefuls) ? statefuls : [statefuls];
+            const sst = isArray(statefuls) ? statefuls : [statefuls];
 
             if (!sst.length) break;
 

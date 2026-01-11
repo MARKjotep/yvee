@@ -1,4 +1,4 @@
-import { getHead, headType, makeID } from "../../@";
+import { renderHead, type headType } from "@coff-r/x/html";
 
 export class HTML {
   lang: string;
@@ -6,7 +6,7 @@ export class HTML {
   constructor(lang: string, htmlHead?: headType) {
     this.lang = lang;
     if (htmlHead) {
-      this.head = getHead(htmlHead);
+      this.head = renderHead(htmlHead);
     }
   }
   body(ctx: string, id?: string, attr?: string) {

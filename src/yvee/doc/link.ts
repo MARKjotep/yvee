@@ -1,5 +1,6 @@
-import { obj, oLen, oVals, cssLoader, Mapper, log } from "../../@";
-import { $ } from "../../dom";
+import { $ } from "@$";
+import { log, oLen, oVals } from "@coff-r/x";
+import { cssLoader } from "@coff-r/x/html";
 
 export async function LINK(link: obj<obj<any>> = {}, id: string) {
   //

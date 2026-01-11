@@ -1,12 +1,12 @@
-import { bind, isWindow, log, makeID, oAss } from "../@";
-import type { headType, maybePromise } from "../@";
-import { $, dom, MainDom, renderedDom, Wizard } from "../dom";
-import type { aAttr, DOM } from "../dom";
-import { State, Stateful, StateHook } from "../stateful";
+import { MainDom, type aAttr, type DOM, type renderedDom } from "@dom";
+import { State, Stateful, StateHook } from "@@/stateful";
 import { doc, docLoader, headLoader } from "./doc";
 import { PathHistory } from "./history";
 import { HTML } from "./html";
 import { Router } from "./router";
+import { bind, IS_BROWSER, oAss, type maybePromise } from "@coff-r/x";
+import type { headType } from "@coff-r/x/html";
+import { Wizard } from "@dom/oz";
 
 export { doc };
 export { content } from "./content";
@@ -55,7 +55,7 @@ export class Yvee extends Router {
   @bind async render(x: renderConfig = {}) {
     const { id, data, class: _class } = x;
 
-    if (isWindow) {
+    if (IS_BROWSER) {
       //
       let winloc = window.location.pathname;
       if (this.isDev) {
@@ -98,6 +98,7 @@ export class Yvee extends Router {
       return new HTML(this.lang, _FHEAD).body(RND.ctx, this.id);
     };
   }
+
   private async init(data = {}) {
     let id = this.id;
 

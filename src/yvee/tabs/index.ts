@@ -1,11 +1,12 @@
-import { bind, oAss, _htmlHead, makeID, isArr } from "../../@";
-import { $, dom } from "../../dom";
-import { State, Stateful, StateHook } from "../../stateful";
-import { content } from "../content";
-import { getBody } from "../doc";
-import { miniStormy } from "../storage";
-import type { buttonAttr } from "../../dom";
-import { fillRoute } from "../router";
+import { dom } from "@dom";
+import { State, Stateful, StateHook } from "@@/stateful";
+import { content } from "@yvee/content";
+import { getBody } from "@yvee/doc";
+import { miniStormy } from "@yvee/storage";
+import type { buttonAttr } from "@dom";
+import { fillRoute } from "@yvee/router";
+import { bind, isArray, makeID, oAss } from "@coff-r/x";
+import { $ } from "@$";
 
 interface mtab {
   tab?: string | string[];
@@ -48,7 +49,7 @@ export class Tabs extends minElements {
   @bind tab<Q extends typeof content<{}>>(path: string) {
     return (f: Q) => {
       f.Button = (a: buttonAttr & mtab, ...ctx: ctx[]) => {
-        if (a.tab && isArr(a.tab)) {
+        if (a.tab && isArray(a.tab)) {
           a.tab = fillRoute(path, a.tab);
         } else if (!a.tab) {
           a.tab = path;

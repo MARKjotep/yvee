@@ -1,9 +1,9 @@
-import { bind, htmlHead, isArr, log } from "../../@";
-import { doc } from "../doc";
-import { Stormy } from "../storage";
-import { websocket } from "../wss";
-import { minElements } from "../elements";
-import type { aAttr } from "../../dom";
+import { doc } from "@yvee/doc";
+import { Stormy } from "@yvee/storage";
+import { websocket } from "@yvee/wss";
+import { minElements } from "@yvee/elements";
+import type { aAttr } from "@dom";
+import { bind, isArray } from "@coff-r/x";
 
 //
 export class Router extends minElements {
@@ -49,7 +49,7 @@ export class Router extends minElements {
   @bind route<Q extends typeof doc<{}>>(path: string) {
     return (f: Q) => {
       f.A = (a: aAttr, ...ctx: ctx[]) => {
-        if (a.href && isArr(a.href)) {
+        if (a.href && isArray(a.href)) {
           a.href = fillRoute(path, a.href);
         } else if (!a.href) {
           a.href = path;

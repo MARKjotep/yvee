@@ -1,117 +1,15 @@
-interface metaViewport {
-    width?: string;
-    height?: string;
-    initialScale?: string;
-    minimumScale?: string;
-    maximumScale?: string;
-    userScalable?: string;
-    interactiveWidget?: string;
-}
-interface httpeQuiv {
-    contentSecurityPolicy?: string;
-    contentType?: string;
-    defaultStyle?: string;
-    refresh?: string;
-    cacheControl?: string;
-    xUaCompatible?: string;
-}
-interface OG {
-    title?: string;
-    description?: string;
-    image?: string;
-    url?: string;
-    type?: string;
-    card?: "summary" | "summary_large_image" | "app" | "player";
-}
-type meta$1<T> = {
-    charset?: T;
-    content?: T;
-    "http-equiv"?: T;
-    name?: T;
-    property?: T;
-    media?: T;
-    url?: T;
-};
-declare class Meta {
-    metas: Record<string, string>[];
-    constructor(description?: string);
-    author(name: string): this;
-    charset(val: string): this;
-    keywords(...keyword: string[]): this;
-    viewport(vport: metaViewport): this;
-    httpEquiv(httpeQuiv: httpeQuiv): this;
-    robots(...robot: ("index" | "noindex" | "follow" | "nofollow")[]): this;
-    themeColor(color: string): this;
-    openGraph(og: Omit<OG, "card">): this;
-    twitter(og: OG): this;
-    push(metas: meta$1<string>[]): void;
-    private set meta(value);
-}
+import { maybePromise, Mapper as Mapper$1, V as V$1, MinStorage, Storage } from '@coff-r/x';
+export { IfClient, Time, __, bind, log, maybePromise } from '@coff-r/x';
 
 type V = string | number | boolean;
 type obj$1<T> = Record<string, T>;
-type maybePromise<T> = Promise<T> | T;
 
-type ModuleLike = {
-    [Symbol.toStringTag]: "Module";
-    default?: unknown;
-    [key: string]: unknown;
+type CSSinT = {
+    [P in keyof CSSStyleDeclaration]?: V;
+} & {
+    [key: string]: V;
 };
-declare const isFN: (v: any) => v is Function;
-declare const isAsync: (v: any) => v is Function;
-declare const isPromise: (v: any) => v is Function;
-declare const isNumber: (value: any) => boolean;
-declare const isObject: (val: any) => val is Record<string, any>;
-declare const isPlainObject: (value: any) => boolean;
-declare const isModule: (obj: any) => obj is ModuleLike;
-declare const isArraybuff: (val: any) => val is string | ArrayBuffer | Uint8Array<ArrayBufferLike>;
-declare const isClassOrId: (k: string) => boolean;
-declare const isBool: (v: any) => v is boolean;
-declare const isStr: (v: any) => v is string;
-declare const isArr: (v: any) => v is any[];
-declare const isObj: (v: any) => v is object;
-declare const isNum: (v: any) => v is number;
-declare const isNull: (v: any) => v is null;
-declare const isNotNull: <T>(v: T) => v is Exclude<T, null>;
-declare const isUndefined: (v: any) => v is undefined;
-declare const isDefined: <T>(v: T) => v is Exclude<T, undefined>;
-declare const isInt: (str: string) => boolean;
-declare const isWindow: boolean;
-declare const isNotWindow: boolean;
-
-type is_ModuleLike = ModuleLike;
-declare const is_isArr: typeof isArr;
-declare const is_isArraybuff: typeof isArraybuff;
-declare const is_isAsync: typeof isAsync;
-declare const is_isBool: typeof isBool;
-declare const is_isClassOrId: typeof isClassOrId;
-declare const is_isDefined: typeof isDefined;
-declare const is_isFN: typeof isFN;
-declare const is_isInt: typeof isInt;
-declare const is_isModule: typeof isModule;
-declare const is_isNotNull: typeof isNotNull;
-declare const is_isNotWindow: typeof isNotWindow;
-declare const is_isNull: typeof isNull;
-declare const is_isNum: typeof isNum;
-declare const is_isNumber: typeof isNumber;
-declare const is_isObj: typeof isObj;
-declare const is_isObject: typeof isObject;
-declare const is_isPlainObject: typeof isPlainObject;
-declare const is_isPromise: typeof isPromise;
-declare const is_isStr: typeof isStr;
-declare const is_isUndefined: typeof isUndefined;
-declare const is_isWindow: typeof isWindow;
-declare namespace is {
-  export { is_isArr as isArr, is_isArraybuff as isArraybuff, is_isAsync as isAsync, is_isBool as isBool, is_isClassOrId as isClassOrId, is_isDefined as isDefined, is_isFN as isFN, is_isInt as isInt, is_isModule as isModule, is_isNotNull as isNotNull, is_isNotWindow as isNotWindow, is_isNull as isNull, is_isNum as isNum, is_isNumber as isNumber, is_isObj as isObj, is_isObject as isObject, is_isPlainObject as isPlainObject, is_isPromise as isPromise, is_isStr as isStr, is_isUndefined as isUndefined, is_isWindow as isWindow };
-  export type { is_ModuleLike as ModuleLike };
-}
-
-declare const IfClient: <T>(fn: () => T) => T | undefined;
-
-/**
- * Method decorator. Bind this to method when destructured.
- */
-declare const bind: (target: any, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
+declare function upsertCSS(selector: string, rules?: CSSinT): void;
 
 /**
  * A custom Map implementation that provides additional utility methods for working with objects and maps.
@@ -127,304 +25,150 @@ declare class Mapper<K, V> extends Map<K, V> {
     init(key: K, val: V): V;
 }
 
-declare class Logger {
-    private name;
-    constructor(name: string);
-    log: (...args: any[]) => void;
-    set i(a: any);
-}
-declare class log {
-    static logger: <T extends abstract new (...args: any) => any>(ctx: InstanceType<T> | string) => Logger;
-    static set f(a: any);
-    static set i(a: any);
-    static set e(a: any);
-    static set w(a: any);
-}
-declare class idm {
-    _c: number;
-    _id: string;
-    constructor(mid?: string);
+declare class Idm {
+    private counter;
+    private readonly baseId;
+    constructor(rawId?: string);
     get id(): string;
-    get mid(): string;
+    get nextId(): string;
 }
 
-type meta<T> = {
-    charset?: T;
-    content?: T;
-    "http-equiv"?: T;
-    name?: T;
-    property?: T;
-    media?: T;
-    url?: T;
+type MetaTag = {
+    charset: string;
+} | {
+    name: string;
+    content: string;
+} | {
+    property: string;
+    content: string;
+} | {
+    "http-equiv": string;
+    content: string;
 };
-type link<T> = {
-    href?: T;
-    hreflang?: T;
-    media?: T;
-    referrerpolicy?: T;
-    rel?: "stylesheet" | "icon" | "manifest" | T;
-    sizes?: T;
-    title?: T;
-    type?: T;
-    as?: T;
-    crossorigin?: T;
+interface MetaViewport {
+    width?: string;
+    height?: string;
+    initialScale?: string;
+    minimumScale?: string;
+    maximumScale?: string;
+    userScalable?: "yes" | "no";
+    interactiveWidget?: "resizes-content" | "overlays-content";
+}
+interface HttpEquiv {
+    contentSecurityPolicy?: string;
+    contentType?: string;
+    defaultStyle?: string;
+    refresh?: string | number;
+    cacheControl?: string;
+    xUaCompatible?: string;
+}
+interface OpenGraphBase {
+    title?: string;
+    description?: string;
+    image?: string;
+    url?: string;
+    type?: string;
+}
+type TwitterCardType = "summary" | "summary_large_image" | "app" | "player";
+interface TwitterMeta extends OpenGraphBase {
+    card?: TwitterCardType;
+}
+declare class MetaBuilder {
+    readonly tags: MetaTag[];
+    constructor(description?: string);
+    author(name: string): this;
+    charset(value: string): this;
+    keywords(...keywords: string[]): this;
+    viewport(vp: MetaViewport): this;
+    httpEquiv(values: HttpEquiv): this;
+    robots(...directives: ("index" | "noindex" | "follow" | "nofollow")[]): this;
+    themeColor(color: string): this;
+    openGraph(og: OpenGraphBase): this;
+    twitter(meta: TwitterMeta): this;
+    extend(tags: MetaTag[]): this;
+    toArray(): readonly MetaTag[];
+}
+
+type Obj<T> = Record<string, T>;
+type MetaAttrs<Value = string> = {
+    charset?: Value;
+    content?: Value;
+    "http-equiv"?: Value;
+    name?: Value;
+    property?: Value;
+    media?: Value;
+    url?: Value;
 };
-type impmap = {
-    imports?: obj$1<string>;
-    scopes?: obj$1<string>;
-    integrity?: obj$1<string>;
+type LinkAttrs<Value = string> = {
+    href?: Value;
+    hreflang?: Value;
+    media?: Value;
+    referrerpolicy?: Value;
+    rel?: "stylesheet" | "icon" | "manifest" | Value;
+    sizes?: Value;
+    title?: Value;
+    type?: Value;
+    as?: Value;
+    crossorigin?: Value;
 };
-type script<T> = {
-    async?: T;
-    crossorigin?: T;
-    defer?: T;
-    integrity?: T;
-    nomodule?: T;
-    referrerpolicy?: T;
-    src?: T;
-    type?: "text/javascript" | T;
-    id?: T;
-    importmap?: impmap;
-    body?: T;
+type ImportMapAttrs<Value = string> = {
+    imports?: Obj<Value>;
+    scopes?: Obj<Value>;
+    integrity?: Obj<Value>;
 };
-type base<T> = {
-    href?: T;
+type ScriptAttrs<Value = string | boolean> = {
+    async?: Value;
+    crossorigin?: Value;
+    defer?: Value;
+    integrity?: Value;
+    nomodule?: Value;
+    referrerpolicy?: Value;
+    src?: Value;
+    type?: "text/javascript" | Value;
+    id?: Value;
+    importmap?: ImportMapAttrs<Value>;
+    body?: Value;
+    yid?: string;
+};
+type BaseAttrs<Value = string> = {
+    href?: Value;
     target?: "_blank" | "_parent" | "_self" | "_top";
 };
-interface headAttr {
-    title?: string;
-    base?: base<string>[];
-    meta?: meta<string>[] | Meta;
-    link?: link<string>[];
-    script?: script<string | boolean>[];
-    css?: string[] | string;
-    js?: string[] | string;
-    description?: string;
-}
-declare abstract class head implements headAttr {
+interface HeadAttributes<Value = string> {
     title?: string;
     description?: string;
+    base?: BaseAttrs<Value>[];
+    meta?: MetaAttrs<Value>[] | MetaBuilder;
+    link?: LinkAttrs<Value>[];
+    script?: ScriptAttrs<Value>[];
+    css?: Value[] | Value;
+    js?: Value[] | Value;
+}
+declare abstract class Head implements HeadAttributes {
+    title?: string;
+    description?: string;
     css?: string[] | string;
     js?: string[] | string;
-    meta?: meta<string>[] | Meta;
-    link?: link<string>[];
-    script?: script<string | boolean>[];
+    meta?: MetaAttrs<string>[] | MetaBuilder;
+    link?: LinkAttrs<string>[];
+    script?: ScriptAttrs<string>[];
 }
-type CSSinT = {
-    [P in keyof CSSStyleDeclaration]?: V;
-} & {
-    [key: string]: V;
-};
-type headType = Mapper<keyof headAttr, any>;
-interface hHeadCFG {
+type headType = Mapper<keyof HeadAttributes, any>;
+interface HeadConfig {
     initial?: headType;
     mark?: boolean;
     push?: obj$1<any>;
 }
-declare class htmlHead {
+declare class HtmlHead {
     lang: string;
     htmlHead: headType;
-    head: (heads?: Omit<headAttr, "base">) => void;
-    constructor({ mark, push }?: hHeadCFG);
-}
-declare const cssLoader: (vv: link<string>) => Promise<HTMLLinkElement | undefined>;
-declare function addCSS(selector: string, rules?: CSSinT): void;
-
-declare class MinStorage {
-    readonly path: string;
-    readonly parsed: string[];
-    readonly args: string[];
-    constructor(path: string);
+    head: (heads?: Omit<HeadAttributes, "base"> & {
+        base?: HeadAttributes["base"];
+    }) => void;
+    constructor({ mark, push }?: HeadConfig);
 }
 
-/** --------------------
- * string | int | float | file | uuid
- * - /path/\<string:hell>
- */
-declare class Storage<T extends MinStorage> {
-    private _storage;
-    private CC;
-    constructor();
-    set(min: T): void;
-    get(path: string): [T | undefined, Record<string, string>];
-    keys(): MapIterator<string>;
-}
-
-type DateAdjustments = {
-    year?: number;
-    month?: number;
-    day?: number;
-    hour?: number;
-    minute?: number;
-    second?: number;
-    quarter?: number;
-    week?: number;
-    startOfMonth?: boolean;
-    endOfMonth?: boolean;
-};
-declare global {
-    interface Date {
-        /**
-         *
-         * * Format a date using tokens.
-         *
-         * ### Available tokens:
-         * - `YYYY, YY` —— Year
-         * - `MMMM, MMM, MM, M` —— Month
-         * - `dddd, ddd` —— Weekday
-         * - `DD, D` —— Day of Month
-         * - `HH, H, hh, h` —— Hour
-         * - `mm, m` —— Minute
-         * - `ss, s` —— Second
-         * - `SSS` —— Millisecond
-         * - `A, a` —— AM/PM
-         * - `Q` —— Quarter
-         * - `DoY` —— Day of Year
-         * @param pattern - Format string with tokens (default: `"YYYY-MM-DD HH:mm:ss"`)
-         * @param locale - Optional locale or array of locales (default: system locale)
-         */
-        format(pattern?: string, locale?: string | string[]): string;
-    }
-    interface DateConstructor {
-        /**
-         * Register or override a custom format token.
-         * @param token The token string to replace (e.g. "DoY")
-         * @param fn A function that returns a string when formatting
-         */
-        registerFormat(token: string, fn: (d: Date, locale?: string | string[]) => string): void;
-        /**
-         *
-         * * Format a date using tokens.
-         *
-         * ### Available tokens:
-         * - `YYYY, YY` —— Year
-         * - `MMMM, MMM, MM, M` —— Month
-         * - `dddd, ddd` —— Weekday
-         * - `DD, D` —— Day of Month
-         * - `HH, H, hh, h` —— Hour
-         * - `mm, m` —— Minute
-         * - `ss, s` —— Second
-         * - `SSS` —— Millisecond
-         * - `A, a` —— AM/PM
-         * - `Q` —— Quarter
-         * - `DoY` —— Day of Year
-         * @param pattern - Format string with tokens (default: `"YYYY-MM-DD HH:mm:ss"`)
-         * @param locale - Optional locale or array of locales (default: system locale)
-         */
-        format(pattern?: string, locale?: string | string[]): string;
-    }
-}
-declare class Time {
-    date: Date;
-    constructor(dateMS?: number | string | Date);
-    timed(time: DateAdjustments, weekStart?: number): Date;
-    static timed(time: DateAdjustments, weekStart?: number): Date;
-    static local(date: number): string;
-    local(): string;
-    /** @type {FormatDateFn} */
-    format(pattern?: string, locale?: string | string[]): string;
-    /**
-     * * Format a date using tokens.
-     *
-     * ### Available tokens:
-     * - `YYYY, YY` —— Year
-     * - `MMMM, MMM, MM, M` —— Month
-     * - `dddd, ddd` —— Weekday
-     * - `DD, D` —— Day of Month
-     * - `HH, H, hh, h` —— Hour
-     * - `mm, m` —— Minute
-     * - `ss, s` —— Second
-     * - `SSS` —— Millisecond
-     * - `A, a` —— AM/PM
-     * - `Q` —— Quarter
-     * - `DoY` —— Day of Year
-     * @param pattern - Format string with tokens (default: `"YYYY-MM-DD HH:mm:ss"`)
-     * @param locale - Optional locale or array of locales (default: system locale)
-     */
-    static format(pattern?: string, locale?: string | string[]): string;
-    static get now(): number;
-    random(end?: Date): Date;
-    static random(start: Date, end?: Date): Date;
-    delta(adjust: DateAdjustments): Date;
-    static delta(adjust: DateAdjustments): Date;
-}
-
-declare class __ {
-    static rand(min?: number, max?: number): number;
-    static fill(count: number, fill?: any): any[];
-    static new({ dom, id, inner, }: {
-        dom: keyof HTMLElementTagNameMap | keyof SVGElementTagNameMap;
-        id?: string;
-        inner?: any;
-    }): HTMLElement;
-    static randFrom(arr: any[] | Object): any;
-    static randArray<T>(arr?: T[], length?: number, unique?: boolean): T[];
-    static randomAZ: () => string;
-    static makeID: (length: number) => string;
-    static class(a: obj$1<any>, ...classes: (string | undefined | boolean)[]): void;
-    static get O(): {
-        vals: {
-            <T>(o: {
-                [s: string]: T;
-            } | ArrayLike<T>): T[];
-            (o: {}): any[];
-        };
-        keys: {
-            (o: object): string[];
-            (o: {}): string[];
-        };
-        items: {
-            <T>(o: {
-                [s: string]: T;
-            } | ArrayLike<T>): [string, T][];
-            (o: {}): [string, any][];
-        };
-        has: (o: object, v: PropertyKey) => boolean;
-        ass: {
-            <T extends {}, U>(target: T, source: U): T & U;
-            <T extends {}, U, V>(target: T, source1: U, source2: V): T & U & V;
-            <T extends {}, U, V, W>(target: T, source1: U, source2: V, source3: W): T & U & V & W;
-            (target: object, ...sources: any[]): any;
-        };
-        len: (obj?: {}) => number;
-    };
-    static get is(): typeof is;
-    static get return(): typeof returner;
-    static isHREF(pt: string, hpt: string): boolean;
-    static sleep: (ms?: number) => Promise<unknown>;
-    static get screen(): "xs" | "sm" | "smd" | "md" | "lg" | "xl" | "xxl" | undefined;
-    bytes(bytes: number): string;
-    static format(val: any): Formatteer;
-    static compareObjects: <T extends object>(oldObj: T, newObj: T | any) => {
-        added: Record<string, any>;
-        removed: Record<string, any>;
-        modified: Record<string, {
-            old: any;
-            new: any;
-        }>;
-    };
-    static isObjectUdpated: (changes: {
-        added: Record<string, any>;
-        removed: Record<string, any>;
-        modified: Record<string, {
-            old: any;
-            new: any;
-        }>;
-    }) => boolean;
-}
-declare class returner {
-    static arr<T = string>(val?: any): T[];
-    static num(val: any, iferr?: any): number;
-    static str(val: any): string;
-    static arr2obj(val: any[], switched?: boolean): any;
-}
-declare class Formatteer {
-    val: any;
-    constructor(val: any);
-    get px(): string;
-    get rem(): string;
-    get pr(): string;
-}
+declare const cssLoader: (attrs: LinkAttrs<string>) => Promise<HTMLLinkElement | undefined>;
 
 type hookFN<T extends any[]> = (...args: statefulValue<T>) => maybePromise<void>;
 interface stateCFG {
@@ -434,31 +178,6 @@ interface stateCFG {
 declare function StateHook<T extends any[]>(callback: hookFN<T>, statefuls: [...{
     [K in keyof T]: Stateful<T[K]>;
 }], { id, init }?: stateCFG): Promise<() => void>;
-
-type statefulValue<T extends any[]> = {
-    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
-};
-declare class Stateful<T> extends EventTarget {
-    private options;
-    private deep;
-    private verify;
-    private hooks;
-    private states;
-    private _value;
-    private listening;
-    private end?;
-    constructor(value: T, options?: AddEventListenerOptions, deep?: boolean, verify?: boolean);
-    get value(): T;
-    set value(newValue: T);
-    get listen(): () => void;
-    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
-    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
-}
-declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
-/**
- * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
- */
-declare function QState<T>(value: T, verify?: boolean): Stateful<T>;
 
 declare class OZ {
     private events;
@@ -477,12 +196,12 @@ declare class OZ {
 
 declare class CATT {
     xid: string;
-    IDM: idm;
-    map: Mapper<string, string[]>;
+    IDM: Idm;
+    map: Mapper$1<string, string[]>;
     states: ((id: string) => () => void)[];
-    events: Mapper<string, (...arg: any) => any>;
+    events: Mapper$1<string, (...arg: any) => any>;
     OZ: OZ;
-    constructor(xid: string, IDM?: idm, _OZ?: OZ);
+    constructor(xid: string, IDM?: Idm, _OZ?: OZ);
     attr_push(key: string, val: any, pre?: string): void;
     get attr(): string;
     set id(id: string);
@@ -1010,7 +729,7 @@ interface videoAttr<T = DVal> extends EAttr {
 }
 
 type kf = KeyframeAnimationOptions;
-type KFType = (CSSStyle | obj$1<V>)[] | CSSStyle | obj$1<V>;
+type KFType = (CSSStyle | obj<V$1>)[] | CSSStyle | obj<V$1>;
 declare class anim {
     private e;
     opt: kf;
@@ -1040,7 +759,7 @@ declare class Eget<T extends Elements = HTMLElement> {
         has: (attr: string) => boolean;
         get: (attr: string) => string | null;
         del: (attr: string) => Eget<T>;
-        set: (attrs: obj$1<any>) => Eget<T>;
+        set: (attrs: obj<any>) => Eget<T>;
     };
     get children(): Elem<T>[];
     get click(): this;
@@ -1057,7 +776,7 @@ declare class Eget<T extends Elements = HTMLElement> {
     get rect(): DOMRect;
     get remove_element(): this;
     get style(): {
-        set: (style: CSSStyle | obj$1<V | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<T>;
+        set: (style: CSSStyle | obj<V$1 | null>, delayOrFN?: number | ((e?: any) => void)) => Elem<T>;
         get: (prop: keyof CSSStyleDeclaration | string) => string;
         del: (...props: (keyof CSSStyleDeclaration | string)[]) => Elem<T>;
     };
@@ -1114,19 +833,43 @@ type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
 type $_<T extends Elements = HTMLElement> = Elem<T>;
 declare class Ref<T extends Elements = HTMLElement> {
     state: Stateful<_$<T>>;
-    constructor();
     get element(): T | undefined;
     set element(elem: T | undefined);
     get $(): _$<T>;
 }
 declare const useRef: <T extends Elements = HTMLElement>() => Ref<T>;
 
+type statefulValue<T extends any[]> = {
+    [K in keyof T]: T[K] extends Stateful<infer U> ? U : T[K];
+};
+declare class Stateful<T> extends EventTarget {
+    private options;
+    private deep;
+    private verify;
+    private hooks;
+    private states;
+    private _value;
+    private listening;
+    private end?;
+    constructor(value: T, options?: AddEventListenerOptions, deep?: boolean, verify?: boolean);
+    get value(): T;
+    set value(newValue: T);
+    get listen(): () => void;
+    call<Q>(callback: (this: Elements, arg: T) => Q, entry: string): (id: string) => () => void;
+    hook<T extends any[]>(callback: hookFN<T>): (id: string) => () => void;
+}
+declare function State<T>(value: T, options?: AddEventListenerOptions): Stateful<T>;
+/**
+ * Quick State checking - skip checking of Object keys:values as it will only be compared as a===b
+ */
+declare function QState<T>(value: T, verify?: boolean): Stateful<T>;
+
 interface renderedDom {
     ctx: string;
     oz: OZ;
-    id?: string;
+    id: string | undefined;
 }
-declare function renderDom(Dom: dom$1, pid?: idm | string): Promise<renderedDom>;
+declare function renderDom(Dom: DOM, pid?: Idm | string): Promise<renderedDom>;
 declare class DOM {
     tag: string;
     attr: attr;
@@ -1139,7 +882,7 @@ declare global {
     type events<T extends Elements = HTMLElement> = {
         [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
     } & c_events<T>;
-    type DVal<T = V | V[]> = T | Stateful<T> | undefined;
+    type DVal<T = V$1 | V$1[]> = T | Stateful<T> | undefined;
     type dom = DOM;
     type ctx<T = DVal | dom> = maybePromise<T | Stateful<T> | ctx[]>;
     type obj<T> = Record<string, T>;
@@ -1156,7 +899,7 @@ interface docObj {
     args?: obj<any>;
     data?: obj<any>;
 }
-declare class doc<T extends docObj = obj<obj<any>>> extends head {
+declare class doc<T extends docObj = obj<obj<any>>> extends Head {
     path: string;
     data: T["data"];
     args: T["args"];
@@ -1173,7 +916,7 @@ type HistoryData<S extends ExtraState = ExtraState> = (S & {
 }) | null;
 type ChangeHandler<S extends ExtraState> = (path: string, state: HistoryData<S>) => void;
 declare class PathHistory<S extends ExtraState = ExtraState> {
-    private onChange?;
+    private onChange;
     private popListener?;
     constructor(path?: Stateful<string>, isDev?: boolean, onChange?: ChangeHandler<S>);
     /** Current path (pathname + search + hash) */
@@ -1271,14 +1014,14 @@ declare class miniStormy extends MainStorage<TabPath> {
     getError(code?: number): [TabPath | undefined, Record<string, string>];
 }
 
-declare class minElements$1 extends htmlHead {
+declare class minElements$1 extends HtmlHead {
     id: string;
     data: obj<any>;
     path: Stateful<string>;
     protected _root: Stateful<any[]>;
     constructor();
     A(a: aAttr, ...ctx: ctx[]): Promise<DOM>;
-    protected _main?: (root: Stateful<any[]>) => maybePromise<dom>;
+    protected _main?: ((root: Stateful<any[]>) => maybePromise<dom>) | undefined;
     protected getMain(_class?: string | string[]): Promise<DOM>;
 }
 
@@ -1351,5 +1094,5 @@ declare class Yvee extends Router {
 }
 declare const Routes: <T>(fn: (route: Yvee["route"]) => T) => (route: Yvee["route"]) => T;
 
-export { $, DOM, IfClient, Meta, PathHistory, QState, Ref, Routes, State, StateHook, Stateful, Tabs, Time, Yvee, __, addCSS, bind, content, cssLoader, doc, dom$1 as dom, frag, log, renderDom, socket, useRef, websocket };
-export type { $_, Elements, _$, aAttr, headAttr, maybePromise, serverRender };
+export { $, DOM, MetaBuilder, PathHistory, QState, Ref, Routes, State, StateHook, Stateful, Tabs, Yvee, content, cssLoader, doc, dom$1 as dom, frag, renderDom, socket, upsertCSS, useRef, websocket };
+export type { $_, Elements, HeadAttributes, _$, aAttr, serverRender };

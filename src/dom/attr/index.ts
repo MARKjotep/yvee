@@ -1,33 +1,31 @@
-import { Elements, Ref } from "../$";
+import { type Elements, Ref } from "@$";
+import { Stateful } from "@@/stateful";
+import { CATT } from "@dom/cat";
+import type { CSSStyle } from "./style";
 import {
-  isArr,
-  isBool,
-  isFN,
-  isObj,
+  isArray,
+  isBoolean,
+  isFunction,
+  isObject,
   isPlainObject,
-  log,
   ngify,
   oItems,
-  V,
-} from "../../@";
-import { Stateful } from "../../stateful";
-import { CATT } from "../cat";
-import { CSSStyle } from "./style";
+} from "@coff-r/x";
 
 export * from "./events";
 export * from "./style";
 
 export const attr_value = (v: any): string => {
-  if (isArr(v)) {
+  if (isArray(v)) {
     return v.filter((f) => f !== undefined).join(" ");
-  } else if (isObj(v)) {
+  } else if (isObject(v)) {
     if (isPlainObject(v)) {
       return ngify(v);
     }
-  } else if (isFN(v)) {
+  } else if (isFunction(v)) {
     return attr_value((v as any)());
   } else if (v !== undefined && v !== null) {
-    return isBool(v) ? (v ? "" : "false") : String(v);
+    return isBoolean(v) ? (v ? "" : "false") : String(v);
   }
   return "";
 };
@@ -51,7 +49,7 @@ export class ATTR {
     //
     const processValue = (k: string, v: any) => {
       //
-      if (isArr(v)) {
+      if (isArray(v)) {
         catt.attr_push(k, attr_value(v), pre);
       } else if (v instanceof Stateful) {
         const entry = pre ? `${pre}_${k}` : k;
@@ -62,7 +60,7 @@ export class ATTR {
 
         processValue(k, v.value);
         //
-      } else if (isObj(v)) {
+      } else if (isObject(v)) {
         if (isPlainObject(v) && !pre) {
           this.get(catt, v as any, k);
         }
@@ -72,7 +70,8 @@ export class ATTR {
     };
 
     oItems(attr).forEach(([k, v]) => {
-      if (k === "ref") {
+      const ok = String(k);
+      if (ok === "ref") {
         if (v instanceof Ref) {
           catt.events.obj({
             element() {
@@ -80,11 +79,11 @@ export class ATTR {
             },
           });
         }
-      } else if (["on"].includes(k)) {
-        isObj(attr.on) && catt.events.obj(attr.on);
+      } else if (["on"].includes(ok)) {
+        isObject(attr.on) && catt.events.obj(attr.on);
       } else {
         if (v === undefined) return;
-        processValue(k, v);
+        processValue(ok, v);
       }
     });
   }

@@ -1,6 +1,6 @@
+import { IS_NOT_BROWSER, Mapper } from "@coff-r/x";
 import { Yvee } from "..";
-import { isNotWindow, isWindow, Mapper, oAss, obj } from "../../@";
-import { State } from "../../stateful";
+import { State } from "@@/stateful";
 
 //
 export class websocket<T = Record<string, any>> {
@@ -80,7 +80,7 @@ export class socket {
   constructor(protected yvee: Yvee) {}
   //
   async load(_path: string) {
-    if (isNotWindow) return;
+    if (IS_NOT_BROWSER) return;
     if (!websockets.has(_path)) {
       const [clientP, args] = this.yvee.storage.getWss(_path);
       if (!clientP) return;
@@ -94,7 +94,7 @@ export class socket {
     return socket;
   }
   unload(_path: string) {
-    if (isNotWindow) return;
+    if (IS_NOT_BROWSER) return;
     if (websockets.has(_path)) {
       const socket = websockets.get(_path);
       if (!socket) return;

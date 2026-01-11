@@ -1,5 +1,6 @@
-import { OZ } from "../oz";
-import { idm, Mapper, reCamel } from "../../@";
+import { Mapper, reCamel } from "@coff-r/x";
+import { Idm } from "@coff-r/x/html";
+import { OZ } from "@dom/oz";
 
 export class CATT {
   map: Mapper<string, string[]> = new Mapper();
@@ -8,7 +9,7 @@ export class CATT {
   OZ: OZ;
   constructor(
     public xid: string,
-    public IDM = new idm(),
+    public IDM = new Idm(),
     _OZ?: OZ,
   ) {
     this.OZ = _OZ ?? new OZ();

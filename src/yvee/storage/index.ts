@@ -1,4 +1,4 @@
-import { Storage, MinStorage, oAss } from "../../@";
+import { MinStorage, oAss, Storage } from "@coff-r/x";
 import { dom } from "../../dom";
 import { content } from "../content";
 import { doc } from "../doc";

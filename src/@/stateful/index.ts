@@ -1,17 +1,15 @@
 import {
   areSetsEqual,
   compareObjects,
-  isArr,
-  isNotWindow,
+  IS_NOT_BROWSER,
+  isArray,
   isPlainObject,
   keyInMap,
-  log,
   Mapper,
-  objectUdpated,
-} from "../@";
-import { Elements, getElementById } from "../dom";
-
-import { StateHook, hookFN, hookM, handleHooks } from "./hook";
+  objectUpdated,
+} from "@coff-r/x";
+import { StateHook, type hookFN, type hookM, handleHooks } from "./hook";
+import { getElementById, type Elements } from "@$";
 
 export { StateHook };
 
@@ -42,7 +40,7 @@ export class Stateful<T> extends EventTarget {
   private states: stateMapped<any> = new Mapper();
   private _value: T;
   private listening = false;
-  private end?: () => void;
+  private end?: (() => void) | undefined;
 
   constructor(
     value: T,
@@ -73,9 +71,9 @@ export class Stateful<T> extends EventTarget {
 
     // if (isNull(newValue) || isUndefined(newValue)) return;
 
-    if (isPlainObject(this._value) || isArr(this._value)) {
-      const changes = compareObjects(this._value as object, newValue);
-      if (!objectUdpated(changes)) return;
+    if (isPlainObject(this._value) || isArray(this._value)) {
+      const changes = compareObjects(this._value as object, newValue as any);
+      if (!objectUpdated(changes)) return;
     } else if (this._value instanceof Set) {
       if (!areSetsEqual(this._value, newValue as Set<T>)) return;
     } else if (this._value === newValue) return;
@@ -115,7 +113,7 @@ export class Stateful<T> extends EventTarget {
 
       keyInMap<statesM<T>>(id, this.states).set(entry, callback);
       // MapArray(id, this.states)!.push(callback);
-      if (!isNotWindow && !this.listening) {
+      if (!IS_NOT_BROWSER && !this.listening) {
         this.end = this.listen;
       }
       return () => {
@@ -127,7 +125,7 @@ export class Stateful<T> extends EventTarget {
     return (id: string) => {
       //
       this.hooks.set(id, callback);
-      if (!isNotWindow && !this.listening) {
+      if (!IS_NOT_BROWSER && !this.listening) {
         this.end = this.listen;
       }
       return () => {

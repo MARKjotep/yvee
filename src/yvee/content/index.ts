@@ -1,6 +1,6 @@
-import { headAttr, htmlHead, log, type maybePromise } from "../../@";
-import { dom } from "../../dom";
-import type { buttonAttr } from "../../dom";
+import type { maybePromise } from "@coff-r/x";
+import { dom } from "@dom";
+import type { buttonAttr } from "@dom";
 
 export interface contentObj {
   args?: obj<any>;

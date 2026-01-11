@@ -1,18 +1,10 @@
-import {
-  idm,
-  isArr,
-  isAsync,
-  isFN,
-  isObj,
-  isPromise,
-  log,
-  ngify,
-  V,
-} from "../../@";
-import { Wizard } from "../oz";
-import { Stateful } from "../../stateful";
-import { dom, DOM, Elements, renderDom } from "..";
+import { Wizard } from "@dom/oz";
+import { Stateful } from "@@/stateful";
+import { dom, DOM, renderDom } from "@dom";
 import { CATT } from "../cat";
+import { isArray, isFunction, isObject, ngify } from "@coff-r/x";
+import { Idm } from "@coff-r/x/html";
+import type { Elements } from "@$";
 
 const TAGS = [
   "area",
@@ -45,7 +37,7 @@ function escapeHTML(input: string) {
 
 const ctx_value = async (cc: any, catt: CATT): Promise<string> => {
   cc = await Promise.resolve(cc);
-  if (isArr(cc)) {
+  if (isArray(cc)) {
     const results: string[] = [];
     for (const c of cc) {
       results.push(await ctx_value(c, catt));
@@ -55,12 +47,12 @@ const ctx_value = async (cc: any, catt: CATT): Promise<string> => {
     const { ctx, oz } = await renderDom(cc, catt.IDM);
     catt.OZ.push(oz);
     return ctx;
-  } else if (isObj(cc)) {
+  } else if (isObject(cc)) {
     if (cc instanceof Set) {
       return [...cc].join(" ");
     }
     return ngify(cc);
-  } else if (isFN(cc)) {
+  } else if (isFunction(cc)) {
     return await ctx_value((cc as any)(), catt);
   } else if (cc !== undefined && cc !== null) {
     return escapeHTML(cc);
@@ -69,7 +61,7 @@ const ctx_value = async (cc: any, catt: CATT): Promise<string> => {
 };
 
 export const processCTXStateful = async (value: any, xid?: string) => {
-  const ndm = new idm(xid);
+  const ndm = new Idm(xid);
   const catt = new CATT(ndm.id, ndm);
   const ctx = await ctx_value(value, catt);
   return { ctx, catt };
@@ -93,7 +85,7 @@ export const processCTX = async (
   catt: CATT,
   inner: string[] = [],
 ) => {
-  if (isArr(v)) {
+  if (isArray(v)) {
     for (const vv of v) {
       await processCTX(vv, v.length, catt, inner);
     }
@@ -126,7 +118,6 @@ export class CTX {
     const selfClosing = hasTag(tag);
     this.closing = selfClosing ? "" : `</${tag}>`;
   }
-
   private async process(
     catt: CATT,
     ctx: any[] = this.ctx,

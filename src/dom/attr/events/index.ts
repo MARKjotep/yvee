@@ -1,5 +1,5 @@
-import { Elements } from "../../$";
-import { Stateful } from "../../../stateful";
+import type { Elements } from "@$";
+import { Stateful } from "@@/stateful";
 
 export interface c_events<T extends Elements = HTMLElement> {
   state?: (

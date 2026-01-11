@@ -1,5 +1,5 @@
-import { Stateful, statefulValue } from "..";
-import { isNotWindow, Mapper, maybePromise } from "../../@";
+import type { Mapper, maybePromise } from "@coff-r/x";
+import { Stateful, type statefulValue } from "..";
 
 export type hookFN<T extends any[]> = (
   ...args: statefulValue<T>

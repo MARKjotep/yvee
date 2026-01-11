@@ -1,5 +1,5 @@
-import { isWindow, log } from "../../@";
-import { State, Stateful } from "../../stateful";
+import { State, Stateful } from "@@/stateful";
+import { IS_BROWSER } from "@coff-r/x";
 
 // browser-path-history.ts
 export type ExtraState = Record<string, unknown>;
@@ -13,8 +13,8 @@ type ChangeHandler<S extends ExtraState> = (
 ) => void;
 
 export class PathHistory<S extends ExtraState = ExtraState> {
-  private onChange?: ChangeHandler<S>;
-  private popListener?: (e: PopStateEvent) => void;
+  private onChange: ChangeHandler<S> | undefined;
+  private popListener?: ((e: PopStateEvent) => void) | undefined;
 
   constructor(
     path: Stateful<string> = State(""),
@@ -43,7 +43,7 @@ export class PathHistory<S extends ExtraState = ExtraState> {
 
       this.onChange?.(this.path(), state);
     };
-    if (isWindow) {
+    if (IS_BROWSER) {
       window.addEventListener("popstate", this.popListener);
     }
   }

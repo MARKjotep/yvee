@@ -1,7 +1,10 @@
-import { oAss } from "@coff-r/x";
-import type { Elem } from "../$";
-import type { kf } from "./types";
-import type { CSSStyle } from "../../attr";
+import { oAss, type V } from "@coff-r/x";
+import { Elem } from "./";
+
+import type { CSSStyle } from "@dom/attr";
+
+export type kf = KeyframeAnimationOptions;
+export type KFType = (CSSStyle | obj<V>)[] | CSSStyle | obj<V>;
 
 export class anim {
   opt: kf;

@@ -10,12 +10,10 @@
     "dist"
   ],
   "scripts": {
-    "util": "cp -r ../misc/util ./",
-    "dirs": "for dir in ./src ./dist ./test ./util ./types; do mkdir -p $dir; done",
-    "@": "ln -sf ../../misc/@/ ./src",
-    "ts": "ln -sf ../misc/tsconfig.json ./;",
-    "init": "bun run dirs && bun run util && bun run @ && bun run ts;",
-    "build": "rm -r ./types ; tsc && bun build ./src/index.ts --outdir ./dist --minify --packages external --target browser && rollup -c ./util/rollup.config.js"
+    "dirs": "for dir in ./src ./dist ./test ./types; do mkdir -p $dir; done",
+    "src": "for dx in /app /features /shared; do mkdir -p ./src$dx; done",
+    "ts": "cp ../misc/tsconfig.json ./; cp ../misc/tsconfig.build.json ./; cp ../misc/builder.ts",
+    "init": "bun run dirs && bun run src && bun run ts;"
   },
   "repository": {
     "type": "git",
@@ -27,14 +25,10 @@
   "homepage": "https://github.com/MARKjotep/yvee#readme",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^4.53.2",
-    "rollup-plugin-dts": "^6.2.3",
     "@coff-r/oven": "link:@coff-r/oven",
     "@coff-r/x": "link:@coff-r/x"
   },
-  "peerDependencies": {
-    "typescript": "^5.7.3"
-  },
+  "peerDependencies": {},
   "directories": {
     "test": "test"
   },

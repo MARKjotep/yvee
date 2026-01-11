@@ -1,20 +1,18 @@
-import { idm, isFN, log, type maybePromise, type V } from "../@";
 import { CATT } from "./cat";
-import { Stateful } from "../stateful";
-import { Elements } from "./$";
-import {
-  ATTR,
-  c_events,
-  EAttr,
-  ElementAttributes,
-  SVGAttributes,
-} from "./attr";
+import { Stateful } from "@@/stateful";
+import type { Elements } from "@$";
+
 import { CTX } from "./ctx";
 import { OZ } from "./oz";
-
-export * from "./$";
-export * from "./oz";
-export * from "./cat";
+import { Idm } from "@coff-r/x/html";
+import { isFunction, type maybePromise, type V } from "@coff-r/x";
+import {
+  ATTR,
+  type c_events,
+  type EAttr,
+  type ElementAttributes,
+  type SVGAttributes,
+} from "./attr";
 
 export type { aAttr, buttonAttr } from "./attr";
 
@@ -25,23 +23,23 @@ export type { aAttr, buttonAttr } from "./attr";
 */
 
 export async function MainDom(_dom: DOM, id: string) {
-  return await renderDom(_dom, new idm(id));
+  return await renderDom(_dom, new Idm(id));
 }
 
 export interface renderedDom {
   ctx: string;
   oz: OZ;
-  id?: string;
+  id: string | undefined;
 }
 
 export async function renderDom(
-  Dom: dom,
-  pid: idm | string = new idm(),
+  Dom: DOM,
+  pid: Idm | string = new Idm(),
 ): Promise<renderedDom> {
   const { tag, attr, ctx } = await Promise.resolve(Dom);
 
-  const _pid = pid instanceof idm ? pid : new idm(pid);
-  const id = _pid.mid;
+  const _pid = pid instanceof Idm ? pid : new Idm(pid);
+  const id = _pid.nextId;
   const catt = new CATT(id, _pid);
   const _attr = new ATTR(attr);
   const _ctx = new CTX(tag, ctx);
@@ -68,7 +66,7 @@ export async function dom(
   attr: attr | null = {},
   ...ctx: ctx[]
 ) {
-  if (isFN(tag)) {
+  if (isFunction(tag)) {
     return await tag(attr ?? {}, ...ctx);
   }
   return new DOM(tag, attr ?? {}, ctx);

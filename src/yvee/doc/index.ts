@@ -1,30 +1,29 @@
 import { Yvee } from "..";
-import {
-  _htmlHead,
-  head,
-  headAttr,
-  headType,
-  htmlHead,
-  isArr,
-  isFN,
-  isModule,
-  isNotWindow,
-  log,
-  oAss,
-  V,
-} from "../../@";
-import { maybePromise } from "../../@";
-import { aAttr, dom } from "../../dom";
+
+import { type aAttr, dom } from "@dom";
 import { LINK } from "./link";
 import { META } from "./meta";
 import { SCRPT } from "./script";
+import {
+  isArray,
+  isFunction,
+  isModule,
+  oAss,
+  type maybePromise,
+} from "@coff-r/x";
+import {
+  Head,
+  HtmlHead,
+  type HeadAttributes,
+  type headType,
+} from "@coff-r/x/html";
 
 export interface docObj {
   args?: obj<any>;
   data?: obj<any>;
 }
 
-export class doc<T extends docObj = obj<obj<any>>> extends head {
+export class doc<T extends docObj = obj<obj<any>>> extends Head {
   path: string = "";
   data: T["data"] = {};
   args: T["args"] = {};
@@ -59,20 +58,20 @@ export async function getBody(
   let val: any = v || "";
   if (isModule(v)) {
     const vd = v.default;
-    const _args = isFN(args) ? args() : args;
-    val = isFN(vd) ? await vd.apply({}, _args) : vd;
+    const _args = isFunction(args) ? args() : args;
+    val = isFunction(vd) ? await vd.apply({}, _args) : vd;
   }
-  return isArr(val) ? val : [val];
+  return isArray(val) ? val : [val];
 }
 
 function getHeads(this: Yvee, _doc: doc) {
-  const mh = new htmlHead({
+  const mh = new HtmlHead({
     push: { rt: this.id },
   });
 
   mh.htmlHead = structuredClone(this.htmlHead);
 
-  mh.head(_doc as headAttr);
+  mh.head(_doc as HeadAttributes);
 
   return mh.htmlHead;
 }

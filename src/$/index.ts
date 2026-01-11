@@ -1,6 +1,12 @@
-import { isNotWindow, isPlainObject, isStr, Mapper, oItems } from "../../@";
-import { Stateful } from "../../stateful";
+import { Stateful } from "@@/stateful";
 import { Elem } from "./element";
+import {
+  IS_NOT_BROWSER,
+  isPlainObject,
+  isString,
+  Mapper,
+  oItems,
+} from "@coff-r/x";
 
 export type Elements =
   | HTMLElementTagNameMap[keyof HTMLElementTagNameMap]
@@ -11,7 +17,7 @@ export type TagNames = keyof HTMLElementTagNameMap | keyof SVGElementTagNameMap;
 const ElementIds: Mapper<string, Elements> = new Mapper();
 
 export const getElementById = (key: string): Elements | undefined => {
-  if (isNotWindow) return;
+  if (IS_NOT_BROWSER) return;
 
   const cached = ElementIds.get(key);
 
@@ -56,23 +62,28 @@ export function $<T extends Elements = HTMLElement>(element: T): Elem<T>;
 export function $<
   T extends Elements = HTMLElement,
   P extends Elements = HTMLElement,
->(element: T | string | CLI, parent?: P) {
-  const doc = parent ? parent : document;
-  if (isStr(element)) {
-    const QD = doc.querySelector(element);
-    if (QD) return new Elem<T>(QD as T, element);
-    return undefined;
-  } else if (isPlainObject(element)) {
-    //
-    const [[k, v]] = oItems(element as CLI);
-    let prefix = k === "id" ? "#" : ".";
-    let el = `${prefix}${v}`;
-    const QD = doc.querySelector(el);
-    if (QD) return new Elem<T>(QD as T, el);
-    return undefined;
-  } else {
-    return new Elem<T>(element as T);
+>(arg: T | string | CLI, parent?: P) {
+  if (IS_NOT_BROWSER) return undefined;
+
+  const doc: ParentNode = (parent ?? document) as unknown as ParentNode;
+
+  const fromQuery = (selector: string): Elem<T> | undefined => {
+    const found = doc.querySelector(selector);
+    return found ? new Elem<T>(found as T, selector) : undefined;
+  };
+
+  if (isString(arg)) {
+    return fromQuery(arg);
   }
+
+  if (isPlainObject(arg)) {
+    const [key, value] = oItems<CLI>(arg)[0]!;
+
+    const prefix = key === "id" ? "#" : ".";
+    return fromQuery(`${prefix}${value}`);
+  }
+
+  return new Elem<T>(arg as T);
 }
 export type _$<T extends Elements = HTMLElement> = Elem<T> | undefined;
 export type $_<T extends Elements = HTMLElement> = Elem<T>;

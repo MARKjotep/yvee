@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "esnext",
     "module": "esnext",
     "lib": ["ESNext", "DOM"],
@@ -35,11 +35,19 @@
     // Modern TS hygiene:
     "verbatimModuleSyntax": true,
     "paths": {
-      "@app/*": ["./src/app/*"],
-      "@shared/*": ["./src/shared/*"],
-      "@features/*": ["./src/features/*"]
+      "@dom/*": ["./src/dom/*"],
+      "@dom": ["./src/dom"],
+      //
+      "@$/*": ["./src/$/*"],
+      "@$": ["./src/$"],
+      //
+      "@yvee/*": ["./src/yvee/*"],
+      "@yvee": ["./src/yvee"],
+      //
+      //
+      "@@/*": ["./src/@/*"]
     }
     //
   },
-  "exclude": ["dist"]
+  "exclude": ["dist", "types"]
 }

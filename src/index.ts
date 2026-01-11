@@ -1,6 +1,8 @@
-export { __, log, Meta, cssLoader, addCSS, Time, IfClient, bind } from "./@";
-export { DOM, dom, frag, $, useRef, Ref, renderDom } from "./dom";
-export { QState, State, Stateful, StateHook } from "./stateful";
+export { __, log, Time, IfClient, bind } from "@coff-r/x";
+export { MetaBuilder, cssLoader, upsertCSS } from "@coff-r/x/html";
+export { DOM, dom, frag, renderDom } from "@dom";
+export { $, useRef, Ref } from "@$";
+export { QState, State, Stateful, StateHook } from "@@/stateful";
 
 export {
   doc,
@@ -14,6 +16,8 @@ export {
 } from "./yvee";
 
 /**types */
-export type { maybePromise, headAttr } from "./@";
-export type { Elements, _$, $_, aAttr } from "./dom";
+export type { maybePromise } from "@coff-r/x";
+export type { HeadAttributes } from "@coff-r/x/html";
+export type { Elements, _$, $_ } from "@$";
+export type { aAttr } from "@dom";
 export type { serverRender } from "./yvee";

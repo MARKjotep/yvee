@@ -1,9 +1,11 @@
-import { bind, htmlHead, makeID, maybePromise } from "../../@";
-import { $, dom } from "../../dom";
+import { dom } from "@dom";
 import type { aAttr } from "../../dom";
-import { State, Stateful } from "../../stateful";
+import { State, Stateful } from "@@/stateful";
+import { HtmlHead } from "@coff-r/x/html";
+import { bind, makeID, type maybePromise } from "@coff-r/x";
+import { $ } from "@$";
 
-export class minElements extends htmlHead {
+export class minElements extends HtmlHead {
   id: string;
   data: obj<any>;
   path: Stateful<string>;
@@ -29,7 +31,7 @@ export class minElements extends htmlHead {
     };
     return dom("a", { on: _e, ..._a }, ...ctx);
   }
-  protected _main?: (root: Stateful<any[]>) => maybePromise<dom>;
+  protected _main?: ((root: Stateful<any[]>) => maybePromise<dom>) | undefined;
   protected async getMain(_class?: string | string[]) {
     return await dom(
       "main",

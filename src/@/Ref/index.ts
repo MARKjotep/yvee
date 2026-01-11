@@ -1,6 +1,6 @@
-import type { _$, Elements } from "../../dom";
-import { Elem } from "../../dom/$/element";
-import { Stateful } from "../../stateful";
+import { Elem } from "@$/element";
+import type { _$, Elements } from "@$";
+import { Stateful } from "@@/stateful";
 
 export class Ref<T extends Elements = HTMLElement> {
   state = new Stateful<_$<T>>(undefined);

@@ -1,5 +1,5 @@
-import { log, metaLoader, obj, oItems, oLen, oVals } from "../../@";
-import { $ } from "../../dom";
+import { $ } from "@$";
+import { oItems, oVals } from "@coff-r/x";
 
 const GID = ["charset", "name", "property", "http-equiv"];
 export async function META(meta?: obj<obj<string>>) {
@@ -10,7 +10,7 @@ export async function META(meta?: obj<obj<string>>) {
     const mattr = (ml as HTMLElement).attributes;
     for (const g of GID) {
       if (g in mattr) {
-        const mmg = mattr[g as any].value;
+        const mmg = mattr[g as any]!.value;
         mg[`${g}_${g === "charset" ? "" : mmg}`] = ml as HTMLElement;
       }
     }
@@ -18,7 +18,7 @@ export async function META(meta?: obj<obj<string>>) {
   if (meta) {
     oItems(meta).forEach(([k, v]) => {
       if (k in mg) {
-        $(mg[k]).attr.set(v);
+        $(mg[k]!)!.attr.set(v);
         delete mg[k];
       } else {
         const _mm = $(document.createElement("meta"));
