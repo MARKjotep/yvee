@@ -3,3 +3,7 @@ test/yvee-bun/client/
 test-results/
 playwright-report/
 blob-report/
+.DS_Store
+.vscode
+bun.lockb
+types
