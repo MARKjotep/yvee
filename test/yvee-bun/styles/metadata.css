@@ -1,0 +1,33 @@
+.metadata-card {
+  color: #193b37;
+  border: 1px solid #cfe0da;
+  background: linear-gradient(145deg, #fff, #eef6f2);
+  box-shadow: 0 22px 70px #18372e18;
+}
+
+.metadata-intro { max-width: 760px; margin-bottom: 2rem; }
+.metadata-intro .eyebrow, .metadata-checklist .eyebrow { color: #47796e; }
+.metadata-intro h1 { max-width: 720px; font-size: clamp(3rem, 8vw, 5.6rem); letter-spacing: -.075em; }
+.metadata-intro > p:last-child, .metadata-checklist > p:last-of-type { max-width: 680px; color: #5e746d; font-size: 1.08rem; }
+.payload-panel { margin-top: 1rem; padding: clamp(1.2rem, 3vw, 2rem); border: 1px solid #d7e4de; border-radius: 16px; background: #fff; }
+.payload-panel--client { border-color: #d9dfc7; background: #fcfdf7; }
+.panel-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.3rem; }
+.panel-heading .eyebrow { margin: 0; color: #68877e; }
+.panel-heading h2 { font-size: clamp(1.35rem, 3vw, 1.9rem); }
+.status-pill { flex: 0 0 auto; padding: .38rem .7rem; border-radius: 999px; font-size: .75rem; font-weight: 750; letter-spacing: .03em; }
+.status-pill--server { color: #1b6656; background: #e0f2e9; }
+.status-pill--waiting { color: #7a6028; background: #f6efd9; }
+.status-pill--ok { color: #315b28; background: #e5f1d8; }
+.payload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; margin: 0; }
+.payload-grid > div { min-width: 0; padding: .8rem; border-radius: 10px; background: #f4f8f5; }
+.payload-grid dt { margin-bottom: .3rem; color: #71857b; font-size: .7rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.payload-grid dd { overflow-wrap: anywhere; margin: 0; color: #24443d; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88rem; }
+.waiting-copy { margin-bottom: 0; color: #6e705a; }
+.waiting-copy code { padding: .1rem .35rem; border-radius: 5px; background: #f1f0e4; }
+.metadata-checklist { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #d7e4de; }
+.metadata-checklist h2 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.metadata-checklist .route-link { color: #246354; }
+@media (max-width: 620px) {
+  .panel-heading { flex-direction: column; }
+  .payload-grid { grid-template-columns: 1fr; }
+}

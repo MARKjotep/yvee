@@ -1,0 +1,9 @@
+.home-card {
+  color: #17345f;
+  border: 1px solid #cbd9ef;
+  background: linear-gradient(145deg, #fff, #e8f1ff);
+  box-shadow: 0 20px 60px #284c801a;
+}
+
+.home-card .eyebrow { color: #3564a4; }
+.home-card .route-link { color: #174f9e; }

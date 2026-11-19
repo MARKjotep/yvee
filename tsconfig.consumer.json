@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": { "@/*": ["./src/*"], "yvee": ["./src/index.ts"] }
+  },
+  "include": ["type-tests/**/*.ts", "type-tests/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "types"]
+}

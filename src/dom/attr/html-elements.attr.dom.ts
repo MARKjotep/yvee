@@ -1,0 +1,172 @@
+import type { EAttr } from "./base.attr.dom";
+import type {
+  aAttr,
+  areaAttr,
+  audioAttr,
+  baseAttr,
+  blockquoteAttr,
+  buttonAttr,
+  canvasAttr,
+  colAttr,
+  colgroupAttr,
+  dataAttr,
+  delAttr,
+  detailsAttr,
+  dialogAttr,
+  fieldsetAttr,
+  formAttr,
+  iframeAttr,
+  imgAttr,
+  inputAttr,
+  insAttr,
+  labelAttr,
+  liAttr,
+  linkAttr,
+  mapAttr,
+  menuAttr,
+  metaAttr,
+  meterAttr,
+  objectAttr,
+  olAttr,
+  optgroupAttr,
+  optionAttr,
+  outputAttr,
+  paramAttr,
+  progressAttr,
+  qAttr,
+  scriptAttr,
+  selectAttr,
+  sourceAttr,
+  styleAttr,
+  tdAttr,
+  textareaAttr,
+  thAttr,
+  timeAttr,
+  trackAttr,
+  videoAttr,
+} from "./html-tags.attr.dom";
+
+export interface ElementAttributes {
+  link: linkAttr;
+  base: baseAttr;
+  meta: metaAttr;
+
+  // Basic ----------------------------------
+  p: EAttr;
+  br: EAttr;
+  hr: EAttr;
+  h: EAttr;
+  cmnt: EAttr;
+  root: EAttr;
+
+  // Styles and Semantics ----------------------------------
+  div: EAttr;
+  span: EAttr;
+  header: EAttr;
+  hgroup: EAttr;
+  footer: EAttr;
+  main: EAttr;
+  section: EAttr;
+  search: EAttr;
+  article: EAttr;
+  aside: EAttr;
+  details: detailsAttr;
+  dialog: dialogAttr;
+  summary: EAttr;
+  data: dataAttr;
+  // Programming ----------------------------------
+  noscript: EAttr;
+  object: objectAttr;
+  param: paramAttr;
+  script: scriptAttr;
+  output: outputAttr;
+  // Links ----------------------------------
+  a: aAttr;
+  nav: EAttr;
+  style: styleAttr;
+  // Audio / Video ----------------------------------
+  audio: audioAttr;
+  video: videoAttr;
+  source: sourceAttr;
+  track: trackAttr;
+  // Images ----------------------------------
+  img: imgAttr;
+  map: mapAttr;
+  area: areaAttr;
+  canvas: canvasAttr;
+  figcaption: EAttr;
+  figure: EAttr;
+  picture: EAttr;
+  // IFrame ----------------------------------
+  iframe: iframeAttr;
+  // Forms and Input ----------------------------------
+  form: formAttr;
+  input: inputAttr;
+  textarea: textareaAttr;
+  button: buttonAttr;
+  select: selectAttr;
+  optgroup: optgroupAttr;
+  option: optionAttr;
+  label: labelAttr;
+  fieldset: fieldsetAttr;
+  legend: EAttr;
+  datalist: EAttr;
+  // Tables ----------------------------------
+  table: EAttr;
+  caption: EAttr;
+  th: thAttr;
+  tr: EAttr;
+  td: tdAttr;
+  thead: EAttr;
+  tbody: EAttr;
+  tfoot: EAttr;
+  col: colAttr;
+  colgroup: colgroupAttr;
+  // Formatting ----------------------------------
+
+  b: EAttr;
+  i: EAttr;
+  q: qAttr;
+  s: EAttr;
+  u: EAttr;
+  em: EAttr;
+  rp: EAttr;
+  del: delAttr;
+  dfn: EAttr;
+  ins: insAttr;
+  kbd: EAttr;
+  pre: EAttr;
+  sub: EAttr;
+  sup: EAttr;
+  var: EAttr;
+  wbr: EAttr;
+  cite: EAttr;
+  time: timeAttr;
+  abbr: EAttr;
+  code: EAttr;
+  mark: EAttr;
+  samp: EAttr;
+  meter: meterAttr;
+  small: EAttr;
+  strong: EAttr;
+  address: EAttr;
+  progress: progressAttr;
+  template: EAttr;
+  blockquote: blockquoteAttr;
+  // List ----------------------------------
+  menu: menuAttr;
+  ul: EAttr;
+  ol: olAttr;
+  li: liAttr;
+  dl: EAttr;
+  dt: EAttr;
+  dd: EAttr;
+
+  h1: EAttr;
+  h2: EAttr;
+  h3: EAttr;
+  h4: EAttr;
+  h5: EAttr;
+  h6: EAttr;
+}
+

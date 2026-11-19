@@ -1,0 +1,39 @@
+.studio-card {
+  overflow: hidden;
+  color: #18372e;
+  border: 1px solid #d7e5d9;
+  background: #fbfcf8;
+  box-shadow: 0 22px 70px #18372e18;
+}
+
+.studio-intro { max-width: 760px; padding-bottom: 1.5rem; }
+.studio-intro .eyebrow, .studio-story .eyebrow, .field-notes .eyebrow { color: #527a5a; }
+.studio-intro h1 { max-width: 720px; font-size: clamp(3.2rem, 9vw, 6.4rem); letter-spacing: -.075em; }
+.studio-lede { max-width: 620px; color: #63796a; font-size: clamp(1.05rem, 2.4vw, 1.35rem); }
+.studio-hero {
+  display: flex;
+  min-height: clamp(280px, 48vw, 540px);
+  align-items: flex-end;
+  padding: 1.2rem;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #10201900 55%, #102019b5), url("/assets/greenhouse-hero.png") center 48% / cover;
+}
+.studio-hero__caption { display: flex; width: 100%; justify-content: space-between; gap: 1rem; color: white; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; text-shadow: 0 1px 8px #07130f; }
+.studio-story { display: grid; grid-template-columns: minmax(220px, .8fr) 1.2fr; gap: clamp(1.5rem, 5vw, 5rem); padding: clamp(2rem, 7vw, 5rem) 0; border-bottom: 1px solid #dce5dc; }
+.studio-story h2, .section-heading h2, .metadata-card h2 { margin: .3rem 0; font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.08; letter-spacing: -.05em; }
+.studio-story > p { align-self: end; max-width: 590px; margin: 0; color: #52685a; font-size: 1.08rem; }
+.section-heading { display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-bottom: 1.1rem; }
+.section-count { color: #719077; font-size: .8rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.field-note-list { border-top: 1px solid #dce5dc; }
+.field-note { display: grid; grid-template-columns: 3rem 1fr auto; align-items: center; gap: 1rem; padding: 1.2rem 0; border-bottom: 1px solid #dce5dc; }
+.field-note__number { color: #75927a; font-size: .8rem; font-weight: 750; }
+.field-note h3 { margin: 0; font-size: clamp(1rem, 2.5vw, 1.3rem); }
+.field-note__type { color: #718174; font-size: .82rem; }
+.studio-footer { display: flex; justify-content: space-between; gap: 1rem; padding-top: 2rem; color: #54705b; font-size: .9rem; font-weight: 700; }
+.studio-footer a { color: #315d3c; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+@media (max-width: 680px) {
+  .studio-story { grid-template-columns: 1fr; gap: 1rem; }
+  .field-note { grid-template-columns: 2rem 1fr; }
+  .field-note__type { grid-column: 2; }
+  .studio-footer { flex-direction: column; }
+}

@@ -1,0 +1,5 @@
+node_modules/
+test/yvee-bun/client/
+test-results/
+playwright-report/
+blob-report/

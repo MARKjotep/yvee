@@ -1,0 +1,42 @@
+{
+  "name": "yvee",
+  "version": "0.0.11",
+  "description": "Yvee JS client framework",
+  "author": "Marky <markjotep@gmail.com>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "init": "bun update && mkdir -p ./src ./dist  ./types && {  [ ! -f ./src/index.ts ] && touch ./src/index.ts; }",
+    "test": "bun test",
+    "test:browser": "playwright test",
+    "test:types": "tsc --noEmit -p tsconfig.consumer.json",
+    "demo": "bun run test/yvee-bun/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MARKjotep/yvee.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MARKjotep/yvee/issues"
+  },
+  "homepage": "https://github.com/MARKjotep/yvee#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@ohmyqt/oven": "link:@ohmyqt/oven",
+    "@ohmyqt/u": "link:@ohmyqt/u",
+    "@playwright/test": "^1.65.1",
+    "@types/bun": "^1.4.4",
+    "fake-indexeddb": "^6.2.8",
+    "typescript": "5.9.3"
+  },
+  "peerDependencies": {},
+  "directories": {
+    "test": "test"
+  },
+  "type": "module"
+}

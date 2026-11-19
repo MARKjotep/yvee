@@ -1,0 +1,9 @@
+.features-card {
+  color: #463317;
+  border: 1px solid #ead6b6;
+  background: linear-gradient(145deg, #fffdf7, #fff0d8);
+  box-shadow: 0 20px 60px #805b281a;
+}
+
+.features-card .eyebrow { color: #98651c; }
+.features-card .route-link { color: #9b5412; }
