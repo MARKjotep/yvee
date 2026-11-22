@@ -1,7 +1,19 @@
 {
   "name": "yvee",
   "version": "0.1.0",
-  "description": "Yvee JS client framework",
+  "description": "TypeScript UI framework with reactive state, a TSX renderer, client-side routing with guards, server-side rendering, and browser storage and network helpers.",
+  "keywords": [
+    "typescript",
+    "ui",
+    "framework",
+    "reactive",
+    "tsx",
+    "ssr",
+    "routing",
+    "spa",
+    "indexeddb",
+    "websockets"
+  ],
   "author": "Marky <markjotep@gmail.com>",
   "license": "MIT",
   "main": "dist/index.js",
