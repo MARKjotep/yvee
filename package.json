@@ -33,7 +33,9 @@
     "test": "bun test",
     "test:browser": "playwright test",
     "test:types": "tsc --noEmit -p tsconfig.consumer.json",
-    "demo": "bun run test/yvee-bun/server.ts"
+    "demo": "bun run test/yvee-bun/server.ts",
+    "build": "bun builder.ts",
+    "prepublishOnly": "bun test && bun run build"
   },
   "repository": {
     "type": "git",
