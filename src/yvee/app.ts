@@ -26,7 +26,7 @@ export interface YveeOptions {
   base?: string;
   history?: boolean;
   id?: string;
-  /** Browser entry directory or JavaScript file URL. Defaults to `/client`, which resolves to `/client/index.js`. */
+  /** Browser entry directory or JavaScript file URL. Defaults to `.`, which resolves to `./index.js` relative to the app's base URL. */
   client?: string;
   index?: string;
 }
@@ -92,10 +92,12 @@ export class Yvee<
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1.0" },
       ],
-      script: [{
-        type: "module",
-        src: resolveClientEntry(options.client ?? "/client"),
-      }],
+      script: [
+        {
+          type: "module",
+          src: resolveClientEntry(options.client ?? "."),
+        },
+      ],
       ...(options.index ? { js: options.index } : {}),
     });
 
@@ -189,6 +191,23 @@ export class Yvee<
     return this.routes.all(transport);
   }
 
+  /** Page paths including the base, with parameter names used as sample values. */
+  listPaths(): string[] {
+    return [...new Set(this.routes.all("page").map(({ path }) =>
+      path.split("/").map(segment =>
+        segment.startsWith(":") ? segment.slice(1) : segment,
+      ).join("/"),
+    ))];
+  }
+
+  /** Render a concrete route URL to a complete HTML document without mounting. */
+  renderHTML(
+    url: ServerRequest<T>["url"],
+    options: Omit<ServerRequest<T>, "url"> = {},
+  ): Promise<string> {
+    return this.server()({ ...options, url });
+  }
+
   render(options: MountOptions<T> = {}): RenderResult<T> {
     const inBrowser = typeof document !== "undefined";
     this.data =
@@ -201,16 +220,18 @@ export class Yvee<
       data: this.data,
     });
     const mount = inBrowser
-      ? this.client.mount({
-          ...(options.id ? { id: options.id } : {}),
-          ...(options.class ? { className: options.class } : {}),
-          ...(options.hydrate === undefined
-            ? {}
-            : { hydrate: options.hydrate }),
-          ...(options.nonce === undefined ? {} : { nonce: options.nonce }),
-        }).then(() => {
-          document.body.dataset.yveeReady = "true";
-        })
+      ? this.client
+          .mount({
+            ...(options.id ? { id: options.id } : {}),
+            ...(options.class ? { className: options.class } : {}),
+            ...(options.hydrate === undefined
+              ? {}
+              : { hydrate: options.hydrate }),
+            ...(options.nonce === undefined ? {} : { nonce: options.nonce }),
+          })
+          .then(() => {
+            document.body.dataset.yveeReady = "true";
+          })
       : Promise.resolve(() => {});
     // A default-exported render result can start browser mounting without a
     // separate client entry awaiting it. Keep its rejection observable to
@@ -277,7 +298,9 @@ function readBootstrapData<T extends Record<string, unknown>>(): T | undefined {
 }
 
 function resolveClientEntry(client: string) {
-  const path = client.startsWith("/") ? client : `/${client}`;
+  const path = client.startsWith("/") || client.startsWith(".")
+    ? client
+    : `/${client}`;
   return /\.js(?:[?#]|$)/i.test(path)
     ? path
     : `${path.replace(/\/+$/, "")}/index.js`;

@@ -2,7 +2,6 @@ import { Roll, Oven } from "@ohmyqt/oven";
 
 const Ov = new Oven({
   external: [],
-  target: "browser",
 });
 
 const RP = new Roll({
@@ -18,7 +17,13 @@ Ov.onsuccess = async () => {
     path: "./tsconfig.build.json",
   });
 
-  await RP.output({ file: "./index.d.ts", format: "esm" });
+  // Keep wildcard asset declarations in a separate ambient declaration file.
+  await Bun.write("./dist/assets.d.ts", Bun.file("./src/assets.d.ts"));
+  await RP.output({
+    file: "./index.d.ts",
+    format: "esm",
+    banner: '/// <reference path="./assets.d.ts" />',
+  });
 };
 
 await Ov.build();

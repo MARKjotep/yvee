@@ -82,9 +82,10 @@ export function createServerRenderer<TData extends Record<string, unknown>>(
     let failed = false;
     try {
       signal.throwIfAborted();
+      const input = data ?? options.data ?? context.data;
       const payload = options.dataFactory
         ? await options.dataFactory({ ...request, signal, onDispose: cleanup => { cleanups.push(cleanup); } })
-        : snapshotData(data ?? options.data ?? context.data);
+        : snapshotData(input);
       signal.throwIfAborted();
       const loaded = await resolvePage(context, url, payload, error, signal);
       if (loaded.kind === "stop") {
@@ -94,7 +95,15 @@ export function createServerRenderer<TData extends Record<string, unknown>>(
       const head = combineHead(context.defaults, loaded.head);
       const body = await renderBody(loaded.body, context.layout, options.class, id, nonce);
       const status = loaded.status;
-      const html = await renderDocument(body, head, id, status, nonce, payload);
+      const html = await renderDocument(
+        body,
+        head,
+        id,
+        status,
+        nonce,
+        payload,
+        options.dataFactory ? input : undefined,
+      );
       signal.throwIfAborted();
       return { html, status };
     } catch (error) {
@@ -167,7 +176,8 @@ async function renderDocument(
   id: string,
   status: number,
   nonce: string | undefined,
-  data: Record<string, unknown>,
+  data: unknown,
+  fallback?: unknown,
 ) {
   // SSR head nodes use a stable owner because the browser app may generate a
   // different runtime ID when it hydrates this document.
@@ -175,10 +185,27 @@ async function renderDocument(
   return [
     "<!doctype html>",
     '<html lang="en">',
-    `<head>${headHTML}${renderJSONScript(data, { id: "ssr", ...(nonce === undefined ? {} : { nonce }) })}</head>`,
+    `<head>${headHTML}${renderBootstrap(data, nonce, fallback)}</head>`,
     `<body id="${escapeAttribute(id)}"${status >= 400 ? ` data-error="${Number(status)}"` : ""}>${body}</body>`,
     "</html>",
   ].join("");
+}
+
+function renderBootstrap(data: unknown, nonce: string | undefined, fallback?: unknown) {
+  const options = { id: "ssr", ...(nonce === undefined ? {} : { nonce }) };
+  try {
+    return renderJSONScript(data, options);
+  } catch (error) {
+    // dataFactory results may own request services that cannot cross to the
+    // browser. Fall back to the request input, then omit the bootstrap data.
+    if (fallback === undefined || !(error instanceof TypeError)) throw error;
+    try {
+      return renderJSONScript(fallback, options);
+    } catch (fallbackError) {
+      if (!(fallbackError instanceof TypeError)) throw fallbackError;
+      return "";
+    }
+  }
 }
 
 async function renderHead(head: HeadConfig, owner: string, nonce?: string) {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { RouteBook, route, routeMetadata, socketRoute } from "../../src/yvee/routing/routes";
 import { Page } from "../../src/yvee/pages/page";
 import { SocketController } from "../../src/yvee/platform/websocket";
+import { Yvee } from "../../src/yvee";
 
 @route("/users/:id")
 class UserPage extends Page {}
@@ -10,6 +11,23 @@ class UserPage extends Page {}
 class ChatSocket extends SocketController {}
 
 describe("Yvee routing", () => {
+  it("lists unique page paths with base paths and sample parameter values", () => {
+    const app = new Yvee({ base: "/app" });
+    app.route("/")(Page);
+    app.route("/users/:id")(UserPage);
+    app.route("/users/id")(Page);
+    app.route("/teams/:team/users/:user_id")(Page);
+    app.register(ChatSocket);
+    app.routes.add("/chat", ChatSocket, "socket");
+
+    expect(app.listPaths()).toEqual([
+      "/app", "/app/users/id", "/app/teams/team/users/user_id",
+    ]);
+    expect(app.listRoutes("page")[1]?.path).toBe("/app/users/:id");
+    expect(new Yvee().listPaths()).toEqual([]);
+    expect(new Yvee().register(UserPage).listPaths()).toEqual(["/users/id"]);
+  });
+
   it("normalizes paths and captures decoded named parameters", () => {
     const routes = new RouteBook("/app");
     routes.add("/users/:id/", UserPage);

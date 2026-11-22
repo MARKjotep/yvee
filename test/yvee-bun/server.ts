@@ -4,8 +4,6 @@ import { clientDirectory, clientName } from "./client-config";
 import { createRequestData, handlePayloadPost } from "./data";
 import type AppEntry from "./index";
 
-import Appy from "./client";
-
 const port = Number(Bun.env.YVEE_BUN_PORT ?? 3847);
 
 // Build from the current source on startup so SSR and hydration use the same runtime.
@@ -127,7 +125,7 @@ const server = Bun.serve({
 
     const data = createRequestData(`${url.pathname}${url.search}`);
 
-    const { html, status } = await Appy.withStatus({
+    const { html, status } = await App.withStatus({
       url: request.url,
       data,
       signal: request.signal,

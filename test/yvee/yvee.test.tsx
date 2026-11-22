@@ -92,7 +92,7 @@ describe("Yvee server rendering", () => {
 
     expect(html).toContain('<body id="portal-root">');
     expect(html).toContain("Item 42");
-    expect(html).toContain("<title>Item 42</title>");
+    expect(html).toContain('<title data-yv="root">Item 42</title>');
     expect(html).toContain('content="A rendered item"');
   });
 

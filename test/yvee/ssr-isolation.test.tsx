@@ -106,7 +106,7 @@ describe('SSR request isolation', () => {
   });
 });
 
-it('keeps stateful body/head IDs deterministic per seed without retaining browser bindings', async () => {
+it('keeps stateful body IDs per seed and SSR head IDs stable without retaining browser bindings', async () => {
   class ReactivePage extends Page {
     label = State('same');
     override body() { return <p>{this.label}</p>; }
@@ -116,9 +116,13 @@ it('keeps stateful body/head IDs deterministic per seed without retaining browse
   const render = app.server();
   const html = await Promise.all(Array.from({ length: 10 }, () => render({ url: '/' })));
   expect(new Set(html).size).toBe(1);
-  expect(html[0]).toContain('id="request-root:h-0"');
+  // SSR head nodes use the stable `root:h` seed when they render, while the
+  // document/body root uses the per-render app or server id.
+  expect(html[0]).toContain('id="root:h-0"');
+  expect(html[0]).toContain('<body id="request-root">');
   const other = await app.server({ id: 'other-root' })({ url: '/' });
-  expect(other).toContain('id="other-root:h-0"');
+  expect(other).toContain('id="root:h-0"');
+  expect(other).toContain('<body id="other-root">');
   expect(other).not.toContain('id="request-root');
   expect(Wizard.keys).toEqual([]);
 });
@@ -151,4 +155,35 @@ it('releases every request subscription across overlapping successful and failed
   expect(live).toBe(0);
   source.dispatchEvent(new Event('ping'));
   expect(notifications).toBe(0);
+});
+
+it('falls back to request data when a factory payload is not JSON serializable', async () => {
+  const render = new Yvee().server({
+    dataFactory: () => ({ service: () => 'server-only' }),
+  });
+  const html = await render({ url: '/', data: { name: 'alice' } });
+  const json = /<script type="application\/json" id="ssr">([\s\S]*?)<\/script>/.exec(html)?.[1];
+  expect(JSON.parse(json ?? 'null')).toEqual({ name: 'alice' });
+  expect(html).not.toContain('server-only');
+});
+
+it('omits bootstrap data when the factory payload and request input both fail serialization', async () => {
+  const app = new Yvee({ id: 'omit-root' }); app.route('/')(Page);
+  const render = app.server({
+    dataFactory: () => ({ service: () => 'server-only' }),
+  });
+  const html = await render({ url: '/', data: { request: () => 'request-only' } });
+  expect(html).toStartWith('<!doctype html>');
+  expect(html).toContain('<body id="omit-root">');
+  expect(html).not.toContain('<script type="application/json"');
+  expect(html).not.toContain('id="ssr"');
+  expect(html).not.toContain('server-only');
+  expect(html).not.toContain('request-only');
+});
+
+it('propagates non-TypeError bootstrap serialization failures instead of falling back', async () => {
+  const render = new Yvee().server({
+    dataFactory: () => ({ value: { toJSON() { throw new Error('boom'); } } }),
+  });
+  await expect(render({ url: '/', data: { fallback: true } })).rejects.toThrow('boom');
 });

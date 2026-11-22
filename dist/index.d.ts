@@ -1,3 +1,4 @@
+/// <reference path="./assets.d.ts" />
 type V$1 = string | number | boolean;
 type CSSStyle$1 = Record<string, V$1 | null | undefined | {
     readonly value: unknown;
@@ -100,8 +101,8 @@ declare class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     animate(keyframes: KFType, onComplete?: fn<any, void>): this;
     query(query: string): T | null;
     queryAll(query: string): T[];
-    newChild<P>(element: keyof HTMLElementTagNameMap, props?: Record<string, P>): Elem<HTMLElement | HTMLObjectElement | HTMLMapElement | HTMLDataElement | HTMLScriptElement | HTMLStyleElement | HTMLHtmlElement | HTMLAnchorElement | HTMLAreaElement | HTMLAudioElement | HTMLBaseElement | HTMLQuoteElement | HTMLBodyElement | HTMLBRElement | HTMLButtonElement | HTMLCanvasElement | HTMLTableCaptionElement | HTMLTableColElement | HTMLDataListElement | HTMLModElement | HTMLDetailsElement | HTMLDialogElement | HTMLDivElement | HTMLDListElement | HTMLEmbedElement | HTMLFieldSetElement | HTMLFormElement | HTMLHeadingElement | HTMLHeadElement | HTMLHRElement | HTMLIFrameElement | HTMLImageElement | HTMLInputElement | HTMLLabelElement | HTMLLegendElement | HTMLLIElement | HTMLLinkElement | HTMLMenuElement | HTMLMetaElement | HTMLMeterElement | HTMLOListElement | HTMLOptGroupElement | HTMLOptionElement | HTMLOutputElement | HTMLParagraphElement | HTMLPictureElement | HTMLPreElement | HTMLProgressElement | HTMLSelectElement | HTMLSlotElement | HTMLSourceElement | HTMLSpanElement | HTMLTableElement | HTMLTableSectionElement | HTMLTableCellElement | HTMLTemplateElement | HTMLTextAreaElement | HTMLTimeElement | HTMLTitleElement | HTMLTableRowElement | HTMLTrackElement | HTMLUListElement | HTMLVideoElement>;
-    newChildNS<P>(element: keyof SVGElementTagNameMap, props?: Record<string, P>): Elem<SVGSymbolElement | SVGFilterElement | SVGScriptElement | SVGStyleElement | SVGAElement | SVGTitleElement | SVGAnimateElement | SVGAnimateMotionElement | SVGAnimateTransformElement | SVGCircleElement | SVGClipPathElement | SVGDefsElement | SVGDescElement | SVGEllipseElement | SVGFEBlendElement | SVGFEColorMatrixElement | SVGFEComponentTransferElement | SVGFECompositeElement | SVGFEConvolveMatrixElement | SVGFEDiffuseLightingElement | SVGFEDisplacementMapElement | SVGFEDistantLightElement | SVGFEDropShadowElement | SVGFEFloodElement | SVGFEFuncAElement | SVGFEFuncBElement | SVGFEFuncGElement | SVGFEFuncRElement | SVGFEGaussianBlurElement | SVGFEImageElement | SVGFEMergeElement | SVGFEMergeNodeElement | SVGFEMorphologyElement | SVGFEOffsetElement | SVGFEPointLightElement | SVGFESpecularLightingElement | SVGFESpotLightElement | SVGFETileElement | SVGFETurbulenceElement | SVGForeignObjectElement | SVGGElement | SVGImageElement | SVGLineElement | SVGLinearGradientElement | SVGMarkerElement | SVGMaskElement | SVGMetadataElement | SVGMPathElement | SVGPathElement | SVGPatternElement | SVGPolygonElement | SVGPolylineElement | SVGRadialGradientElement | SVGRectElement | SVGSetElement | SVGStopElement | SVGSVGElement | SVGSwitchElement | SVGTextElement | SVGTextPathElement | SVGTSpanElement | SVGUseElement | SVGViewElement>;
+    newChild<P>(element: keyof HTMLElementTagNameMap, props?: Record<string, P>): Elem<HTMLAnchorElement | HTMLAreaElement | HTMLAudioElement | HTMLBRElement | HTMLBaseElement | HTMLBodyElement | HTMLButtonElement | HTMLCanvasElement | HTMLDListElement | HTMLDataElement | HTMLDataListElement | HTMLDetailsElement | HTMLDialogElement | HTMLDivElement | HTMLElement | HTMLEmbedElement | HTMLFieldSetElement | HTMLFormElement | HTMLHRElement | HTMLHeadElement | HTMLHeadingElement | HTMLHtmlElement | HTMLIFrameElement | HTMLImageElement | HTMLInputElement | HTMLLIElement | HTMLLabelElement | HTMLLegendElement | HTMLLinkElement | HTMLMapElement | HTMLMenuElement | HTMLMetaElement | HTMLMeterElement | HTMLModElement | HTMLOListElement | HTMLObjectElement | HTMLOptGroupElement | HTMLOptionElement | HTMLOutputElement | HTMLParagraphElement | HTMLPictureElement | HTMLPreElement | HTMLProgressElement | HTMLQuoteElement | HTMLScriptElement | HTMLSelectElement | HTMLSlotElement | HTMLSourceElement | HTMLSpanElement | HTMLStyleElement | HTMLTableCaptionElement | HTMLTableCellElement | HTMLTableColElement | HTMLTableElement | HTMLTableRowElement | HTMLTableSectionElement | HTMLTemplateElement | HTMLTextAreaElement | HTMLTimeElement | HTMLTitleElement | HTMLTrackElement | HTMLUListElement | HTMLVideoElement>;
+    newChildNS<P>(element: keyof SVGElementTagNameMap, props?: Record<string, P>): Elem<SVGAElement | SVGAnimateElement | SVGAnimateMotionElement | SVGAnimateTransformElement | SVGCircleElement | SVGClipPathElement | SVGDefsElement | SVGDescElement | SVGEllipseElement | SVGFEBlendElement | SVGFEColorMatrixElement | SVGFEComponentTransferElement | SVGFECompositeElement | SVGFEConvolveMatrixElement | SVGFEDiffuseLightingElement | SVGFEDisplacementMapElement | SVGFEDistantLightElement | SVGFEDropShadowElement | SVGFEFloodElement | SVGFEFuncAElement | SVGFEFuncBElement | SVGFEFuncGElement | SVGFEFuncRElement | SVGFEGaussianBlurElement | SVGFEImageElement | SVGFEMergeElement | SVGFEMergeNodeElement | SVGFEMorphologyElement | SVGFEOffsetElement | SVGFEPointLightElement | SVGFESpecularLightingElement | SVGFESpotLightElement | SVGFETileElement | SVGFETurbulenceElement | SVGFilterElement | SVGForeignObjectElement | SVGGElement | SVGImageElement | SVGLineElement | SVGLinearGradientElement | SVGMPathElement | SVGMarkerElement | SVGMaskElement | SVGMetadataElement | SVGPathElement | SVGPatternElement | SVGPolygonElement | SVGPolylineElement | SVGRadialGradientElement | SVGRectElement | SVGSVGElement | SVGScriptElement | SVGSetElement | SVGStopElement | SVGStyleElement | SVGSwitchElement | SVGSymbolElement | SVGTSpanElement | SVGTextElement | SVGTextPathElement | SVGTitleElement | SVGUseElement | SVGViewElement>;
     get<K extends keyof T>(property: K): T[K];
     get(property: string): unknown;
 }
@@ -1254,18 +1255,18 @@ interface RouteMatch<T> {
 }
 declare function error(status: number): <T extends Constructor<Page>>(controller: T) => T;
 declare const page: (path?: string) => <T extends Constructor>(controller: T) => T;
-declare const route: (path?: string) => <T extends Constructor>(controller: T) => T;
+declare const route: typeof page;
 declare const socketRoute: (path?: string) => <T extends Constructor>(controller: T) => T;
 declare class RouteBook<T = unknown> {
     private readonly base;
     private readonly entries;
     constructor(base?: string);
     add(path: string, controller: Constructor<T>, transport?: Transport): {
-        controller: Constructor<T>;
-        transport: Transport;
         path: string;
         expression: RegExp;
         names: string[];
+        controller: Constructor<T>;
+        transport: Transport;
     };
     find(path: string, transport?: Transport): RouteMatch<T> | undefined;
     all(transport?: Transport): RouteEntry<T>[];
@@ -1392,7 +1393,7 @@ interface YveeOptions {
     base?: string;
     history?: boolean;
     id?: string;
-    /** Browser entry directory or JavaScript file URL. Defaults to `/client`, which resolves to `/client/index.js`. */
+    /** Browser entry directory or JavaScript file URL. Defaults to `.`, which resolves to `./index.js` relative to the app's base URL. */
     client?: string;
     index?: string;
 }
@@ -1438,6 +1439,10 @@ declare class Yvee<T extends Record<string, unknown> = Record<string, unknown>> 
     error(code: number, controller: Constructor<Page>): this;
     register(...controllers: Constructor[]): this;
     listRoutes(transport?: Transport): RouteEntry<unknown>[];
+    /** Page paths including the base, with parameter names used as sample values. */
+    listPaths(): string[];
+    /** Render a concrete route URL to a complete HTML document without mounting. */
+    renderHTML(url: ServerRequest<T>["url"], options?: Omit<ServerRequest<T>, "url">): Promise<string>;
     render(options?: MountOptions<T>): RenderResult<T>;
     dispose(): void;
     server(options?: ServerOptions<T>): ServerRenderer<T>;

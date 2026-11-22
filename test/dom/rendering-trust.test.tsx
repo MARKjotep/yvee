@@ -73,7 +73,18 @@ describe('rendering trust boundaries', () => {
   it('propagates response nonces through configured and nested TSX scripts/styles', async () => {
     const elements = [await dom('script', {}, 'globalThis.ok = true'), await dom('style', {}, 'body { color: red }')];
     const html = await renderHead({ script: [{ body: '1', nonce: 'wrong' }], js: '/app.js', style: 'p {}', elements }, 'request-nonce');
-    expect(html.match(/nonce="request-nonce"/g)).toHaveLength(5);
+    // Five scripts (default client entry, configured inline script, app.js,
+    // nested TSX script, bootstrap JSON) and two styles (configured plus TSX).
+    expect(html.match(/<script[^>]*nonce="request-nonce"/g)).toHaveLength(5);
+    expect(html.match(/<style[^>]*nonce="request-nonce"/g)).toHaveLength(2);
+    expect(html.match(/nonce="request-nonce"/g)).toHaveLength(7);
+    expect(html).toContain('<script type="module" src="./index.js" nonce="request-nonce"');
+    expect(html).toContain('<script nonce="request-nonce"');
+    expect(html).toContain('<script src="/app.js" nonce="request-nonce"');
+    expect(html).toContain('<script data-yv="root" nonce="request-nonce">globalThis.ok = true</script>');
+    expect(html).toContain('<script type="application/json" id="ssr" nonce="request-nonce"');
+    expect(html).toContain('<style nonce="request-nonce" data-yv="root">p {}</style>');
+    expect(html).toContain('<style data-yv="root" nonce="request-nonce">body { color: red }</style>');
     expect(html).not.toContain('nonce="wrong"');
     const body = await renderDom(new DOM('main', {}, elements), new Idm('root', 0, 'body-nonce'));
     expect(body.ctx.match(/nonce="body-nonce"/g)).toHaveLength(2);

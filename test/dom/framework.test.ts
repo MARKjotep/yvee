@@ -50,9 +50,11 @@ installTestBrowser();
 const { Elem } = await import("../../src/$/element/element.$");
 const { $, getElementById } = await import("../../src/$/query.$");
 const { Ref, RefState } = await import("../../src/core/ref.core");
-const { RecState, State } = await import("../../src/core/state/stateful.core");
+const { RecState, State, Stateful } = await import("../../src/core/state/stateful.core");
 const { dom, renderDom } = await import("../../src/dom/dom.dom");
 const { Idm } = await import("../../src/dom/render/idm.dom");
+const { CATT } = await import("../../src/dom/render/cat.dom");
+const { OZ } = await import("../../src/dom/render/oz.dom");
 const { Wizard } = await import("../../src/dom/render/oz.dom");
 restoreGlobals();
 
@@ -73,6 +75,26 @@ describe("framework basics", () => {
     count.value = 1;
 
     expect(count.value).toBe(1);
+  });
+
+  it("unloads state event subscriptions when their owning element is reset", async () => {
+    const state = new Stateful(0);
+    const seen: number[] = [];
+    const catt = new CATT("state-owner");
+    catt.setId("state-owner");
+    catt.states.push(state.call(function (value: number) { seen.push(value); }, "event-state"));
+    const oz = new OZ().set(catt);
+    mountedElements.set("state-owner", new TestElement("state-owner"));
+
+    await oz.stage();
+    state.value = 1;
+    await state.flush();
+    expect(seen).toEqual([1]);
+
+    oz.reset(["state-owner"]);
+    state.value = 2;
+    await state.flush();
+    expect(seen).toEqual([1]);
   });
 
   it("deletes falsey values from record state", () => {
