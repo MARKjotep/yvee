@@ -89,6 +89,11 @@ every other result. Guard redirects are followed internally before rendering;
 normally. Global guards are skipped while the 403 page renders so the same
 rejection cannot suppress it.
 
+The `<body data-error="...">` marker is part of the hydration contract: it is
+read as an error-page hint during the initial load, then preserved for error
+pages and removed for success pages. After hydration, `document.body.dataset.error`
+matches the committed page's error status, or is absent for a `2xx`/`3xx` page.
+
 Request URLs are normalized to root-relative paths before page selection. `""`
 and `"?"` render the home page, a bare `"about"` is treated as `/about`, and query
 strings or fragments do not affect which page loads. When no page matches, the

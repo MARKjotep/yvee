@@ -167,6 +167,12 @@ your own page for a status to override them; a registered 403 page is used for
 server guard stops. The server renderer exposes the status through
 `withStatus()`; see [Server rendering](rendering.md#server-rendering).
 
+Server-rendered error pages carry `<body data-error="<status>">`. Hydration reads
+that marker as a load hint and preserves it on error pages, so clients and tests
+can key off `document.body.dataset.error` after mount. Success pages have no
+`data-error` attribute, and a committed client-side navigation keeps the marker
+in step with the current page status.
+
 ## Inspecting routes
 
 `app.listRoutes(transport?)` returns the registered route entries. `app.listPaths()`

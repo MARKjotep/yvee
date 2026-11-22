@@ -177,9 +177,13 @@ export class YveeClient {
     const originalURL = url;
     const controller = new AbortController();
     this.activeLoad = controller;
+    // Read the SSR hint before clearing it so a stop or failed load can put the
+    // original marker back exactly as the server delivered it.
+    const body = document.body;
+    const marker = body.dataset.error;
+    delete body.dataset.error;
     try {
-      const initialStatus = Number(document.body.dataset.error);
-      delete document.body.dataset.error;
+      const initialStatus = Number(marker);
       let result = await this.options.load(url, controller.signal,
         initialStatus >= 400 && initialStatus <= 599 ? initialStatus : undefined);
       let redirectCount = 0;
@@ -191,7 +195,12 @@ export class YveeClient {
       }
 
       if (urlKey(url) !== urlKey(originalURL)) this.history.write(url, undefined, true);
+      if (result.kind === "ready") reconcileBodyError(result.status, body);
+      else if (marker !== undefined) body.dataset.error = marker;
       return result;
+    } catch (error) {
+      if (marker !== undefined) body.dataset.error = marker;
+      throw error;
     } finally {
       if (this.activeLoad === controller) this.activeLoad = undefined;
     }
@@ -288,6 +297,9 @@ export class YveeClient {
     try { previousPage?.(); } catch (error) { this.options.onError?.(error, result.url); }
     this.view.remember(result.body, combineHead(this.options.getHead(), result.head));
     this.currentURL = result.url;
+    // Keep the SSR body marker in step with the committed page so a hydrated
+    // error page cannot leave a stale marker after a successful navigation.
+    reconcileBodyError(result.status);
     if (!this.options.useHistory) {
       this.accessibility.commit(result.url, () => this.mounted && revision === this.revision);
       this.options.onLoading(false);
@@ -400,4 +412,9 @@ export class YveeClient {
     this.history.reset();
     if (errors.length) throw new AggregateError(errors, "App disposal failed.");
   }
+}
+
+function reconcileBodyError(status: number, body: HTMLElement = document.body) {
+  if (status >= 400) body.dataset.error = String(status);
+  else delete body.dataset.error;
 }
