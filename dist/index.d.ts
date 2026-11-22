@@ -1332,6 +1332,8 @@ interface ServerRequest<TData> {
 interface ServerStatusResult {
     html: string;
     status: number;
+    /** Present only when a guard stopped the requested page; currently `"guard-stop"`. */
+    reason?: string;
 }
 interface ServerDataContext<TData> extends ServerRequest<TData> {
     signal: AbortSignal;
@@ -1409,7 +1411,13 @@ interface MountOptions<T> {
  * In a browser it also behaves like the mount promise for backwards-compatible
  * client startup (`app.render().then(...)`).
  */
-type RenderResult<T extends Record<string, unknown>> = ServerRenderer<T> & Promise<() => void>;
+type RenderResult<T extends Record<string, unknown>> = ServerRenderer<T> & Promise<() => void> & {
+    /**
+     * The Yvee instance that produced this renderer; call `listPaths()` or
+     * `listRoutes()` on it from built bundles, tests, and static-export tooling.
+     */
+    readonly app: Yvee<T>;
+};
 
 declare class Yvee<T extends Record<string, unknown> = Record<string, unknown>> extends HeadDefaults {
     readonly id: string;

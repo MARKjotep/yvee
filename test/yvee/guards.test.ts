@@ -38,9 +38,43 @@ describe("guard helpers", () => {
     }
     const app = new Yvee().register(route("/users/:id")(UserPage));
     app.use(paramsGuard({ id: (value) => /^\d+$/.test(value) }));
-    await expect(app.server()({ url: "/users/invalid" })).rejects.toThrow("stopped by a guard");
+    const stopped = await app.server().withStatus({ url: "/users/invalid" });
+    expect(stopped.status).toBe(403);
+    expect(stopped.reason).toBe("guard-stop");
+    expect(stopped.html).toContain('data-error="403"');
     expect(fetched).toBe(false);
     await app.server()({ url: "/users/42" });
     expect(fetched).toBe(true);
+  });
+
+  it("renders a registered 403 page for a guard stop and marks only that result", async () => {
+    class GuardedPage extends Page {
+      override body() { return "Guarded content"; }
+    }
+    class ForbiddenPage extends Page {
+      override body() { return "Forbidden"; }
+    }
+    const app = new Yvee({ history: false });
+    app.register(route("/guard/:param")(GuardedPage));
+    app.error(403, ForbiddenPage);
+    app.use(paramsGuard({ param: (value) => value === "ok" }));
+
+    const stopped = await app.server().withStatus({ url: "/guard/nope" });
+    expect(stopped.status).toBe(403);
+    expect(stopped.reason).toBe("guard-stop");
+    expect(stopped.html).toContain('data-error="403"');
+    expect(stopped.html).toContain("Forbidden");
+    expect(stopped.html).not.toContain("Guarded content");
+
+    const allowed = await app.server().withStatus({ url: "/guard/ok" });
+    expect(allowed.status).toBe(200);
+    expect("reason" in allowed).toBe(false);
+    expect(allowed.html).toContain("Guarded content");
+
+    const explicit = await app.server().withStatus({ url: "/guard/ok", error: 403 });
+    expect(explicit.status).toBe(403);
+    expect("reason" in explicit).toBe(false);
+    expect(explicit.html).toContain('data-error="403"');
+    expect(explicit.html).toContain("Forbidden");
   });
 });

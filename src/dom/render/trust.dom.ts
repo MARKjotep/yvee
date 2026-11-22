@@ -25,7 +25,9 @@ function validateURL(value: string, attribute: string) {
   const normalized = value.replace(/[\u0000-\u0020\u007f]/g, '');
   const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(normalized)?.[1]?.toLowerCase();
   if (!scheme || ['http', 'https'].includes(scheme)) return;
-  if ((attribute === 'href' || attribute === 'xlink:href') && ['mailto', 'tel'].includes(scheme)) return;
+  // Top-level navigation ignores data: URLs, so they are inert as links and
+  // may pass through literally; src and srcset keep their stricter rules.
+  if ((attribute === 'href' || attribute === 'xlink:href') && ['mailto', 'tel', 'data'].includes(scheme)) return;
   if (attribute === 'src' && /^data:image\/(?:png|gif|jpeg|webp|avif);base64,[a-z0-9+/=]*$/i.test(normalized)) return;
   throw new TypeError(`Unsupported URL scheme in ${attribute}: ${scheme}`);
 }

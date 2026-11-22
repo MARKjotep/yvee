@@ -186,4 +186,35 @@ describe("head asset resolution during server rendering", () => {
     expect(html).toContain('href="https://cdn.example.com"');
     expect(html).toContain('href="//cdn.example.com/font.woff2"');
   });
+
+  it("passes data: hrefs through byte-identically in SSR", async () => {
+    const app = new Yvee({ history: false });
+    app.register(AboutPage);
+    const href = "data:image/svg+xml;base64,PHN2Zy8+";
+    app.head({ link: [{ rel: "icon", href }] });
+
+    const html = await app.renderHTML("/about");
+
+    expect(html).toContain(`href="${href}"`);
+  });
+
+  it("still rejects executable hrefs during SSR", async () => {
+    const app = new Yvee({ history: false });
+    app.register(AboutPage);
+    app.head({ link: [{ rel: "icon", href: "javascript:alert(1)" }] });
+
+    await expect(app.renderHTML("/about")).rejects.toThrow("URL scheme");
+  });
+
+  it("keeps the stricter src data: rules during SSR", async () => {
+    const imageApp = new Yvee({ history: false });
+    imageApp.register(AboutPage);
+    imageApp.head({ js: ["data:image/png;base64,YQ=="] });
+    expect(await imageApp.renderHTML("/about")).toContain('src="data:image/png;base64,YQ=="');
+
+    const dataApp = new Yvee({ history: false });
+    dataApp.register(AboutPage);
+    dataApp.head({ js: ["data:text/javascript,alert(1)"] });
+    await expect(dataApp.renderHTML("/about")).rejects.toThrow("URL scheme");
+  });
 });

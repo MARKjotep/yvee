@@ -68,9 +68,9 @@ in [guard-design.md](guard-design.md).
 | --- | --- |
 | `ServerOptions<TData>` | SSR app options including document root metadata, data defaults and a per-request `dataFactory`. |
 | `ServerRequest<TData>` | One render request: URL, optional data/error, CSP nonce and abort signal. |
-| `ServerStatusResult` | `{ html, status }` returned by `ServerRenderer.withStatus()`. |
+| `ServerStatusResult` | `{ html, status, reason? }` returned by `ServerRenderer.withStatus()`. `reason` is `"guard-stop"` only when a guard stopped the page and the 403 error result was rendered. |
 | `ServerDataContext<TData>` | Request data-factory input with normalized signal and `onDispose` registration. |
-| `ServerRenderer<TData>` | Callable HTML renderer with `withStatus()` for the HTML and status pair. Request URLs are normalized to root-relative paths; malformed and traversal-like input renders `404` rather than throwing. |
+| `ServerRenderer<TData>` | Callable HTML renderer with `withStatus()` for the HTML, status and optional guard-stop reason. Request URLs are normalized to root-relative paths; malformed and traversal-like input renders `404` rather than throwing. |
 | `HeadConfig` | Document metadata and resources: title, base, meta, links, scripts, styles, CSS/JS URLs and reactive DOM elements. `./`/`../` asset values in link `href`, `css`, `js` and script `src` resolve against the head `base` when emitted. |
 | `HeadResult` | Head input accepted from a page or app: `HeadConfig`, DOM node, trusted style string, or nothing. |
 | `HeadDefaults` | Accumulates app-level head values; `head()` adds defaults inherited by page head values. |

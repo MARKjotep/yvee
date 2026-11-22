@@ -76,9 +76,18 @@ const renderPage = app.server({ id: "app-root" });
 const html = await renderPage({ url: "/users/42" });
 ```
 
-`renderPage.withStatus(request)` returns `{ html, status }`. A server request
-accepts `url`, `data`, `error`, `nonce` and `signal`. Data is passed to the page
-and its `fetch` method; `error` selects a registered error page.
+`renderPage.withStatus(request)` returns `{ html, status, reason? }`. A server
+request accepts `url`, `data`, `error`, `nonce` and `signal`. Data is passed to
+the page and its `fetch` method; `error` selects a registered error page.
+
+A guard `stop` does not reject the render. The registered 403 error page (or the
+built-in failure page) renders inside the app shell with
+`<body data-error="403">`, and the result is
+`{ status: 403, html, reason: "guard-stop" }`. The `reason` field is absent from
+every other result. Guard redirects are followed internally before rendering;
+`allow`, `void` and other continuing decisions render the requested page
+normally. Global guards are skipped while the 403 page renders so the same
+rejection cannot suppress it.
 
 Request URLs are normalized to root-relative paths before page selection. `""`
 and `"?"` render the home page, a bare `"about"` is treated as `/about`, and query
@@ -240,11 +249,13 @@ DOM rendering, reactive attributes, configured head attributes and
   `onload`, etc.) and `srcdoc` are rejected. Register functions with
   `on={{ ... }}`.
 - URL attributes accept relative URLs and HTTP(S). `href`/`xlink:href` also
-  accept `mailto:` and `tel:`. `src` accepts base64 PNG, GIF, JPEG, WebP and AVIF
-  images. Other explicit schemes, SVG data URLs and data URLs in `srcset` are
-  rejected. `srcset` accepts comma-separated URL/descriptor candidates. These
-  checks do not restrict HTTP(S) destinations; use application policy and CSP
-  for that.
+  accept `mailto:`, `tel:` and literal `data:` values; browsers block top-level
+  navigation to `data:` URLs, so they are inert as links and pass through
+  unchanged. `src` accepts base64 PNG, GIF, JPEG, WebP and AVIF images. Other
+  explicit schemes, SVG data URLs and non-image `data:` URLs in `src`, and any
+  data URL in `srcset`, are rejected. `srcset` accepts comma-separated
+  URL/descriptor candidates. These checks do not restrict HTTP(S) destinations;
+  use application policy and CSP for that.
 - Inline script/style children must be static trusted text. Configured head code
   and TSX code reject HTML closing-tag sequences that could terminate their
   container. Script HTML-comment/open-script sequences are also rejected. Code

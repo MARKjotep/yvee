@@ -22,7 +22,7 @@ describe('rendering trust boundaries', () => {
   });
 
   it('rejects executable URLs and attributes in DOM and head rendering', async () => {
-    for (const value of ['javascript:alert(1)', 'JaVa\nScRiPt:alert(1)', 'vbscript:x', 'data:text/html,x']) {
+    for (const value of ['javascript:alert(1)', 'JaVa\nScRiPt:alert(1)', 'vbscript:x']) {
       await expect(renderDom(new DOM('a', { href: value }, []))).rejects.toThrow('URL scheme');
       await expect(renderHead({ link: [{ href: value }] })).rejects.toThrow('URL scheme');
     }
@@ -35,9 +35,11 @@ describe('rendering trust boundaries', () => {
   });
 
   it('allows documented URL schemes and raster image data while rejecting SVG and data srcsets', () => {
-    for (const value of ['/relative', '#anchor', '//example.com/x', 'https://example.com', 'mailto:a@b', 'tel:123']) {
+    for (const value of ['/relative', '#anchor', '//example.com/x', 'https://example.com', 'mailto:a@b', 'tel:123', 'data:image/svg+xml,<svg/>', 'data:text/html,<p>x</p>']) {
       expect(() => validateAttribute('href', value)).not.toThrow();
+      expect(() => validateAttribute('xlink:href', value)).not.toThrow();
     }
+    expect(() => validateAttribute('src', 'data:text/plain,hi')).toThrow();
     expect(() => validateAttribute('src', 'data:image/png;base64,YQ==')).not.toThrow();
     expect(() => validateAttribute('src', 'data:image/svg+xml;base64,YQ==')).toThrow();
     expect(() => validateAttribute('srcset', '/a.png 1x, https://example.com/b.png 2x')).not.toThrow();

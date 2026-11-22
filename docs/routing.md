@@ -82,6 +82,14 @@ type GuardResult =
   | { kind: "redirect"; to: string; replace?: boolean };
 ```
 
+In the browser a stop or redirect controls navigation. During server rendering a
+stop is not an exception: `withStatus()` renders the app's 403 error page (or the
+built-in failure page) inside the app shell with `<body data-error="403">` and
+resolves `{ status: 403, html, reason: "guard-stop" }`. A redirect is followed
+internally and the target page renders; `allow`, `void` and other continuing
+decisions render the requested page normally. The `reason` field appears only on
+guard-stopped server results.
+
 Create reusable guards with `createGuard()` and attach them with `@use(...)` or
 for the whole app with `app.use(...)`:
 
@@ -155,8 +163,9 @@ app.register(NotFoundPage);
 ```
 
 `MissingPage` and `FailurePage` are the default 404 and 500 controllers. Register
-your own page for a status to override them. The server renderer exposes the
-status through `withStatus()`; see [Server rendering](rendering.md#server-rendering).
+your own page for a status to override them; a registered 403 page is used for
+server guard stops. The server renderer exposes the status through
+`withStatus()`; see [Server rendering](rendering.md#server-rendering).
 
 ## Inspecting routes
 

@@ -115,7 +115,7 @@ describe("Yvee server rendering", () => {
     expect(html).toContain("Home route");
   });
 
-  it("does not render a route when a server guard stops it", async () => {
+  it("resolves a 403 result when a server guard stops it", async () => {
     class PrivatePage extends Page {
       override body() {
         return <h1>Private content</h1>;
@@ -126,9 +126,12 @@ describe("Yvee server rendering", () => {
     app.register(route("/private")(PrivatePage));
     app.use(() => ({ kind: "stop" }));
 
-    await expect(app.server()({ url: "/private" })).rejects.toThrow(
-      "stopped by a guard",
-    );
+    const result = await app.server().withStatus({ url: "/private" });
+
+    expect(result.status).toBe(403);
+    expect(result.reason).toBe("guard-stop");
+    expect(result.html).toContain('data-error="403"');
+    expect(result.html).not.toContain("Private content");
   });
 
   it("renders a registered 500 page when a page fails", async () => {

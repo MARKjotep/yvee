@@ -10,7 +10,7 @@ import type { Layout } from "../client/mount";
 import { combineHead, renderHeadElements, resolveHeadAssets, type HeadConfig } from "./head";
 import type { Guard } from "../guards";
 import { loadPage, type PageLoad } from "../client/load-page";
-import type { Page } from "../pages/page";
+import { FailurePage, type Page } from "../pages/page";
 import type { YveeURL } from "../routing/path";
 import { toURL } from "../routing/path";
 import type { Constructor, RouteBook } from "../routing/routes";
@@ -34,6 +34,8 @@ export interface ServerRequest<TData> {
 export interface ServerStatusResult {
   html: string;
   status: number;
+  /** Present only when a guard stopped the requested page; currently `"guard-stop"`. */
+  reason?: string;
 }
 
 export interface ServerDataContext<TData> extends ServerRequest<TData> {
@@ -80,6 +82,7 @@ export function createServerRenderer<TData extends Record<string, unknown>>(
     const cleanups: (() => void | Promise<void>)[] = [];
     let failure: unknown;
     let failed = false;
+    let reason: string | undefined;
     try {
       signal.throwIfAborted();
       const input = data ?? options.data ?? context.data;
@@ -87,9 +90,17 @@ export function createServerRenderer<TData extends Record<string, unknown>>(
         ? await options.dataFactory({ ...request, signal, onDispose: cleanup => { cleanups.push(cleanup); } })
         : snapshotData(input);
       signal.throwIfAborted();
-      const loaded = await resolvePage(context, url, payload, error, signal);
+      let loaded = await resolvePage(context, url, payload, error, signal);
       if (loaded.kind === "stop") {
-        throw new Error(`Yvee server rendering was stopped by a guard for ${url.path}`);
+        reason = "guard-stop";
+        // A guard stop is a 403. Skip global guards for the error page so the
+        // same rejection cannot suppress it; error-page guards still apply.
+        loaded = await resolvePage({ ...context, guards: [] }, url, payload, 403, signal);
+        if (loaded.kind === "stop") {
+          const page = new FailurePage();
+          page.status = 403;
+          loaded = { kind: "ready", status: 403, body: [page.body()], head: {}, url };
+        }
       }
       if (loaded.dispose) cleanups.push(loaded.dispose);
       const head = combineHead(context.defaults, loaded.head);
@@ -105,7 +116,7 @@ export function createServerRenderer<TData extends Record<string, unknown>>(
         options.dataFactory ? input : undefined,
       );
       signal.throwIfAborted();
-      return { html, status };
+      return { html, status, ...(reason === undefined ? {} : { reason }) };
     } catch (error) {
       failure = error;
       failed = true;
