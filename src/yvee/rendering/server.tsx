@@ -7,7 +7,7 @@ import type { DOMContext } from "@/dom/render/contracts.dom";
 import { DOM, dom } from "@/dom/render/node.dom";
 import { renderDom } from "@/dom/dom.dom";
 import type { Layout } from "../client/mount";
-import { combineHead, renderHeadElements, type HeadConfig } from "./head";
+import { combineHead, renderHeadElements, resolveHeadAssets, type HeadConfig } from "./head";
 import type { Guard } from "../guards";
 import { loadPage, type PageLoad } from "../client/load-page";
 import type { Page } from "../pages/page";
@@ -209,6 +209,7 @@ function renderBootstrap(data: unknown, nonce: string | undefined, fallback?: un
 }
 
 async function renderHead(head: HeadConfig, owner: string, nonce?: string) {
+  head = resolveHeadAssets(head);
   const parts: string[] = [];
 
   const base = head.base?.at(-1);

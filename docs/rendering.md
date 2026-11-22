@@ -80,6 +80,14 @@ const html = await renderPage({ url: "/users/42" });
 accepts `url`, `data`, `error`, `nonce` and `signal`. Data is passed to the page
 and its `fetch` method; `error` selects a registered error page.
 
+Request URLs are normalized to root-relative paths before page selection. `""`
+and `"?"` render the home page, a bare `"about"` is treated as `/about`, and query
+strings or fragments do not affect which page loads. When no page matches, the
+reported missing path drops the query string and trailing slashes and
+percent-encodes markup-like characters; traversal-like inputs such as encoded
+dots or `%00`, and very long paths, render `404` instead of throwing. This is
+documented behavior, not validated input.
+
 `app.render()` also returns a callable server renderer, so a default export can
 serve both environments:
 
@@ -89,6 +97,19 @@ export default app.render({ id: "app-root" });
 
 In a browser the same value behaves as a mount promise. In a server it can be
 called with a `ServerRequest`.
+
+The render result also exposes `.app`, the `Yvee` instance that produced it, so a
+built entry can introspect paths and routes without importing application source:
+
+```ts
+const renderer = app.render();
+export default renderer;
+export const app = renderer.app;
+```
+
+`renderer.app.listPaths()` and `renderer.app.listRoutes()` return the same
+registrations the server renders. The default export stays the callable
+renderer.
 
 The browser renderer can reuse matching server markup; pass `hydrate: false` to
 `app.render` to replace the mount element contents.
@@ -146,6 +167,24 @@ string, or nothing. `HeadDefaults` accumulates app-level defaults; `app.head()`
 adds values inherited by page head values. `applyHead(config, owner, options)`
 mounts owned head nodes in a browser and returns a cleanup with stylesheet
 readiness, deferred activation and cancellation.
+
+Relative asset values from Bun's file loader are resolved automatically. A head
+`link` `href`, `css`, `js` or `script` `src` starting with `./` or `../` is
+resolved against the last `base` href (default `/`) when the head is emitted, so
+SSR and the client apply the same URL:
+
+```ts
+import favicon from "./static/favicon.svg";
+
+app.head({
+  link: [{ rel: "icon", type: "image/svg+xml", href: favicon }],
+});
+// base "/"       -> href="/static/favicon.svg"
+// base "/notes/" -> href="/notes/static/favicon.svg"
+```
+
+Absolute `/…`, `data:`, `http(s):`, protocol-relative `//`, anchor and empty
+values are emitted unchanged.
 
 Plain `HeadConfig` fields such as `title` and `description` are static values.
 For reactive metadata, return DOM elements containing state from `Page.head` or

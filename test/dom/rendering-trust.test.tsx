@@ -78,7 +78,7 @@ describe('rendering trust boundaries', () => {
     expect(html.match(/<script[^>]*nonce="request-nonce"/g)).toHaveLength(5);
     expect(html.match(/<style[^>]*nonce="request-nonce"/g)).toHaveLength(2);
     expect(html.match(/nonce="request-nonce"/g)).toHaveLength(7);
-    expect(html).toContain('<script type="module" src="./index.js" nonce="request-nonce"');
+    expect(html).toContain('<script type="module" src="/index.js" nonce="request-nonce"');
     expect(html).toContain('<script nonce="request-nonce"');
     expect(html).toContain('<script src="/app.js" nonce="request-nonce"');
     expect(html).toContain('<script data-yv="root" nonce="request-nonce">globalThis.ok = true</script>');

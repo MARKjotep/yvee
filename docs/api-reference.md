@@ -17,7 +17,7 @@ For usage guidance see [Getting started](getting-started.md), [State](state.md),
 | `Yvee<TData>` | Creates an app with typed data, routes, guards, loading state, head defaults, sockets and client/server rendering. Use `render()` in a browser or as a callable server renderer, `server()` for explicit SSR, `renderHTML()` for one URL, `listPaths()` for export, and `dispose()` to release the current mount. |
 | `YveeOptions` | App construction settings: route `base`, browser `history`, stable root `id`, browser entry `client` (defaults to `.`, resolving to `./index.js` relative to the base) and optional `index` script URL added through the head `js` list. |
 | `MountOptions<TData>` | Browser mount settings for root `id`, client `data`, wrapper `class`, hydration and CSP `nonce`. |
-| `RenderResult<TData>` | Callable server renderer that also behaves as the browser mount promise. `then`, `catch` and `finally` are available for client startup. |
+| `RenderResult<TData>` | Callable server renderer that also behaves as the browser mount promise. `then`, `catch` and `finally` are available for client startup, and `app` is the producing `Yvee` instance for `listPaths()`/`listRoutes()` introspection from built entries. |
 | `Layout` | Async-capable function that wraps the root content state in a DOM context. |
 | `Page<TData>` | Base route controller. Override `fetch`, `body` and `head`; each instance has URL/params/data/status/error and a `resources` disposal scope. |
 | `PageFetchContext<TData>` | Fetch input: parsed Yvee URL, string params, request data, abort signal and page-owned resources. |
@@ -70,8 +70,8 @@ in [guard-design.md](guard-design.md).
 | `ServerRequest<TData>` | One render request: URL, optional data/error, CSP nonce and abort signal. |
 | `ServerStatusResult` | `{ html, status }` returned by `ServerRenderer.withStatus()`. |
 | `ServerDataContext<TData>` | Request data-factory input with normalized signal and `onDispose` registration. |
-| `ServerRenderer<TData>` | Callable HTML renderer with `withStatus()` for the HTML and status pair. |
-| `HeadConfig` | Document metadata and resources: title, base, meta, links, scripts, styles, CSS/JS URLs and reactive DOM elements. |
+| `ServerRenderer<TData>` | Callable HTML renderer with `withStatus()` for the HTML and status pair. Request URLs are normalized to root-relative paths; malformed and traversal-like input renders `404` rather than throwing. |
+| `HeadConfig` | Document metadata and resources: title, base, meta, links, scripts, styles, CSS/JS URLs and reactive DOM elements. `./`/`../` asset values in link `href`, `css`, `js` and script `src` resolve against the head `base` when emitted. |
 | `HeadResult` | Head input accepted from a page or app: `HeadConfig`, DOM node, trusted style string, or nothing. |
 | `HeadDefaults` | Accumulates app-level head values; `head()` adds defaults inherited by page head values. |
 | `applyHead(config, owner, options)` | Mounts owned head nodes in a browser and returns a cleanup object with stylesheet readiness, deferred activation and cancellation. |
@@ -229,7 +229,7 @@ head attributes; existing record-based metadata remains supported.
 
 ## Version
 
-This documentation targets `yvee@0.1.0`. The package `exports` map currently
+This documentation targets `yvee@0.1.1`. The package `exports` map currently
 exposes only the root entry (`import ... from "yvee"`). Run `bun run test:types`
 in this repository for consumer TSX, context inference and expected-invalid
 calls.

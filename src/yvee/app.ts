@@ -45,7 +45,13 @@ export interface MountOptions<T> {
  * client startup (`app.render().then(...)`).
  */
 export type RenderResult<T extends Record<string, unknown>> =
-  ServerRenderer<T> & Promise<() => void>;
+  ServerRenderer<T> & Promise<() => void> & {
+    /**
+     * The Yvee instance that produced this renderer; call `listPaths()` or
+     * `listRoutes()` on it from built bundles, tests, and static-export tooling.
+     */
+    readonly app: Yvee<T>;
+  };
 
 export type { Layout };
 
@@ -245,6 +251,7 @@ export class Yvee<
       then: mount.then.bind(mount),
       catch: mount.catch.bind(mount),
       finally: mount.finally.bind(mount),
+      app: this as Yvee<T>,
     }) as RenderResult<T>;
   }
 

@@ -1,6 +1,7 @@
 import { validateAttribute, inlineContent } from "@/dom/render/trust.dom";
 import { Wizard } from "@/dom/render/oz.dom";
 import type { RenderedDOM } from "@/dom/dom.dom";
+import { resolveHeadAssets } from "./asset";
 import { asArray, type HeadConfig } from "./config";
 import { renderHeadElements } from "./elements";
 import { waitForStylesheets } from "./stylesheets";
@@ -28,6 +29,8 @@ export function applyHead(
       cancel() {},
     });
   }
+
+  config = resolveHeadAssets(config);
 
   let previousTitle = document.title;
   const title = config.title ?? "";
