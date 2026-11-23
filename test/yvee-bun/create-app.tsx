@@ -5,11 +5,7 @@ import { dom } from "../../src/dom/render/node.dom";
 import { client } from "./client-config";
 import { FeaturesRoute } from "./routes/features";
 import { AsyncDOMRoute } from "./routes/async-dom";
-import {
-  DashboardAnalyticsRoute,
-  DashboardRoute,
-  DashboardSettingsRoute,
-} from "./routes/dashboard";
+import { DashboardRoute } from "./routes/dashboard";
 import { HomeRoute } from "./routes/home";
 import { MetadataRoute } from "./routes/metadata";
 import { StudioRoute } from "./routes/studio";
@@ -30,8 +26,6 @@ export function createDemoApp() {
     MetadataRoute,
     AsyncDOMRoute,
     DashboardRoute,
-    DashboardAnalyticsRoute,
-    DashboardSettingsRoute,
     NotFoundPage,
     ChatSocket,
   );

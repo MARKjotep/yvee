@@ -3,7 +3,7 @@ export { MissingPage } from "./pages/page";
 export { FailurePage } from "./pages/page";
 export type { YveeOptions, MountOptions, RenderResult, Layout } from "./app";
 export { Page } from "./pages/page";
-export type { PageFetchContext } from "./pages/page";
+export type { PageFetchContext, RegionLoader, RegionModule } from "./pages/page";
 export { page, route, error, socketRoute, RouteBook, interpolate } from "./routing/routes";
 export type { Constructor, RouteEntry, Transport } from "./routing/routes";
 /** Create and compose route guards; `buildReturnTo`/`readReturnTo` handle the rejected-URL round-trip. */

@@ -8,9 +8,10 @@ import {
 import { FailurePage, MissingPage, type Page } from "../pages/page";
 import type { YveeURL } from "../routing/path";
 import { RouteBook, type Constructor } from "../routing/routes";
+import { regionIdFor, renderRegion } from "./regions";
 
 export type PageLoad =
-  | { kind: "ready"; status: number; body: unknown[]; head: HeadConfig; url: YveeURL; failure?: unknown; dispose?: () => void }
+  | { kind: "ready"; status: number; body: unknown[]; head: HeadConfig; url: YveeURL; page?: Page; failure?: unknown; dispose?: () => void }
   | { kind: "stop" }
   | { kind: "redirect"; to: string; replace?: boolean };
 
@@ -50,12 +51,12 @@ export async function loadPage<TData extends Record<string, unknown>, TApp>({
       [...globalGuards, ...guardsFor(page.constructor)],
       { app, page, url, params: page.params, data: page.data, signal },
     );
-    if (decision.kind !== "allow") { page.resources.dispose(); return decision; }
+    if (decision.kind !== "allow") { disposePage(page); return decision; }
 
     const loaded = await renderPage(page, url, signal);
-    return { ...loaded, url, dispose: () => page.resources.dispose() };
+    return { ...loaded, url, dispose: pageDispose(page) };
   } catch (failure) {
-    page.resources.dispose();
+    disposePage(page);
     if (signal.aborted) throw signal.reason ?? failure;
     return renderFailure({
       app,
@@ -97,6 +98,8 @@ async function renderPage(page: Page, url: YveeURL, signal: AbortSignal) {
   }
 
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
+  await initializeRegion(page);
+  if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
   const bodyModule = await page.body?.();
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
 
@@ -114,7 +117,20 @@ async function renderPage(page: Page, url: YveeURL, signal: AbortSignal) {
     status: page.status,
     head,
     body: Array.isArray(bodyValue) ? bodyValue : [bodyValue ?? ""],
+    page,
   };
+}
+
+/**
+ * Region views render on the critical path so SSR and hydration agree on the
+ * requested region. The module cache makes later switches instantaneous.
+ */
+async function initializeRegion(page: Page) {
+  if (!page.regions || !page.regionParam) return;
+  const id = regionIdFor(page, page.url);
+  if (!id) return;
+  page.region.value = id;
+  page.regionContent.value = await renderRegion(page, id);
 }
 
 interface LazyPageModule {
@@ -175,10 +191,10 @@ async function renderFailure<TData extends Record<string, unknown>, TApp>({
       [...globalGuards, ...guardsFor(page.constructor)],
       { app, page, url, params: page.params, data: page.data, signal },
     );
-    if (decision.kind !== "allow") { page.resources.dispose(); return decision; }
-    return { ...(await renderPage(page, url, signal)), url, failure, dispose: () => page.resources.dispose() };
+    if (decision.kind !== "allow") { disposePage(page); return decision; }
+    return { ...(await renderPage(page, url, signal)), url, failure, dispose: pageDispose(page) };
   } catch (error) {
-    page.resources.dispose();
+    disposePage(page);
     if (signal.aborted) throw signal.reason ?? error;
     throw new AggregateError([failure, error], "Yvee error page failed to render.");
   }
@@ -186,7 +202,7 @@ async function renderFailure<TData extends Record<string, unknown>, TApp>({
 
 function ownPageSignal(page: Page, signal: AbortSignal) {
   const abort = () => {
-    try { page.resources.dispose(); }
+    try { disposePage(page); }
     catch (error) { console.error("Yvee aborted page cleanup failed", error); }
   };
   if (signal.aborted) abort();
@@ -194,4 +210,18 @@ function ownPageSignal(page: Page, signal: AbortSignal) {
     signal.addEventListener("abort", abort, { once: true });
     page.resources.defer(() => signal.removeEventListener("abort", abort));
   }
+}
+
+/** Dispose the active region scope before the page scope when a page is left. */
+function disposePage(page: Page) {
+  const errors: unknown[] = [];
+  try { page.regionResources.dispose(); } catch (error) { errors.push(error); }
+  try { page.resources.dispose(); } catch (error) { errors.push(error); }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length) throw new AggregateError(errors, "Yvee page cleanup failed.");
+}
+
+/** Cleanup closure kept by the runtime for the lifetime of the loaded page. */
+function pageDispose(page: Page) {
+  return () => disposePage(page);
 }

@@ -10,6 +10,7 @@ interface NavigationOptions {
 
 export class NavigationEvents {
   private previousScrollRestoration: ScrollRestoration | undefined;
+  private started = false;
   private readonly handlePop = (event: PopStateEvent) =>
     this.options.onPop(toURL(location.href), event.state);
   private readonly handleClick = (event: MouseEvent) => {
@@ -29,7 +30,14 @@ export class NavigationEvents {
 
   constructor(private readonly options: NavigationOptions) {}
 
+  /**
+   * Attach interception of in-app anchor clicks and popstate. Idempotent so the
+   * runtime can attach at hydration start and again after the boot settles
+   * without duplicating listeners or losing the saved scroll restoration mode.
+   */
   start() {
+    if (this.started) return;
+    this.started = true;
     if (this.options.history !== false) {
       this.previousScrollRestoration = history.scrollRestoration;
       history.scrollRestoration = "manual";
@@ -38,7 +46,10 @@ export class NavigationEvents {
     document.addEventListener("click", this.handleClick);
   }
 
+  /** Detach listeners once; repeated calls after a stop are no-ops. */
   stop() {
+    if (!this.started) return;
+    this.started = false;
     if (typeof window !== "undefined") window.removeEventListener("popstate", this.handlePop);
     if (typeof document !== "undefined") document.removeEventListener("click", this.handleClick);
     if (this.previousScrollRestoration !== undefined) {

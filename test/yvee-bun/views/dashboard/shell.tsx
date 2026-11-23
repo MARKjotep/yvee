@@ -1,11 +1,11 @@
-import type { DOMContext } from "../../../../src/dom/render/contracts.dom";
+import { Derived, type IStateful } from "../../../../src/core/core.core";
 import { dom } from "../../../../src/dom/render/node.dom";
 import type { Page } from "../../../../src/yvee";
 
 const tabs = [
-  { href: "/dashboard", label: "Overview", hint: "Start here" },
-  { href: "/dashboard/analytics", label: "Analytics", hint: "Traffic & usage" },
-  { href: "/dashboard/settings", label: "Settings", hint: "Workspace" },
+  { id: "overview", href: "/dashboard?tab=overview", label: "Overview", hint: "Start here" },
+  { id: "analytics", href: "/dashboard?tab=analytics", label: "Analytics", hint: "Traffic & usage" },
+  { id: "settings", href: "/dashboard?tab=settings", label: "Settings", hint: "Workspace" },
 ] as const;
 
 const anchors = [
@@ -14,11 +14,35 @@ const anchors = [
   { href: "/dashboard#notes", label: "Notes" },
 ] as const;
 
-export function DashboardShell(
-  { page }: { page: Page },
-  ...children: DOMContext[]
-) {
-  const path = page.url.path;
+type Tab = (typeof tabs)[number];
+
+interface TabAttributes {
+  class: IStateful<string>;
+  "aria-current": IStateful<"page" | "false">;
+}
+
+function tabAttributes(page: Page, tab: Tab): Promise<TabAttributes> {
+  return Promise.all([
+    Derived(
+      [page.region],
+      (region) => region === tab.id
+        ? "dashboard-nav__tab dashboard-nav__tab--active"
+        : "dashboard-nav__tab",
+      { scope: page.resources },
+    ),
+    Derived(
+      [page.region],
+      (region) => region === tab.id ? "page" as const : "false" as const,
+      { scope: page.resources },
+    ),
+  ]).then(([className, current]) => ({
+    class: className,
+    "aria-current": current,
+  }));
+}
+
+export default async function DashboardShell({ page }: { page: Page }) {
+  const attributes = await Promise.all(tabs.map((tab) => tabAttributes(page, tab)));
 
   return (
     <div class="dashboard-layout">
@@ -34,20 +58,21 @@ export function DashboardShell(
 
           <p class="dashboard-nav__label">Tabs</p>
           <ul class="dashboard-nav__tabs">
-            {tabs.map((tab) => (
-              <li key={tab.href}>
-                <a
-                  class={path === tab.href
-                    ? "dashboard-nav__tab dashboard-nav__tab--active"
-                    : "dashboard-nav__tab"}
-                  href={tab.href}
-                  aria-current={path === tab.href ? "page" : undefined}
-                >
-                  <span>{tab.label}</span>
-                  <small>{tab.hint}</small>
-                </a>
-              </li>
-            ))}
+            {tabs.map((tab, index) => {
+              const attrs = attributes[index]!;
+              return (
+                <li key={tab.id}>
+                  <a
+                    class={attrs.class}
+                    href={tab.href}
+                    aria-current={attrs["aria-current"]}
+                  >
+                    <span>{tab.label}</span>
+                    <small>{tab.hint}</small>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
 
           <p class="dashboard-nav__label">On this page</p>
@@ -58,12 +83,12 @@ export function DashboardShell(
           </div>
         </nav>
         <p class="dashboard-sidebar__note">
-          The sidebar lives in the shared shell. Each tab swaps only the panel
-          on the right.
+          The sidebar lives in the shared shell. Each tab is a region: only the
+          panel on the right changes, and the page never reloads.
         </p>
       </aside>
 
-      <div class="dashboard-panel">{children}</div>
+      <div class="dashboard-panel">{page.regionContent}</div>
     </div>
   );
 }
