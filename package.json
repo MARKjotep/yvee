@@ -1,6 +1,6 @@
 {
   "name": "yvee",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "TypeScript UI framework with reactive state, a TSX renderer, client-side routing with guards, server-side rendering, and browser storage and network helpers.",
   "keywords": [
     "typescript",
@@ -51,7 +51,7 @@
     "@ohmyqt/oven": "link:@ohmyqt/oven",
     "@ohmyqt/u": "link:@ohmyqt/u",
     "@playwright/test": "^1.65.1",
-    "@types/bun": "^1.4.4",
+    "@types/bun": "^1.4.5",
     "fake-indexeddb": "^6.2.8",
     "typescript": "5.9.3"
   },
