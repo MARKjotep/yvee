@@ -117,19 +117,35 @@ export class BrowserStore {
     return scope ? scope.defer(stop) : stop;
   }
 
-  get<T = unknown>(key: string, fallback?: T) {
+  /**
+   * Validated read: parses the stored JSON and returns its value only when it
+   * passes `validate`; otherwise `.value` is `undefined`. Invalid entries are
+   * left in storage, so call `.remove()` to discard them. A function argument
+   * is always treated as a validator.
+   */
+  get<T>(key: string, validate: (value: unknown) => value is T): StoredValue<T | undefined>;
+  get<T = unknown>(key: string, fallback?: T): StoredValue<T | undefined>;
+  get<T = unknown>(key: string, fallbackOrValidate?: T | ((value: unknown) => value is T)): StoredValue<T | undefined> {
+    const validate = typeof fallbackOrValidate === "function"
+      ? (fallbackOrValidate as (value: unknown) => value is T)
+      : undefined;
     let value: T | undefined;
 
     if (typeof window !== "undefined") {
       try {
         const raw = this.storage().getItem(key);
-        if (raw !== null) value = JSON.parse(raw) as T;
+        if (raw !== null) {
+          const parsed: unknown = JSON.parse(raw);
+          if (!validate) value = parsed as T;
+          else if (validate(parsed)) value = parsed;
+        }
       } catch {
         value = undefined;
       }
     }
 
-    return new StoredValue<T | undefined>(this.storeName, key, value === undefined ? fallback : value);
+    if (validate) return new StoredValue<T | undefined>(this.storeName, key, value);
+    return new StoredValue<T | undefined>(this.storeName, key, value === undefined ? fallbackOrValidate as T | undefined : value);
   }
 
   /** Writes immediately; storage/serialization failures propagate to the caller. */

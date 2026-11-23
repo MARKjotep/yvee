@@ -477,64 +477,100 @@ type CSSStyle = {
 };
 
 interface c_events<T extends Elements = HTMLElement> {
-    state?: (this: T, e: T) => maybePromise<[
+    state?: ((this: T, e: T) => maybePromise<[
         (...args: any[]) => void,
         IStateful<any>[],
         boolean?,
         boolean?
-    ]>;
-    states?: (this: T, e: T) => maybePromise<[
+    ]>) | undefined;
+    states?: ((this: T, e: T) => maybePromise<[
         (...args: any[]) => void,
         IStateful<any>[],
         boolean?,
         boolean?
-    ]>[];
-    ready?: (this: T, e: T) => maybePromise<void | (() => void)>;
-    resize?: (this: T, e: UIEvent) => void;
-    beforeunload?: (this: T, e: BeforeUnloadEvent) => void;
-    popstate?: (this: T, e: PopStateEvent) => void;
-    DOMContentLoaded?: (this: T, e: Event) => void;
-    winscroll?: (this: T, e: Event) => void;
-    winload?: (this: T, e: Event) => void;
-    winfocus?: (this: T, e: Event) => void;
-    winblur?: (this: T, e: Event) => void;
-    winkeydown?: (this: T, e: KeyboardEvent) => void;
-    winkeypress?: (this: T, e: KeyboardEvent) => void;
-    winkeyup?: (this: T, e: KeyboardEvent) => void;
+    ]>[]) | undefined;
+    ready?: ((this: T, e: T) => maybePromise<void | (() => void)>) | undefined;
+    resize?: ((this: T, e: UIEvent) => void) | undefined;
+    beforeunload?: ((this: T, e: BeforeUnloadEvent) => void) | undefined;
+    popstate?: ((this: T, e: PopStateEvent) => void) | undefined;
+    DOMContentLoaded?: ((this: T, e: Event) => void) | undefined;
+    winscroll?: ((this: T, e: Event) => void) | undefined;
+    winload?: ((this: T, e: Event) => void) | undefined;
+    winfocus?: ((this: T, e: Event) => void) | undefined;
+    winblur?: ((this: T, e: Event) => void) | undefined;
+    winkeydown?: ((this: T, e: KeyboardEvent) => void) | undefined;
+    winkeypress?: ((this: T, e: KeyboardEvent) => void) | undefined;
+    winkeyup?: ((this: T, e: KeyboardEvent) => void) | undefined;
 }
+/**
+ * Event handler map accepted by `on`. Every handler is optional and may be
+ * explicitly `undefined`; the renderer skips absent handlers.
+ */
 type DOMEvents<T extends Elements = HTMLElement> = {
-    [P in keyof GlobalEventHandlersEventMap]?: (this: T, event: GlobalEventHandlersEventMap[P]) => void;
+    [P in keyof GlobalEventHandlersEventMap]?: ((this: T, event: GlobalEventHandlersEventMap[P]) => void) | undefined;
 } & c_events<T>;
 
+/**
+ * Attributes accepted by every Yvee element. Optional attributes are declared
+ * as `?: T | undefined` so a conditionally-present value
+ * (`disabled={props.disabled}`) type-checks under `exactOptionalPropertyTypes`;
+ * an explicitly `undefined` attribute is dropped during render.
+ */
 interface EAttr<T = DVal> {
     [key: string]: any;
     [key: `data-${string}`]: T | any;
-    accesskey?: T;
-    autocapitalize?: T;
-    class?: T | T[];
-    on?: DOMEvents<any>;
-    ref?: Ref<any>;
-    contenteditable?: T;
-    dir?: T;
-    draggable?: T;
-    hidden?: T;
-    id?: T;
-    itemprop?: T;
-    lang?: T;
-    role?: T;
-    slot?: T;
-    spellcheck?: T;
-    style?: CSSStyle | string;
-    tabindex?: T;
-    title?: T;
-    translate?: T;
+    accesskey?: T | undefined;
+    autocapitalize?: T | undefined;
+    class?: T | T[] | undefined;
+    on?: DOMEvents<any> | undefined;
+    ref?: Ref<any> | undefined;
+    contenteditable?: T | undefined;
+    dir?: T | undefined;
+    draggable?: T | undefined;
+    hidden?: T | undefined;
+    id?: T | undefined;
+    itemprop?: T | undefined;
+    lang?: T | undefined;
+    role?: T | undefined;
+    slot?: T | undefined;
+    spellcheck?: T | undefined;
+    style?: CSSStyle | string | undefined;
+    tabindex?: T | undefined;
+    title?: T | undefined;
+    translate?: T | undefined;
 }
 
+/**
+ * Attribute/event shape accepted by renderer nodes and JSX intrinsics.
+ *
+ * Optional attributes accept an explicitly `undefined` value
+ * (`disabled?: T | undefined`) and are omitted from the rendered markup.
+ */
 type DOMAttr = EAttr;
 type DOMValue<T = V | V[]> = DVal<T>;
 type DOMRenderable = string | number | boolean | null | undefined | DOM | DOMRenderable[] | IStateful<unknown> | object | (() => maybePromise<DOMRenderable>);
 type DOMContext = maybePromise<DOMRenderable>;
+/**
+ * Attributes passed to a Yvee function component: {@link DOMAttr} plus the
+ * component's own props.
+ *
+ * JSX children are **not** part of this object. `dom` forwards them as rest
+ * arguments, so `props.children` is always `undefined`; declare components as
+ * `(props: P, ...children: DOMContext[])` and render `{children}`.
+ */
 type DOMComponentProps<T extends object = {}> = DOMAttr & T;
+/**
+ * Type of a Yvee function component.
+ *
+ * The first parameter carries attributes/props; JSX children arrive as the
+ * remaining rest parameters (they are never placed on the props object).
+ *
+ * ```tsx
+ * function Card(props: { title: string }, ...children: DOMContext[]) {
+ *   return <section><h2>{props.title}</h2>{children}</section>;
+ * }
+ * ```
+ */
 type DOMComponent<T extends object = {}> = (attributes: DOMComponentProps<T>, ...children: DOMContext[]) => maybePromise<DOM>;
 type DOMNode = DOM;
 
@@ -548,329 +584,329 @@ declare function dom(tag: string | DOMComponent, attr?: DOMAttr | null, ...ctx: 
 declare const frag: (_attr: DOMAttr, ...ctx: DOMContext[]) => Promise<DOM>;
 
 interface aAttr<T = DVal> extends EAttr {
-    download?: T;
-    href?: T;
-    hreflang?: T;
-    media?: T;
-    ping?: T;
-    referrerpolicy?: T;
-    rel?: T;
-    shape?: T;
-    target?: T;
+    download?: T | undefined;
+    href?: T | undefined;
+    hreflang?: T | undefined;
+    media?: T | undefined;
+    ping?: T | undefined;
+    referrerpolicy?: T | undefined;
+    rel?: T | undefined;
+    shape?: T | undefined;
+    target?: T | undefined;
 }
 interface areaAttr<T = DVal> extends EAttr {
-    alt?: T;
-    coords?: T;
-    download?: T;
-    href?: T;
-    media?: T;
-    ping?: T;
-    referrerpolicy?: T;
-    rel?: T;
-    shape?: T;
-    target?: T;
+    alt?: T | undefined;
+    coords?: T | undefined;
+    download?: T | undefined;
+    href?: T | undefined;
+    media?: T | undefined;
+    ping?: T | undefined;
+    referrerpolicy?: T | undefined;
+    rel?: T | undefined;
+    shape?: T | undefined;
+    target?: T | undefined;
 }
 interface audioAttr<T = DVal> extends EAttr {
-    autoplay?: T;
-    controls?: T;
-    crossorigin?: T;
-    loop?: T;
-    muted?: T;
-    preload?: T;
-    src?: T;
+    autoplay?: T | undefined;
+    controls?: T | undefined;
+    crossorigin?: T | undefined;
+    loop?: T | undefined;
+    muted?: T | undefined;
+    preload?: T | undefined;
+    src?: T | undefined;
 }
 interface baseAttr<T = DVal> extends EAttr {
-    href?: T;
-    target?: T;
+    href?: T | undefined;
+    target?: T | undefined;
 }
 interface blockquoteAttr<T = DVal> extends EAttr {
-    cite?: T;
+    cite?: T | undefined;
 }
 interface buttonAttr<T = DVal> extends EAttr {
-    disabled?: T;
-    form?: T;
-    formaction?: T;
-    formenctype?: T;
-    formmethod?: T;
-    formnovalidate?: T;
-    formtarget?: T;
-    name?: T;
-    type?: T;
-    value?: T;
+    disabled?: T | undefined;
+    form?: T | undefined;
+    formaction?: T | undefined;
+    formenctype?: T | undefined;
+    formmethod?: T | undefined;
+    formnovalidate?: T | undefined;
+    formtarget?: T | undefined;
+    name?: T | undefined;
+    type?: T | undefined;
+    value?: T | undefined;
 }
 interface canvasAttr<T = DVal> extends EAttr {
-    height?: T;
-    width?: T;
+    height?: T | undefined;
+    width?: T | undefined;
 }
 interface colAttr<T = DVal> extends EAttr {
-    span?: T;
+    span?: T | undefined;
 }
 interface colgroupAttr<T = DVal> extends EAttr {
-    span?: T;
+    span?: T | undefined;
 }
 interface dataAttr<T = DVal> extends EAttr {
-    value?: T;
+    value?: T | undefined;
 }
 interface delAttr<T = DVal> extends EAttr {
-    cite?: T;
-    datetime?: T;
+    cite?: T | undefined;
+    datetime?: T | undefined;
 }
 interface detailsAttr<T = DVal> extends EAttr {
-    open?: T;
+    open?: T | undefined;
 }
 interface dialogAttr<T = DVal> extends EAttr {
-    open?: T;
+    open?: T | undefined;
 }
 interface embedAttr<T = DVal> extends EAttr {
-    height?: T;
-    src?: T;
-    type?: T;
-    width?: T;
+    height?: T | undefined;
+    src?: T | undefined;
+    type?: T | undefined;
+    width?: T | undefined;
 }
 interface fieldsetAttr<T = DVal> extends EAttr {
-    disabled?: T;
-    form?: T;
-    name?: T;
+    disabled?: T | undefined;
+    form?: T | undefined;
+    name?: T | undefined;
 }
 interface formAttr<T = DVal> extends EAttr {
-    accept?: T;
-    "accept-charset"?: T;
-    action?: T;
-    autocomplete?: T;
-    enctype?: T;
-    method?: T;
-    name?: T;
-    novalidate?: T;
-    target?: T;
+    accept?: T | undefined;
+    "accept-charset"?: T | undefined;
+    action?: T | undefined;
+    autocomplete?: T | undefined;
+    enctype?: T | undefined;
+    method?: T | undefined;
+    name?: T | undefined;
+    novalidate?: T | undefined;
+    target?: T | undefined;
 }
 interface iframeAttr<T = DVal> extends EAttr {
-    allow?: T;
-    csp?: T;
-    loading?: T;
-    name?: T;
-    height?: T;
-    referrerpolicy?: T;
-    sandbox?: T;
-    src?: T;
-    srcdoc?: T;
-    width?: T;
+    allow?: T | undefined;
+    csp?: T | undefined;
+    loading?: T | undefined;
+    name?: T | undefined;
+    height?: T | undefined;
+    referrerpolicy?: T | undefined;
+    sandbox?: T | undefined;
+    src?: T | undefined;
+    srcdoc?: T | undefined;
+    width?: T | undefined;
 }
 interface imgAttr<T = DVal> extends EAttr {
-    alt?: T;
-    crossorigin?: T;
-    decoding?: T;
-    ismap?: T;
-    loading?: T;
-    height?: T;
-    referrerpolicy?: T;
-    sizes?: T;
-    src?: T;
-    srcset?: T;
-    usemap?: T;
-    width?: T;
+    alt?: T | undefined;
+    crossorigin?: T | undefined;
+    decoding?: T | undefined;
+    ismap?: T | undefined;
+    loading?: T | undefined;
+    height?: T | undefined;
+    referrerpolicy?: T | undefined;
+    sizes?: T | undefined;
+    src?: T | undefined;
+    srcset?: T | undefined;
+    usemap?: T | undefined;
+    width?: T | undefined;
 }
 interface inputAttr<T = DVal> extends EAttr {
-    accept?: T;
-    alt?: T;
-    autocomplete?: T;
-    capture?: T;
-    checked?: T;
-    dirname?: T;
-    disabled?: T;
-    form?: T;
-    formaction?: T;
-    formenctype?: T;
-    formmethod?: T;
-    formnovalidate?: T;
-    formtarget?: T;
-    list?: T;
-    max?: T;
-    maxlength?: T;
-    minlength?: T;
-    min?: T;
-    multiple?: T;
-    name?: T;
-    pattern?: T;
-    placeholder?: T;
-    height?: T;
-    readonly?: T;
-    required?: T;
-    size?: T;
-    src?: T;
-    step?: T;
-    type?: T;
-    usemap?: T;
-    value?: T;
-    width?: T;
+    accept?: T | undefined;
+    alt?: T | undefined;
+    autocomplete?: T | undefined;
+    capture?: T | undefined;
+    checked?: T | undefined;
+    dirname?: T | undefined;
+    disabled?: T | undefined;
+    form?: T | undefined;
+    formaction?: T | undefined;
+    formenctype?: T | undefined;
+    formmethod?: T | undefined;
+    formnovalidate?: T | undefined;
+    formtarget?: T | undefined;
+    list?: T | undefined;
+    max?: T | undefined;
+    maxlength?: T | undefined;
+    minlength?: T | undefined;
+    min?: T | undefined;
+    multiple?: T | undefined;
+    name?: T | undefined;
+    pattern?: T | undefined;
+    placeholder?: T | undefined;
+    height?: T | undefined;
+    readonly?: T | undefined;
+    required?: T | undefined;
+    size?: T | undefined;
+    src?: T | undefined;
+    step?: T | undefined;
+    type?: T | undefined;
+    usemap?: T | undefined;
+    value?: T | undefined;
+    width?: T | undefined;
 }
 interface insAttr<T = DVal> extends EAttr {
-    cite?: T;
-    datetime?: T;
+    cite?: T | undefined;
+    datetime?: T | undefined;
 }
 interface labelAttr<T = DVal> extends EAttr {
-    for?: T;
-    form?: T;
+    for?: T | undefined;
+    form?: T | undefined;
 }
 interface liAttr<T = DVal> extends EAttr {
-    value?: T;
+    value?: T | undefined;
 }
 interface linkAttr<T = DVal> extends EAttr {
-    as?: T;
-    crossorigin?: T;
-    href?: T;
-    hreflang?: T;
-    integrity?: T;
-    media?: T;
-    referrerpolicy?: T;
-    rel?: T;
-    sizes?: T;
-    type?: T;
+    as?: T | undefined;
+    crossorigin?: T | undefined;
+    href?: T | undefined;
+    hreflang?: T | undefined;
+    integrity?: T | undefined;
+    media?: T | undefined;
+    referrerpolicy?: T | undefined;
+    rel?: T | undefined;
+    sizes?: T | undefined;
+    type?: T | undefined;
 }
 interface mapAttr<T = DVal> extends EAttr {
-    name?: T;
+    name?: T | undefined;
 }
 interface menuAttr<T = DVal> extends EAttr {
-    type?: T;
+    type?: T | undefined;
 }
 interface metaAttr<T = DVal> extends EAttr {
-    charset?: T;
-    content?: T;
-    "http-equiv"?: T;
-    name?: T;
+    charset?: T | undefined;
+    content?: T | undefined;
+    "http-equiv"?: T | undefined;
+    name?: T | undefined;
 }
 interface meterAttr<T = DVal> extends EAttr {
-    form?: T;
-    high?: T;
-    low?: T;
-    max?: T;
-    min?: T;
-    optimum?: T;
-    value?: T;
+    form?: T | undefined;
+    high?: T | undefined;
+    low?: T | undefined;
+    max?: T | undefined;
+    min?: T | undefined;
+    optimum?: T | undefined;
+    value?: T | undefined;
 }
 interface objectAttr<T = DVal> extends EAttr {
-    data?: T;
-    form?: T;
-    name?: T;
-    height?: T;
-    type?: T;
-    usemap?: T;
-    width?: T;
+    data?: T | undefined;
+    form?: T | undefined;
+    name?: T | undefined;
+    height?: T | undefined;
+    type?: T | undefined;
+    usemap?: T | undefined;
+    width?: T | undefined;
 }
 interface olAttr<T = DVal> extends EAttr {
-    reversed?: T;
-    start?: T;
-    type?: T;
+    reversed?: T | undefined;
+    start?: T | undefined;
+    type?: T | undefined;
 }
 interface optgroupAttr<T = DVal> extends EAttr {
-    disabled?: T;
-    label?: T;
+    disabled?: T | undefined;
+    label?: T | undefined;
 }
 interface optionAttr<T = DVal> extends EAttr {
-    disabled?: T;
-    label?: T;
-    selected?: T;
-    value?: T;
+    disabled?: T | undefined;
+    label?: T | undefined;
+    selected?: T | undefined;
+    value?: T | undefined;
 }
 interface outputAttr<T = DVal> extends EAttr {
-    for?: T;
-    form?: T;
-    name?: T;
+    for?: T | undefined;
+    form?: T | undefined;
+    name?: T | undefined;
 }
 interface paramAttr<T = DVal> extends EAttr {
-    name?: T;
-    value?: T;
+    name?: T | undefined;
+    value?: T | undefined;
 }
 interface progressAttr<T = DVal> extends EAttr {
-    form?: T;
-    max?: T;
-    value?: T;
+    form?: T | undefined;
+    max?: T | undefined;
+    value?: T | undefined;
 }
 interface qAttr<T = DVal> extends EAttr {
-    cite?: T;
+    cite?: T | undefined;
 }
 interface scriptAttr<T = DVal> extends EAttr {
-    async?: T;
-    crossorigin?: T;
-    defer?: T;
-    integrity?: T;
-    referrerpolicy?: T;
-    src?: T;
-    type?: T;
+    async?: T | undefined;
+    crossorigin?: T | undefined;
+    defer?: T | undefined;
+    integrity?: T | undefined;
+    referrerpolicy?: T | undefined;
+    src?: T | undefined;
+    type?: T | undefined;
 }
 interface selectAttr<T = DVal> extends EAttr {
-    autocomplete?: T;
-    disabled?: T;
-    form?: T;
-    multiple?: T;
-    name?: T;
-    required?: T;
-    size?: T;
+    autocomplete?: T | undefined;
+    disabled?: T | undefined;
+    form?: T | undefined;
+    multiple?: T | undefined;
+    name?: T | undefined;
+    required?: T | undefined;
+    size?: T | undefined;
 }
 interface sourceAttr<T = DVal> extends EAttr {
-    media?: T;
-    sizes?: T;
-    src?: T;
-    srcset?: T;
-    type?: T;
+    media?: T | undefined;
+    sizes?: T | undefined;
+    src?: T | undefined;
+    srcset?: T | undefined;
+    type?: T | undefined;
 }
 interface styleAttr<T = DVal> extends EAttr {
-    media?: T;
-    type?: T;
+    media?: T | undefined;
+    type?: T | undefined;
 }
 interface tdAttr<T = DVal> extends EAttr {
-    colspan?: T;
-    headers?: T;
-    rowspan?: T;
+    colspan?: T | undefined;
+    headers?: T | undefined;
+    rowspan?: T | undefined;
 }
 interface textareaAttr<T = DVal> extends EAttr {
-    autocomplete?: T;
-    cols?: T;
-    dirname?: T;
-    disabled?: T;
-    enterkeyhint?: T;
-    form?: T;
-    inputmode?: T;
-    maxlength?: T;
-    minlength?: T;
-    name?: T;
-    placeholder?: T;
-    readonly?: T;
-    required?: T;
-    rows?: T;
-    wrap?: T;
+    autocomplete?: T | undefined;
+    cols?: T | undefined;
+    dirname?: T | undefined;
+    disabled?: T | undefined;
+    enterkeyhint?: T | undefined;
+    form?: T | undefined;
+    inputmode?: T | undefined;
+    maxlength?: T | undefined;
+    minlength?: T | undefined;
+    name?: T | undefined;
+    placeholder?: T | undefined;
+    readonly?: T | undefined;
+    required?: T | undefined;
+    rows?: T | undefined;
+    wrap?: T | undefined;
 }
 interface thAttr<T = DVal> extends EAttr<T> {
-    colspan?: T;
-    headers?: T;
-    rowspan?: T;
-    scope?: T;
+    colspan?: T | undefined;
+    headers?: T | undefined;
+    rowspan?: T | undefined;
+    scope?: T | undefined;
 }
 interface timeAttr<T = DVal> extends EAttr {
-    datetime?: T;
+    datetime?: T | undefined;
 }
 interface trackAttr<T = DVal> extends EAttr {
-    default?: T;
-    kind?: T;
-    label?: T;
-    src?: T;
-    srclang?: T;
+    default?: T | undefined;
+    kind?: T | undefined;
+    label?: T | undefined;
+    src?: T | undefined;
+    srclang?: T | undefined;
 }
 interface videoAttr<T = DVal> extends EAttr {
-    autoplay?: T;
-    controls?: T;
-    crossorigin?: T;
-    loop?: T;
-    muted?: T;
-    playsinline?: T;
-    height?: T;
-    poster?: T;
-    preload?: T;
-    src?: T;
-    width?: T;
+    autoplay?: T | undefined;
+    controls?: T | undefined;
+    crossorigin?: T | undefined;
+    loop?: T | undefined;
+    muted?: T | undefined;
+    playsinline?: T | undefined;
+    height?: T | undefined;
+    poster?: T | undefined;
+    preload?: T | undefined;
+    src?: T | undefined;
+    width?: T | undefined;
 }
 interface contenteditableAttr<T = DVal> extends EAttr {
-    enterkeyhint?: T;
-    inputmode?: T;
+    enterkeyhint?: T | undefined;
+    inputmode?: T | undefined;
 }
 
 interface ElementAttributes {
@@ -984,7 +1020,7 @@ interface ElementAttributes {
 
 interface SVGAttributes {
     svg: svgAttr & {
-        viewBox?: DVal;
+        viewBox?: DVal | undefined;
     };
     path: svgEAttr;
     circle: svgEAttr;
@@ -1046,57 +1082,66 @@ interface SVGAttributes {
     view: svgEAttr;
 }
 interface svgAttr<T = DVal> extends EAttr<T> {
-    height?: T;
-    width?: T;
-    preserveAspectRatio?: T;
-    fill?: T;
-    stroke?: T;
-    strokeWidth?: T;
-    opacity?: T;
-    display?: T;
-    overflow?: T;
+    height?: T | undefined;
+    width?: T | undefined;
+    preserveAspectRatio?: T | undefined;
+    fill?: T | undefined;
+    stroke?: T | undefined;
+    strokeWidth?: T | undefined;
+    opacity?: T | undefined;
+    display?: T | undefined;
+    overflow?: T | undefined;
 }
 interface svgEAttr<T = DVal> extends svgAttr<T> {
-    transform?: T;
-    role?: T;
-    tabindex?: T;
-    visibility?: T;
-    fillOpacity?: T;
-    fillRule?: T;
-    stroke?: T;
-    strokeWidth?: T;
-    strokeOpacity?: T;
-    strokeLinecap?: T;
-    strokeLinejoin?: T;
-    strokeMiterlimit?: T;
-    strokeDasharray?: T;
-    strokeDashoffset?: T;
-    x?: T;
-    y?: T;
-    x1?: T;
-    y1?: T;
-    x2?: T;
-    y2?: T;
-    cx?: T;
-    cy?: T;
-    r?: T;
-    rx?: T;
-    ry?: T;
-    d?: T;
-    points?: T;
+    transform?: T | undefined;
+    role?: T | undefined;
+    tabindex?: T | undefined;
+    visibility?: T | undefined;
+    fillOpacity?: T | undefined;
+    fillRule?: T | undefined;
+    stroke?: T | undefined;
+    strokeWidth?: T | undefined;
+    strokeOpacity?: T | undefined;
+    strokeLinecap?: T | undefined;
+    strokeLinejoin?: T | undefined;
+    strokeMiterlimit?: T | undefined;
+    strokeDasharray?: T | undefined;
+    strokeDashoffset?: T | undefined;
+    x?: T | undefined;
+    y?: T | undefined;
+    x1?: T | undefined;
+    y1?: T | undefined;
+    x2?: T | undefined;
+    y2?: T | undefined;
+    cx?: T | undefined;
+    cy?: T | undefined;
+    r?: T | undefined;
+    rx?: T | undefined;
+    ry?: T | undefined;
+    d?: T | undefined;
+    points?: T | undefined;
 }
 interface svgETextAttr<T = DVal> extends svgEAttr<T> {
-    fontSize?: T;
-    fontFamily?: T;
-    fontWeight?: T;
-    textAnchor?: T;
-    dominantBaseline?: T;
+    fontSize?: T | undefined;
+    fontFamily?: T | undefined;
+    fontWeight?: T | undefined;
+    textAnchor?: T | undefined;
+    dominantBaseline?: T | undefined;
 }
 
 declare global {
     type events<T extends Elements = HTMLElement> = {
-        [P in keyof GlobalEventHandlersEventMap]?: (this: T, e: GlobalEventHandlersEventMap[P]) => void;
+        [P in keyof GlobalEventHandlersEventMap]?: ((this: T, e: GlobalEventHandlersEventMap[P]) => void) | undefined;
     } & c_events<T>;
+    /**
+     * Yvee JSX namespace.
+     *
+     * Function components receive their attributes as the first argument and JSX
+     * children as **rest arguments**: declare them as
+     * `(props: P, ...children: DOMContext[])` and render `{children}`.
+     * Children are never placed on `props`, and `props.children` is always
+     * `undefined`.
+     */
     namespace JSX {
         type Element = maybePromise<DOM>;
         interface IntrinsicElements extends ElementAttributes, SVGAttributes {
@@ -1214,6 +1259,7 @@ declare function applyHead(config: HeadConfig, owner: string, options?: {
 }): HeadCleanup;
 
 declare class Page<TData extends Record<string, unknown> = Record<string, unknown>> {
+    #private;
     readonly resources: DisposalScope;
     url: YveeURL;
     path: string;
@@ -1224,6 +1270,15 @@ declare class Page<TData extends Record<string, unknown> = Record<string, unknow
     fetch?(context: PageFetchContext<TData>): Partial<TData> | Promise<Partial<TData>>;
     head?(): HeadResult | Promise<HeadResult>;
     body?(): unknown | Promise<unknown>;
+    /**
+     * Read the server-seeded data for this document at most once.
+     *
+     * During SSR (no `document`) it returns `this.data` on every call, so server
+     * renders are deterministic. In the browser it returns the hydrated payload
+     * for the first call of the initial mount and `undefined` for later calls,
+     * re-renders and client-side navigations. `page.data` is never modified.
+     */
+    ssrData<T extends Record<string, unknown> = TData>(): T | undefined;
 }
 interface PageFetchContext<TData extends Record<string, unknown>> {
     url: YveeURL;
@@ -1277,15 +1332,25 @@ interface GuardApp<TData extends Record<string, unknown>> {
     data: TData;
     url: IStateful<YveeURL>;
 }
+/** A guard redirect decision. */
+type GuardRedirect = {
+    kind: "redirect";
+    /** Destination path, optionally carrying its own query and hash. */
+    to: string;
+    /** Keep the current history entry instead of pushing a new one. */
+    replace?: boolean;
+    /**
+     * Preserves the URL that was rejected as a `returnTo` query parameter on
+     * `to`. `true` appends the current request URL (`path + search + hash`);
+     * a string appends that explicit value instead. Omit it for a bare redirect.
+     */
+    returnTo?: boolean | string;
+};
 type GuardResult = void | {
     kind: "allow";
 } | {
     kind: "stop";
-} | {
-    kind: "redirect";
-    to: string;
-    replace?: boolean;
-};
+} | GuardRedirect;
 interface GuardContext<TApp = unknown, TPage = unknown, TData extends Record<string, unknown> = Record<string, unknown>> {
     app: TApp;
     page: TPage;
@@ -1293,11 +1358,37 @@ interface GuardContext<TApp = unknown, TPage = unknown, TData extends Record<str
     params: Readonly<Record<string, string>>;
     data: TData;
     signal: AbortSignal;
+    /**
+     * `true` while guards run without a browser `window` (server rendering or
+     * Bun), `false` for client-side navigation. Always populated by the guard
+     * runner, so guard code can branch without touching globals.
+     */
+    readonly server: boolean;
 }
+/**
+ * Guard context accepted by the runner before the environment flag is filled
+ * in. Existing call sites may omit `server`; `checkGuards` normalizes it to a
+ * full `GuardContext` for every guard.
+ */
+type GuardContextInput<TApp = unknown, TPage = unknown, TData extends Record<string, unknown> = Record<string, unknown>> = Omit<GuardContext<TApp, TPage, TData>, "server"> & {
+    readonly server?: boolean;
+};
 type Guard<TApp = unknown, TPage = unknown, TData extends Record<string, unknown> = Record<string, unknown>> = (context: GuardContext<TApp, TPage, TData>) => GuardResult | Promise<GuardResult>;
 type GuardFactory<Args extends unknown[] = [], TContext = GuardContext> = (...args: Args) => (context: TContext) => GuardResult | Promise<GuardResult>;
 declare const createGuard: <Args extends unknown[], TContext = GuardContext>(factory: GuardFactory<Args, TContext>) => GuardFactory<Args, TContext>;
 declare const use: (...guards: Guard<any, any, any>[]) => <T extends Constructor>(controller: T) => T;
+/**
+ * Returns `to` with the request URL (`path + search + hash`) appended as an
+ * encoded `returnTo` query parameter. Guards can set `returnTo: true` instead;
+ * this helper is for building a redirect target by hand.
+ */
+declare function buildReturnTo(url: YveeURL, to: string): string;
+/**
+ * Reads and decodes a `returnTo` query parameter from a redirect target, a
+ * `URL`, or a parsed `YveeURL`. Returns `undefined` when the parameter is
+ * absent, so a login view can fall back to its default destination.
+ */
+declare function readReturnTo(url: string | URL | YveeURL): string | undefined;
 
 type ContextGuard<C = GuardContext> = (context: C) => GuardResult | Promise<GuardResult>;
 type GuardPredicate<C = GuardContext> = (context: C) => boolean | Promise<boolean>;
@@ -1357,6 +1448,8 @@ interface SocketRouteSource {
     routes: RouteBook;
 }
 type MessageFailure = 'parse' | 'validation' | 'handler';
+/** Lifecycle of a socket connection: waiting to connect or retry, open, or closed/disposed. */
+type SocketConnectionState = 'connecting' | 'open' | 'closed';
 interface JsonMessageOptions<T> {
     validate?: (value: unknown) => value is T;
     onError?: (error: unknown, phase: MessageFailure, event: MessageEvent) => void;
@@ -1374,12 +1467,44 @@ declare class SocketController {
     connection?: WebSocket;
     path: string;
     params: Record<string, string>;
+    /**
+     * Reactive connection state, bindable from a view like `app.loading`.
+     * Starts as `"connecting"`, becomes `"open"` once the native socket opens and
+     * queued frames flush, and `"closed"` when the socket closes or the hub
+     * disposes the controller. Retries cycle `"closed"` back to `"connecting"`.
+     */
+    readonly state: IStateful<SocketConnectionState>;
+    private queue;
+    private disposed;
     open(_event: Event): void;
     message(_event: MessageEvent): void | Promise<void>;
     close(_event: CloseEvent): void;
     error(_event: Event): void;
     messageError(error: unknown, phase: MessageFailure, _event: MessageEvent): void;
+    /**
+     * Sends a JSON frame, queueing it in FIFO order while the socket is missing
+     * or not open. Queued frames flush once when the connection opens, including
+     * after a retry reconnect. Frames sent to a disposed controller are dropped.
+     * The queue is unbounded while waiting, so senders should avoid producing
+     * frames faster than the connection can open. Never throws: serialization
+     * and native send failures are logged and the frame is skipped.
+     *
+     * Unlike `sendJson`, this does not drop frames sent before the socket opens.
+     */
+    send(value: unknown): void;
+    /** Fire-and-forget: silently drops the frame unless the socket is open now. */
     sendJson(value: unknown): void;
+    /** @internal Binds the native socket and enters `"connecting"`. */
+    attach(socket: WebSocket): void;
+    /** @internal Enters `"open"`; the hub flushes queued frames after the `open` hook. */
+    opened(): void;
+    /** @internal Sends queued frames in FIFO order if the socket is open. */
+    flush(): void;
+    /** @internal Enters `"closed"`; queued frames survive for a retry reconnect. */
+    closed(): void;
+    /** @internal Disposes the controller: clears queued frames and enters `"closed"`. */
+    dispose(): void;
+    private transmit;
     onMessage<T = unknown>(handler: (value: T, event: MessageEvent) => void | Promise<void>, options?: JsonMessageOptions<T>): this;
 }
 declare class SocketHub {
@@ -1457,6 +1582,15 @@ declare class Yvee<T extends Record<string, unknown> = Record<string, unknown>> 
     private load;
 }
 
+/**
+ * `true` when the module is evaluated in a browser (a global `window` exists).
+ *
+ * Evaluated once at module scope with `typeof window`, so importing this module
+ * during server rendering or in Bun never throws. Use it in guards, pages and
+ * auth helpers instead of repeating `typeof window === "undefined"` checks.
+ */
+declare const isClient: boolean;
+
 type StoreName = "localStorage" | "sessionStorage";
 
 interface StorageSchema<T> {
@@ -1512,6 +1646,13 @@ declare class BrowserStore {
     versioned<T>(key: string, schema: StorageSchema<T>): VersionedValue<T>;
     /** Native storage events from other documents; same-document writes do not notify. */
     watch(key: string, callback: (change: StorageChange) => void, { signal, scope }?: StorageWatchOptions): Cleanup;
+    /**
+     * Validated read: parses the stored JSON and returns its value only when it
+     * passes `validate`; otherwise `.value` is `undefined`. Invalid entries are
+     * left in storage, so call `.remove()` to discard them. A function argument
+     * is always treated as a validator.
+     */
+    get<T>(key: string, validate: (value: unknown) => value is T): StoredValue<T | undefined>;
     get<T = unknown>(key: string, fallback?: T): StoredValue<T | undefined>;
     /** Writes immediately; storage/serialization failures propagate to the caller. */
     set<T>(key: string, value: T): StoredValue<T>;
@@ -1522,22 +1663,83 @@ declare class BrowserStore {
 declare const local: BrowserStore;
 declare const session: BrowserStore;
 
+/**
+ * Non-success HTTP response. `body` holds the parsed JSON error body when one
+ * was readable. The message is the explicit `message` argument, then a string
+ * `error` or `message` field on `body`, then `HTTP <status> <statusText>`.
+ */
 declare class HTTPError extends Error {
     readonly response: Response;
-    constructor(response: Response);
+    /** Parsed JSON body of the response, or `undefined` when it was not JSON. */
+    readonly body?: unknown;
+    constructor(response: Response, message?: string, body?: unknown);
+    /**
+     * Builds an `HTTPError` after cloning the response and parsing its JSON body.
+     * The clone is taken first, so `response` stays readable for other callers.
+     * Parse failures leave `body` undefined.
+     */
+    static fromResponse(response: Response, message?: string): Promise<HTTPError>;
 }
 interface RequestRetry {
     /** Additional attempts, from 0 to 5. Only GET, HEAD and OPTIONS may retry. */
     attempts: number;
     delayMs?: number;
 }
+interface CsrfOptions {
+    /** Header carrying the token. Defaults to `x-csrf-token`. */
+    header?: string;
+    /** JSON body field carrying the token. Defaults to `csrfToken`. */
+    field?: string;
+    /** Token minting endpoint. Defaults to `/csrf`; `false` disables minting. */
+    endpoint?: string | false;
+}
 interface JSONRequestOptions<T> extends RequestInit {
     validate: (value: unknown) => value is T;
     retry?: RequestRetry;
     fetch?: typeof globalThis.fetch;
+    /**
+     * Attaches a CSRF token to the request header and, for a JSON body, a body
+     * field. `true` uses the `x-csrf-token` header, the `csrfToken` field, the
+     * `csrf_token` cookie, a `meta[name="csrf-token"]` tag, then a cached or
+     * freshly minted token from `GET /csrf`. Existing body fields are never
+     * overwritten.
+     */
+    csrf?: boolean | CsrfOptions;
 }
 /** HTTP/status failures are distinct from JSON parsing and caller validation failures. */
 declare function requestJSON<T>(input: RequestInfo | URL, options: JSONRequestOptions<T>): Promise<T>;
+interface FormRequestOptions<T> extends Omit<RequestInit, "body"> {
+    /** JSON payload, serialized as the request body. Ignored when `body` is set. */
+    data?: unknown;
+    /** Raw body such as `FormData`; takes precedence over `data`. */
+    body?: BodyInit | null;
+    /** Optional validator for the parsed JSON success payload. */
+    validate?: (value: unknown) => value is T;
+    /** CSRF options forwarded to `requestJSON`. */
+    csrf?: boolean | CsrfOptions;
+    fetch?: typeof globalThis.fetch;
+}
+interface FormResult<T> {
+    ok: boolean;
+    /** HTTP status, or `0` when no response was received. */
+    status: number;
+    data?: T | undefined;
+    /** Server error text when available, otherwise the failure message. */
+    error?: string | undefined;
+}
+/**
+ * Submits a JSON or `FormData` body without throwing.
+ * HTTP and network failures resolve to `{ ok: false, status, error }`; a
+ * missing response reports status `0`. A 204/205 success has no `data`.
+ */
+declare function requestForm<T = unknown>(url: string | URL, options?: FormRequestOptions<T>): Promise<FormResult<T>>;
+
+/**
+ * Reads a cookie from `document.cookie` in the browser.
+ * Returns `undefined` without a `document` or when the cookie is absent.
+ * Values are decoded once; a malformed percent-encoding returns the raw value.
+ */
+declare function readCookie(name: string): string | undefined;
 
 interface StreamHandlers {
     open?: (event: Event) => void;
@@ -1558,5 +1760,5 @@ declare function renderJSONScript(value: unknown, options: {
     nonce?: string;
 }): string;
 
-export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, createGuard, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, loaded, local, normalizePath, page, paramsGuard, renderContent, renderDom, renderJSONScript, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
-export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, Guard, GuardApp, GuardContext, GuardFactory, GuardFallback, GuardPredicate, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };
+export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, buildReturnTo, createGuard, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, isClient, loaded, local, normalizePath, page, paramsGuard, readCookie, readReturnTo, renderContent, renderDom, renderJSONScript, requestForm, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
+export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, CsrfOptions, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, FormRequestOptions, FormResult, Guard, GuardApp, GuardContext, GuardContextInput, GuardFactory, GuardFallback, GuardPredicate, GuardRedirect, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketConnectionState, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };

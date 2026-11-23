@@ -38,6 +38,45 @@ mounting handles rendering and activating those bindings for page content.
 `DOMComponent<Props>` is a typed function component. Because TSX elements may be
 promises, the renderer awaits async components during SSR and navigation.
 
+Optional attributes — intrinsic attribute maps and `DOMAttr` alike — are typed
+as `?: T | undefined`. Forwarding a conditionally-present value such as
+`disabled={props.disabled}`, `aria-label={props.ariaLabel}` or `on={props.on}`
+type-checks under `exactOptionalPropertyTypes`; the renderer omits every
+`undefined` attribute, so defined-and-truthy, absent and explicitly-`undefined`
+attributes produce the same markup for the same value.
+
+### Components and children
+
+A component is a function `dom` calls with attributes as its first argument and
+JSX children as **rest arguments**:
+
+```tsx
+import { dom, type DOMContext } from "yvee";
+
+function Card(props: { title: string }, ...children: DOMContext[]) {
+  return (
+    <section>
+      <h2>{props.title}</h2>
+      {children}
+    </section>
+  );
+}
+
+const card = (
+  <Card title="Hello">
+    <p>Body</p>
+  </Card>
+);
+```
+
+`DOMComponentProps` and `DOMComponent<Props>` describe that shape. Children are
+never placed on the props object, so `props.children` is always `undefined` and
+rendering it silently drops the content; render the `...children` rest parameter
+instead. Prefer typing the props parameter with your own props object: the
+permissive `DOMAttr` index signature that `DOMComponentProps` carries types
+unknown keys — including `children` — as `any`, which hides the mistake from the
+compiler.
+
 `renderDom(value, idm?)` converts a DOM tree into markup plus deferred browser
 binding instructions and returns `RenderedDOM` (`ctx`, `oz`, `id`). Ordinary
 applications should use `Yvee.render` rather than calling the renderer directly.
@@ -127,6 +166,31 @@ renderer.
 
 The browser renderer can reuse matching server markup; pass `hydrate: false` to
 `app.render` to replace the mount element contents.
+
+### Consume-once SSR data
+
+`page.ssrData<T>()` exposes the data seeded for the current document at most
+once, so a view can tell fresh SSR data from re-seeded data:
+
+- During server rendering (no `document`) it returns `page.data` on every call,
+  so repeated renders stay deterministic.
+- In the browser the first call after `app.render()` returns the hydrated
+  payload; later calls, re-renders and client-side navigations return
+  `undefined`. The window opens when the initial mount starts and closes when it
+  settles, so a page reached by navigation never sees another page's payload.
+- `page.data` is not modified. Read it for ordinary values and use `ssrData()`
+  only for hydration-specific work.
+
+```tsx
+override body() {
+  const seeded = this.ssrData<{ user: string }>();
+  return <p>{seeded ? `Hello ${seeded.user}` : "Local view"}</p>;
+}
+```
+
+The window is per document, not per page instance: a second call in the same
+pass already returns `undefined`, matching the module-level `reconciled` flag it
+replaces.
 
 `ServerOptions` supports `id`, `class`, `data` and a per-request `dataFactory`.
 `ServerRenderer<T>` is the callable renderer with `withStatus()`.

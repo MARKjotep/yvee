@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { dom } from "../../src/dom/render/node.dom";
 import { Page, route, Yvee } from "../../src/yvee";
 import { resolveHeadAssets, type HeadConfig } from "../../src/yvee/rendering/head";
 
@@ -115,7 +116,7 @@ describe("resolveHeadAssets", () => {
       link: Object.freeze([{ rel: "icon", href: "/favicon.ico" }]),
       css: "/site.css",
       description: "static",
-    }) as HeadConfig;
+    }) as unknown as HeadConfig;
     const snapshot = JSON.stringify(head);
 
     const resolved = resolveHeadAssets(head);

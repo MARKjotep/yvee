@@ -5,7 +5,11 @@ import { HeadDefaults, type HeadResult } from "./rendering/head";
 import { loadPage } from "./client/load-page";
 import { type Layout } from "./client/mount";
 import { YveeClient } from "./client/runtime";
-import { type Page } from "./pages/page";
+import {
+  finishHydrationPass,
+  startHydrationPass,
+  type Page,
+} from "./pages/page";
 import { normalizePath, toURL, type YveeURL } from "./routing/path";
 import {
   RouteBook,
@@ -220,6 +224,10 @@ export class Yvee<
       options.data ??
       (inBrowser ? readBootstrapData<T>() : undefined) ??
       ({} as T);
+    // Pages constructed during this browser render are the hydration pass;
+    // the window closes when the initial mount settles so later navigations
+    // and re-renders cannot re-serve the server payload.
+    const hydration = inBrowser ? startHydrationPass() : undefined;
     const renderer = this.server({
       ...(options.id ? { id: options.id } : {}),
       ...(options.class ? { class: options.class } : {}),
@@ -239,6 +247,12 @@ export class Yvee<
             document.body.dataset.yveeReady = "true";
           })
       : Promise.resolve(() => {});
+    if (hydration) {
+      void mount.then(
+        () => finishHydrationPass(hydration),
+        () => finishHydrationPass(hydration),
+      );
+    }
     // A default-exported render result can start browser mounting without a
     // separate client entry awaiting it. Keep its rejection observable to
     // consumers while also avoiding an unhandled rejection in that pattern.

@@ -71,15 +71,15 @@ new Yvee({ base: "/my-project/", client: "/my-project/client.js" });
 ## Guards
 
 Guards run before page fetch, body and head work. A guard receives a context
-with the destination URL, route params, page, app, request data and navigation
-signal. It can allow, stop or redirect:
+with the destination URL, route params, page, app, request data, a navigation
+signal and a `server` environment flag. It can allow, stop or redirect:
 
 ```ts
 type GuardResult =
   | void
   | { kind: "allow" }
   | { kind: "stop" }
-  | { kind: "redirect"; to: string; replace?: boolean };
+  | { kind: "redirect"; to: string; replace?: boolean; returnTo?: boolean | string };
 ```
 
 In the browser a stop or redirect controls navigation. During server rendering a
@@ -106,6 +106,40 @@ class AccountPage extends Page {
   }
 }
 ```
+
+### Preserving the rejected URL
+
+Set `returnTo` on a redirect to carry the URL the guard rejected. `true` appends
+the current request URL (`path + search + hash`) as an encoded `returnTo` query
+parameter; a string appends that explicit value instead. Redirects that omit
+`returnTo` render exactly like today's bare redirect:
+
+```ts
+import type { Guard } from "yvee";
+
+const accountGuard: Guard = ({ data }) =>
+  data.signedIn === true
+    ? { kind: "allow" }
+    : { kind: "redirect", to: "/login", returnTo: true };
+```
+
+An anonymous visit to `/account?tab=billing#invoices` redirects to
+`/login?returnTo=%2Faccount%3Ftab%3Dbilling%23invoices`. The target's own query
+and hash are kept, and the framework resolves the parameter in the guard runner,
+so both client navigation and server rendering follow the annotated target.
+
+Read the value back in the login view and fall back when it is absent:
+
+```ts
+import { readReturnTo } from "yvee";
+
+const returnTo = readReturnTo(window.location.href) ?? "/account";
+```
+
+`readReturnTo()` accepts a redirect target string, a `URL`, or a parsed
+`YveeURL` and returns the decoded value or `undefined`. `buildReturnTo(url, to)`
+builds the same target by hand when a guard cannot return a redirect object.
+Only navigate to paths you trust; a `returnTo` value comes from the URL.
 
 ### Built-in guards
 
@@ -139,6 +173,31 @@ Authentication and permission predicates should use your application's session
 data. Browser guards control navigation; protect server endpoints separately.
 The [authentication example](../examples/README.md) shows request-owned identity
 without a prescribed session format.
+
+### Browser or server
+
+`isClient` is exported from `yvee` as a module-scope boolean: `true` only when a
+global `window` exists. It is evaluated safely, so importing it during server
+rendering or in Bun never throws:
+
+```ts
+import { isClient } from "yvee";
+
+if (isClient) {
+  // Browser-only helpers such as document storage are available.
+}
+```
+
+Guard contexts also carry `server`: `true` when guards run without a browser
+(server rendering or Bun) and `false` during client-side navigation. The guard
+runner always populates it, so guard code can branch without touching globals:
+
+```ts
+import type { Guard } from "yvee";
+
+const clientOnly: Guard = ({ server }) =>
+  server ? { kind: "stop" } : { kind: "allow" };
+```
 
 Client guards are destination entry checks. Unsaved-change departure checks,
 session readiness and active-route revalidation are future design work

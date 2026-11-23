@@ -3,7 +3,7 @@ import type { DVal } from "./value-types.attr.dom";
 
 export interface SVGAttributes {
   // SVG Elements  ----------------------------------
-  svg: svgAttr & { viewBox?: DVal };
+  svg: svgAttr & { viewBox?: DVal | undefined };
   path: svgEAttr;
   circle: svgEAttr;
   animate: svgEAttr;
@@ -65,52 +65,52 @@ export interface SVGAttributes {
 }
 
 export interface svgAttr<T = DVal> extends EAttr<T> {
-  height?: T;
-  width?: T;
-  preserveAspectRatio?: T;
-  fill?: T;
-  stroke?: T;
-  strokeWidth?: T;
-  opacity?: T;
-  display?: T;
-  overflow?: T;
+  height?: T | undefined;
+  width?: T | undefined;
+  preserveAspectRatio?: T | undefined;
+  fill?: T | undefined;
+  stroke?: T | undefined;
+  strokeWidth?: T | undefined;
+  opacity?: T | undefined;
+  display?: T | undefined;
+  overflow?: T | undefined;
 }
 
 export interface svgEAttr<T = DVal> extends svgAttr<T> {
-  transform?: T;
-  role?: T;
-  tabindex?: T;
-  visibility?: T;
-  fillOpacity?: T;
-  fillRule?: T;
-  stroke?: T;
-  strokeWidth?: T;
-  strokeOpacity?: T;
-  strokeLinecap?: T;
-  strokeLinejoin?: T;
-  strokeMiterlimit?: T;
-  strokeDasharray?: T;
-  strokeDashoffset?: T;
-  x?: T;
-  y?: T;
-  x1?: T;
-  y1?: T;
-  x2?: T;
-  y2?: T;
-  cx?: T;
-  cy?: T;
-  r?: T;
-  rx?: T;
-  ry?: T;
-  d?: T;
-  points?: T;
+  transform?: T | undefined;
+  role?: T | undefined;
+  tabindex?: T | undefined;
+  visibility?: T | undefined;
+  fillOpacity?: T | undefined;
+  fillRule?: T | undefined;
+  stroke?: T | undefined;
+  strokeWidth?: T | undefined;
+  strokeOpacity?: T | undefined;
+  strokeLinecap?: T | undefined;
+  strokeLinejoin?: T | undefined;
+  strokeMiterlimit?: T | undefined;
+  strokeDasharray?: T | undefined;
+  strokeDashoffset?: T | undefined;
+  x?: T | undefined;
+  y?: T | undefined;
+  x1?: T | undefined;
+  y1?: T | undefined;
+  x2?: T | undefined;
+  y2?: T | undefined;
+  cx?: T | undefined;
+  cy?: T | undefined;
+  r?: T | undefined;
+  rx?: T | undefined;
+  ry?: T | undefined;
+  d?: T | undefined;
+  points?: T | undefined;
 }
 
 export interface svgETextAttr<T = DVal> extends svgEAttr<T> {
-  fontSize?: T;
-  fontFamily?: T;
-  fontWeight?: T;
-  textAnchor?: T;
-  dominantBaseline?: T;
+  fontSize?: T | undefined;
+  fontFamily?: T | undefined;
+  fontWeight?: T | undefined;
+  textAnchor?: T | undefined;
+  dominantBaseline?: T | undefined;
 }
 

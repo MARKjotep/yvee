@@ -28,6 +28,7 @@ session.remove("draft");
 `BrowserStore` methods:
 
 - `get(key, fallback?)` returns a `StoredValue`; `.value` is the current value.
+- `get(key, validate)` returns a validated `StoredValue`; `.value` is the value or `undefined`.
 - `set(key, value)` writes immediately and returns the `StoredValue`.
 - `remove(key)` deletes the entry.
 - `has(key)` reports whether the key exists.
@@ -40,7 +41,26 @@ provides `str()`, `int()`, `float()`, `bool()` and `json()` conversions.
 
 Writes and removals are explicit and propagate storage errors to the caller.
 Without a browser, writes do nothing and reads use the fallback. Types are
-compile-time hints, so validate untrusted stored data before relying on it.
+compile-time hints; pass a type predicate as the second argument to validate
+untrusted stored JSON:
+
+```ts
+import { local } from "yvee";
+
+const isSession = (value: unknown): value is { token: string } =>
+  typeof value === "object" &&
+  value !== null &&
+  "token" in value &&
+  typeof value.token === "string";
+
+const session = local.get("session", isSession).value; // { token: string } | undefined
+```
+
+A validating `get` returns `undefined` when the entry is missing, unreadable or
+fails the predicate. It leaves rejected entries in storage, so call `.remove()`
+on the returned `StoredValue` to discard them. A function argument is always
+treated as a validator, so use a non-function fallback with the two-argument
+form.
 
 ### Versioned values
 
@@ -165,12 +185,82 @@ Retries default to zero. Up to five additional attempts are allowed for bodyless
 GET/HEAD/OPTIONS requests, with a fixed, abortable delay. Network `TypeError`s
 and 408/429/500/502/503/504 responses may retry; parsing and validation never
 retry. Retry responses are cancelled before waiting. Other methods reject a
-retry policy before sending. There is no automatic token handling or retry-after
-policy.
+retry policy before sending. There is no automatic retry-after policy or token
+handling outside the CSRF option below.
 
 `JSONRequestOptions<T>` extends `RequestInit` with the required `validate`,
-optional `retry` and optional `fetch`. `RequestRetry` has `attempts` (0–5) and
-an optional `delayMs`.
+optional `retry`, optional `fetch` and optional `csrf`. `RequestRetry` has
+`attempts` (0–5) and an optional `delayMs`.
+
+### CSRF tokens
+
+```ts
+requestJSON("/api/items", {
+  method: "POST",
+  body: JSON.stringify({ title }),
+  validate: (value): value is { id: number } =>
+    typeof value === "object" && value !== null && "id" in value,
+  csrf: true,
+});
+```
+
+`csrf: true` reads the `csrf_token` cookie, then the content of a
+`meta[name="csrf-token"]` tag, then mints a token from `GET /csrf` (accepting
+`csrfToken` or `token` in the JSON response). Minted tokens are cached for the
+page lifetime. The token is sent in the `x-csrf-token` header and, when the
+request has a JSON body, in the `csrfToken` field. A field already present in
+the caller's body is never overwritten. Bodyless requests only receive the
+header.
+
+Override the defaults with `csrf: { header, field, endpoint }`;
+`endpoint: false` disables minting. Without a browser (`document` unavailable)
+the cookie and meta sources are skipped; minting still uses `endpoint`, which
+must then be a URL the server can reach. Disabling minting without a readable
+token rejects with `TypeError` before the target request is sent. Mint failures
+are not cached. `header` defaults to `x-csrf-token`, `field` to `csrfToken` and
+`endpoint` to `/csrf`.
+
+### Reading cookies
+
+```ts
+import { readCookie } from "yvee";
+
+const token = readCookie("csrf_token"); // string | undefined
+```
+
+`readCookie(name)` splits `document.cookie`, matches the exact cookie name, and
+decodes the value once. It returns `undefined` when the cookie is absent or
+`document` is unavailable (server rendering). Malformed percent-encoding returns
+the raw value instead of throwing.
+
+### Form submissions
+
+```ts
+import { requestForm } from "yvee";
+
+const result = await requestForm<{ id: number }>("/api/items", {
+  data: { title },
+  csrf: true,
+});
+
+if (result.ok) console.log(result.data?.id);
+else console.error(result.error);
+```
+
+`requestForm` posts `data` as JSON or a raw `body` such as `FormData`, reusing
+`requestJSON` (including `csrf`). It never throws. Failures resolve to
+`{ ok: false, status, error }` using the server's `{ error }`/`{ message }` text
+when present; network failures report status `0`. A 204/205 success has no
+`data`. `validate` is optional; without it the parsed JSON is asserted as `T`.
+`body` takes precedence over `data`, and the method defaults to `POST`.
+
+### HTTP errors
+
+`HTTPError` exposes `body?: unknown`, parsed from a clone of the response when
+the error is constructed, so the original `response` remains readable. The
+message is an explicit constructor message, then a string `error` or `message`
+field on the parsed body, then `HTTP <status> <statusText>`. Non-JSON error
+bodies leave `body` undefined.
 
 ## WebSockets
 
@@ -195,6 +285,28 @@ class ChatSocket extends SocketController {
 app.register(ChatSocket);
 const controller = app.socket.load("/chat", { signal: app.resources.signal });
 controller.sendJson({ text: "hello" });
+```
+
+`controller.send(value)` serializes and sends a frame immediately when the
+socket is open, and otherwise queues it in FIFO order until the connection
+opens. The `open` hook runs first, then the queue flushes, so a join frame sent
+from `open` reaches the server before frames queued earlier. Queued frames
+flush exactly once on open, including after a retry reconnect. `send` never
+throws: serialization and native send failures are logged, and frames sent
+after the hub disposes the controller are dropped. The queue is unbounded while
+waiting, so avoid producing frames faster than the connection can open.
+`sendJson(value)` stays fire-and-forget: it drops the frame unless the socket
+is open at call time.
+
+`controller.state` is a reactive `IStateful<"connecting" | "open" | "closed">`,
+bindable like `app.loading`. It starts `"connecting"`, becomes `"open"` when
+the native socket opens (flushing queued frames), and `"closed"` when the
+socket closes or the hub disposes the controller; a retry moves it back to
+`"connecting"`.
+
+```ts
+controller.send({ text: "queued until open" });
+controller.state.value; // "connecting" | "open" | "closed"
 ```
 
 `SocketHub.load(path, options)` accepts relative paths and HTTP(S)/WS(S) URLs,

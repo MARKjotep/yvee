@@ -103,6 +103,41 @@ base. Set `client` to a directory or explicit JavaScript file to change it:
 new Yvee({ base: "/my-project/", client: "/my-project/client.js" });
 ```
 
+## Component authoring
+
+A Yvee component is a function called by `dom`. Attributes are its first
+argument; **JSX children are rest arguments**:
+
+```tsx
+import { dom, type DOMContext } from "yvee";
+
+function Card(props: { title: string }, ...children: DOMContext[]) {
+  return (
+    <article class="card">
+      <h2>{props.title}</h2>
+      {children}
+    </article>
+  );
+}
+
+const view = (
+  <Card title="Hello">
+    <p>Body</p>
+  </Card>
+);
+```
+
+> **Children are not on `props`.** Because `dom` forwards JSX children only as
+> rest arguments, `props.children` is always `undefined`, and rendering it
+> silently drops the children. Type the props parameter as your own props
+> object and render the `...children` rest parameter instead. (`DOMComponent`
+> and `DOMComponentProps` describe this shape for typed components.)
+
+Components may be async; the renderer awaits them during SSR and navigation.
+Optional attributes accept an explicit `undefined` (`disabled={props.disabled}`,
+`on={props.on}`) and are omitted from the markup, so a conditionally-present
+value can be forwarded without normalizing it first.
+
 ## Documentation
 
 | Guide | What it covers |

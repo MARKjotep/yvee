@@ -4,7 +4,7 @@ import { checkGuards, type GuardContext } from "../../src/yvee/guards";
 import { toURL } from "../../src/yvee/routing/path";
 
 const context = (signal = new AbortController().signal): GuardContext => ({
-  app: {}, page: {}, data: {}, params: {}, url: toURL("/"), signal,
+  app: {}, page: {}, data: {}, params: {}, url: toURL("/"), signal, server: true,
 });
 
 describe("guard helpers", () => {
