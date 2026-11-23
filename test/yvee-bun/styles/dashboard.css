@@ -1,0 +1,91 @@
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.dashboard-sidebar {
+  position: sticky;
+  top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d8e0e7;
+  border-radius: 18px;
+  background: #fffffff2;
+  box-shadow: 0 14px 40px #284c800d;
+}
+
+.dashboard-brand { display: flex; align-items: center; gap: .65rem; padding: .25rem .2rem 1rem; border-bottom: 1px solid #e4eaf0; }
+.dashboard-brand__mark { display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border-radius: .7rem; color: #fff; background: #17345f; font-weight: 800; }
+.dashboard-brand strong { display: block; font-size: .95rem; letter-spacing: -.02em; }
+.dashboard-brand small { display: block; color: #728396; font-size: .75rem; }
+.dashboard-nav__label { margin: 1rem .35rem .4rem; color: #7d8ea1; font-size: .68rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.dashboard-nav__tabs { display: flex; flex-direction: column; gap: .25rem; margin: 0; padding: 0; list-style: none; }
+.dashboard-nav__tab { display: flex; flex-direction: column; gap: .1rem; padding: .55rem .7rem; border-radius: .65rem; color: #42566b; text-decoration: none; }
+.dashboard-nav__tab span { font-size: .92rem; font-weight: 700; }
+.dashboard-nav__tab small { color: #8494a6; font-size: .72rem; }
+.dashboard-nav__tab:hover, .dashboard-nav__tab:focus-visible { color: #17345f; background: #eef3f8; }
+.dashboard-nav__tab--active { color: #17345f; background: #e7eef7; box-shadow: inset 3px 0 0 #17345f; }
+.dashboard-nav__tab--active small { color: #5f738a; }
+.dashboard-nav__anchors { display: flex; flex-direction: column; gap: .1rem; }
+.dashboard-nav__anchors a { padding: .3rem .35rem; color: #59708a; font-size: .82rem; text-decoration: none; }
+.dashboard-nav__anchors a:hover, .dashboard-nav__anchors a:focus-visible { color: #17345f; text-decoration: underline; text-underline-offset: 3px; }
+.dashboard-sidebar__note { margin: 1rem .2rem 0; padding-top: .85rem; border-top: 1px solid #e4eaf0; color: #7c8da1; font-size: .75rem; line-height: 1.5; }
+
+.dashboard-panel {
+  min-width: 0;
+  padding: clamp(1.3rem, 3.5vw, 2.2rem);
+  border: 1px solid #d8e0e7;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 20px 60px #284c800d;
+}
+
+.dashboard-tab__intro { padding-bottom: 1.2rem; border-bottom: 1px solid #e4eaf0; }
+.dashboard-tab__intro .eyebrow, .dashboard-section .eyebrow { color: #5a7390; }
+.dashboard-tab__intro h1 { margin: .2rem 0 .5rem; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.06em; }
+.dashboard-tab__intro p:last-child { max-width: 60ch; color: #5c6c7e; }
+
+.dashboard-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; margin: 1.2rem 0; }
+.dashboard-stat { padding: 1rem; border: 1px solid #e2e9f0; border-radius: 14px; background: #f8fafc; }
+.dashboard-stat__label { margin: 0; color: #6c7e92; font-size: .72rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.dashboard-stat strong { display: block; margin: .25rem 0; font-size: clamp(1.5rem, 4vw, 2rem); letter-spacing: -.05em; }
+.dashboard-stat small { color: #71859b; font-size: .78rem; }
+.dashboard-stat--up small { color: #2f7d5b; }
+
+.dashboard-section { padding: 1.3rem 0; border-top: 1px solid #e4eaf0; scroll-margin-top: 1rem; }
+.dashboard-section:first-of-type { border-top: 0; }
+.dashboard-section h2 { margin: .2rem 0 .5rem; font-size: clamp(1.25rem, 3vw, 1.7rem); letter-spacing: -.04em; }
+.dashboard-section p { color: #5c6c7e; }
+.dashboard-steps { display: grid; gap: .5rem; margin: .8rem 0 0; padding-left: 1.2rem; color: #4c6076; }
+.dashboard-steps li::marker { color: #7390ae; font-weight: 700; }
+.dashboard-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+.dashboard-links a { padding: .45rem .75rem; border: 1px solid #dbe4ed; border-radius: 999px; color: #31506f; background: #f8fafc; font-size: .85rem; font-weight: 650; text-decoration: none; }
+.dashboard-links a:hover, .dashboard-links a:focus-visible { border-color: #b9cada; color: #17345f; background: #eef3f8; }
+.dashboard-note { margin: .8rem 0 0; padding: .8rem 1rem; border-left: 3px solid #b9cada; background: #f6f9fc; color: #5c6c7e; font-size: .9rem; }
+
+.dashboard-chart { display: flex; align-items: flex-end; gap: .55rem; height: 12rem; margin: 1rem 0 0; padding: 1rem; border: 1px solid #e2e9f0; border-radius: 14px; background: #f8fafc; }
+.dashboard-chart__bar { display: flex; flex: 1; flex-direction: column; justify-content: flex-end; height: 100%; text-align: center; }
+.dashboard-chart__fill { display: block; min-height: .4rem; margin-bottom: .4rem; border-radius: .35rem .35rem 0 0; background: linear-gradient(180deg, #6f95bd, #17345f); }
+.dashboard-chart__bar small { color: #7b8da1; font-size: .7rem; }
+
+.dashboard-list { margin: 1rem 0 0; padding: 0; list-style: none; border-top: 1px solid #e4eaf0; }
+.dashboard-list li { display: flex; justify-content: space-between; gap: 1rem; padding: .7rem 0; border-bottom: 1px solid #e4eaf0; color: #4c6076; }
+.dashboard-list code { color: #31506f; font-size: .85rem; }
+.dashboard-list span { color: #71859b; font-size: .82rem; font-variant-numeric: tabular-nums; }
+
+.dashboard-settings { margin: 1rem 0 0; padding: 0; list-style: none; border-top: 1px solid #e4eaf0; }
+.dashboard-setting { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #e4eaf0; }
+.dashboard-setting strong { display: block; font-size: .92rem; }
+.dashboard-setting small { color: #74869a; font-size: .8rem; }
+.dashboard-setting input { width: 1.05rem; height: 1.05rem; accent-color: #17345f; }
+
+@media (max-width: 760px) {
+  .dashboard-layout { grid-template-columns: 1fr; }
+  .dashboard-sidebar { position: static; }
+  .dashboard-stats { grid-template-columns: 1fr; }
+  .dashboard-chart { height: 9rem; }
+  .dashboard-nav__tabs { flex-direction: row; flex-wrap: wrap; }
+  .dashboard-nav__tab { flex: 1 1 8rem; }
+  .dashboard-nav__anchors { flex-direction: row; flex-wrap: wrap; }
+}

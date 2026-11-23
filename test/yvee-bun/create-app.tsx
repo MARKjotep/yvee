@@ -5,6 +5,11 @@ import { dom } from "../../src/dom/render/node.dom";
 import { client } from "./client-config";
 import { FeaturesRoute } from "./routes/features";
 import { AsyncDOMRoute } from "./routes/async-dom";
+import {
+  DashboardAnalyticsRoute,
+  DashboardRoute,
+  DashboardSettingsRoute,
+} from "./routes/dashboard";
 import { HomeRoute } from "./routes/home";
 import { MetadataRoute } from "./routes/metadata";
 import { StudioRoute } from "./routes/studio";
@@ -24,6 +29,9 @@ export function createDemoApp() {
     StudioRoute,
     MetadataRoute,
     AsyncDOMRoute,
+    DashboardRoute,
+    DashboardAnalyticsRoute,
+    DashboardSettingsRoute,
     NotFoundPage,
     ChatSocket,
   );
@@ -38,6 +46,7 @@ export function createDemoApp() {
           <a href="/">Home</a>
           <a href="/features">Features</a>
           <a href="/studio">Studio</a>
+          <a href="/dashboard">Dashboard</a>
           <a href="/metadata">SSR data</a>
           <a href="/async-dom">Async DOM</a>
           <a href="/missing-page">404 demo</a>

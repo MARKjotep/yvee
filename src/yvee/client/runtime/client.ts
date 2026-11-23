@@ -148,6 +148,10 @@ export class YveeClient {
       this.options.url.value = target;
       return;
     }
+    if (this.isHashNavigation(target)) {
+      this.navigateHash(target, state, replace);
+      return;
+    }
 
     this.history.saveCurrentScroll();
     const targetKey = urlKey(target);
@@ -171,6 +175,36 @@ export class YveeClient {
 
   forward() {
     if (typeof history !== "undefined") history.forward();
+  }
+
+  /**
+   * A fragment change on the displayed page needs no page load, so it must skip
+   * the URL hook while still pushing an entry and scrolling to the anchor.
+   */
+  private isHashNavigation(target: YveeURL) {
+    const current = this.currentURL;
+    return Boolean(
+      current &&
+      // An in-flight transition owns the URL state and history bookkeeping.
+      !this.activeLoad &&
+      !this.pendingNavigation &&
+      target.path === current.path &&
+      target.search === current.search &&
+      target.hash !== current.hash,
+    );
+  }
+
+  private navigateHash(target: YveeURL, state?: Record<string, unknown>, replace = false) {
+    const revision = this.revision;
+    this.history.saveCurrentScroll();
+    this.history.write(target, state, replace);
+    this.currentURL = target;
+    this.updateURL(target);
+    void this.scroll.scrollToRoute(target, revision).then(() => {
+      if (this.mounted && revision === this.revision) this.history.trackDisplayedEntry();
+    }).catch(error => {
+      if (this.mounted && revision === this.revision) this.options.onError?.(error, target);
+    });
   }
 
   private async resolveInitialPage(url: YveeURL): Promise<PageLoad> {

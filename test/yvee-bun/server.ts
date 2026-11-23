@@ -64,6 +64,13 @@ const staticFiles = new Map([
     },
   ],
   [
+    "/styles/dashboard.css",
+    {
+      file: `${import.meta.dir}/styles/dashboard.css`,
+      type: "text/css; charset=utf-8",
+    },
+  ],
+  [
     "/assets/greenhouse-hero.png",
     {
       file: `${import.meta.dir}/public/assets/greenhouse-hero.png`,
