@@ -1,4 +1,6 @@
 import { dom } from "../../../../src/dom/render/node.dom";
+import type { Page, RegionCache } from "../../../../src/yvee";
+import type { DashboardRoute } from "../../routes/dashboard";
 
 const preferences = [
   {
@@ -23,7 +25,10 @@ const preferences = [
   },
 ];
 
-export default function DashboardSettingsView() {
+export default function DashboardSettingsView(
+  { page, cache }: { page: Page; cache: RegionCache },
+) {
+  const draft = (cache.get() as { draft?: string } | undefined)?.draft ?? "";
   return (
     <article class="dashboard-tab">
       <header class="dashboard-tab__intro">
@@ -56,6 +61,50 @@ export default function DashboardSettingsView() {
         </ul>
         <p class="dashboard-note">
           Preferences are placeholders; this demo does not persist changes.
+        </p>
+      </section>
+
+      <section class="dashboard-section">
+        <p class="eyebrow">Keep-state</p>
+        <h2>Draft notes</h2>
+        <p>
+          This draft is kept in the region cache with <code>keepAlive</code>, so
+          a re-entered Settings region restores it. While it is unsaved,{" "}
+          <code>regionWillLeave</code> blocks tab changes; save or clear it to
+          switch away.
+        </p>
+        <label>
+          <span>Draft notes</span>
+          <textarea
+            name="draft"
+            rows={3}
+            placeholder="Write a note, save it, then try another tab."
+            style={{ display: "block", width: "100%", marginTop: ".4rem" }}
+            on={{
+              input(event) {
+                const value = (event.currentTarget as HTMLTextAreaElement).value;
+                cache.set({ draft: value });
+                (page as DashboardRoute).settingsDraft = value;
+              },
+            }}
+          >{draft}</textarea>
+        </label>
+        <div class="dashboard-links">
+          <button
+            type="button"
+            on={{
+              click() {
+                (page as DashboardRoute).settingsDraft = "";
+              },
+            }}
+          >
+            Save draft
+          </button>
+        </div>
+        <p class="dashboard-note">
+          Saving clears the page's <code>settingsDraft</code> copy so the leave
+          hook allows the tab change; the cache keeps the text for the next
+          visit.
         </p>
       </section>
 

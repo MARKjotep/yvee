@@ -21,6 +21,16 @@ const topRoutes = [
   { path: "/features", loads: "986" },
   { path: "/studio", loads: "742" },
   { path: "/dashboard?tab=analytics", loads: "531" },
+  { path: "/dashboard?tab=settings", loads: "488" },
+  { path: "/chat", loads: "402" },
+  { path: "/docs/routing", loads: "377" },
+  { path: "/docs/regions", loads: "351" },
+  { path: "/docs/streaming", loads: "318" },
+  { path: "/docs/head", loads: "295" },
+  { path: "/", loads: "264" },
+  { path: "/docs/forms", loads: "231" },
+  { path: "/docs/resources", loads: "207" },
+  { path: "/docs/sockets", loads: "182" },
 ];
 
 export default function DashboardAnalyticsView() {
@@ -69,14 +79,20 @@ export default function DashboardAnalyticsView() {
       <section class="dashboard-section">
         <p class="eyebrow">Most requested</p>
         <h2>Top routes</h2>
-        <ul class="dashboard-list">
-          {topRoutes.map((row) => (
-            <li key={row.path}>
-              <code>{row.path}</code>
-              <span>{row.loads} loads</span>
-            </li>
-          ))}
-        </ul>
+        <p>
+          Scroll this table, switch tabs and come back: the region restores the
+          offset from <code>data-scroll-key</code>.
+        </p>
+        <div class="dashboard-scroll" data-scroll-key="route-table">
+          <ul class="dashboard-list">
+            {topRoutes.map((row) => (
+              <li key={row.path}>
+                <code>{row.path}</code>
+                <span>{row.loads} loads</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     </article>
   );

@@ -74,6 +74,10 @@
 .dashboard-list code { color: #31506f; font-size: .85rem; }
 .dashboard-list span { color: #71859b; font-size: .82rem; font-variant-numeric: tabular-nums; }
 
+.dashboard-scroll { max-height: 15rem; overflow: auto; margin-top: 1rem; border-top: 1px solid #e4eaf0; border-bottom: 1px solid #e4eaf0; }
+.dashboard-scroll .dashboard-list { margin-top: 0; border-top: 0; }
+.dashboard-scroll .dashboard-list li:last-child { border-bottom: 0; }
+
 .dashboard-settings { margin: 1rem 0 0; padding: 0; list-style: none; border-top: 1px solid #e4eaf0; }
 .dashboard-setting { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .85rem 0; border-bottom: 1px solid #e4eaf0; }
 .dashboard-setting strong { display: block; font-size: .92rem; }

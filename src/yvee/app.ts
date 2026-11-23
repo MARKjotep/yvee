@@ -117,6 +117,7 @@ export class Yvee<
       useHistory,
       url: this.url,
       root: this.root,
+      app: this,
       load: (url, signal, error) => this.load(url, signal, error),
       getHead: () => this.values,
       getLayout: () => this.layout,

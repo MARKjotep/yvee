@@ -1,13 +1,27 @@
 import { StateHook } from "@/core/core.core";
 import { DisposalScope } from "@/core/disposal.core";
 import { Wizard } from "@/dom/render/oz.dom";
-import { combineHead, removeHeadElements } from "../../rendering/head";
+import { combineHead, removeHeadElements, type HeadConfig } from "../../rendering/head";
 import type { PageLoad } from "../load-page";
-import type { Page } from "../../pages/page";
+import type { Page, RegionModule } from "../../pages/page";
 import { mountRoot } from "../mount";
 import { NavigationEvents } from "../navigation";
 import { toURL, urlKey, type YveeURL } from "../../routing/path";
-import { canonicalRegionURL, hasRegions, recallRegion, regionIdFor, regionModule, rememberRegion, sameRegionSearch } from "../regions";
+import type { GuardRedirect } from "../../guards";
+import { checkRegionGuards } from "../../guards";
+import {
+  canonicalRegionURL,
+  captureRegionScroll,
+  hasRegions,
+  recallRegion,
+  regionCache,
+  regionHead,
+  regionModule,
+  rememberRegion,
+  resolveRegionId,
+  restoreRegionScroll,
+  sameRegionSearch,
+} from "../regions";
 import { RouteHistory } from "./history";
 import { RouteScroll } from "./scroll";
 import { RouteAccessibility } from "./accessibility";
@@ -55,6 +69,8 @@ export class YveeClient {
     | undefined;
   private stopURL: (() => void) | undefined;
   private activeLoad: AbortController | undefined;
+  /** Abort controller for the in-flight region guard run, if any. */
+  private regionGuardRun: AbortController | undefined;
 
   constructor(private readonly options: RuntimeOptions) {
     this.history = new RouteHistory({ id: options.id, enabled: options.useHistory, currentURL: () => this.currentURL });
@@ -128,10 +144,18 @@ export class YveeClient {
       }
       this.options.url.value = firstPage.url;
       this.options.root.value = firstPage.body;
+      const baseHead = combineHead(
+        this.options.getHead(),
+        firstPage.baseHead ?? firstPage.head,
+      );
       const initialHead = this.view.stage(
-        combineHead(this.options.getHead(), firstPage.head),
+        firstPage.baseHead
+          ? combineHead(baseHead, firstPage.regionHead ?? {})
+          : combineHead(this.options.getHead(), firstPage.head),
         mountRevision,
       );
+      this.view.base = baseHead;
+      this.view.regionHead = firstPage.regionHead;
       this.view.active = initialHead;
       await initialHead.ready;
       if (!this.mounted || mountRevision !== this.revision) {
@@ -201,7 +225,7 @@ export class YveeClient {
     }
     const region = this.regionNavigation(target);
     if (region === "apply") {
-      this.navigateRegion(target, state, replace);
+      void this.navigateRegion(target, state, replace);
       return;
     }
     // A region URL that resolves to the displayed region needs no work.
@@ -277,14 +301,46 @@ export class YveeClient {
       return;
     }
     // Classify before clearing pending state: an in-flight transition owns
-    // the URL and must still complete as a full navigation.
-    const regionOnly = this.isRegionOnlyPop(url);
+    // the URL and must still complete as a full navigation. A fragment-only
+    // move wins over the region path because the search did not change.
+    const hashOnly = this.isHashOnlyPop(url);
+    const regionOnly = !hashOnly && this.isRegionOnlyPop(url);
     const previous = this.currentURL;
     const scroll = this.history.pop(url, state);
     this.pendingNavigation = undefined;
     this.updateURL(url);
-    if (regionOnly && previous) this.applyRegionPop(previous, url, scroll);
+    if (hashOnly) this.applyHashPop(url);
+    else if (regionOnly && previous) void this.applyRegionPop(previous, url, scroll);
     else void this.transition(url, true, scroll);
+  }
+
+  /**
+   * A pop that only moved the fragment on the displayed route needs no page
+   * load. Unlike a fragment navigation it must not push, because the history
+   * entry already moved.
+   */
+  private isHashOnlyPop(url: YveeURL) {
+    const current = this.currentURL;
+    return Boolean(
+      this.mounted &&
+      current &&
+      // An in-flight transition owns the URL state and history bookkeeping.
+      !this.activeLoad &&
+      !this.pendingNavigation &&
+      url.path === current.path &&
+      url.search === current.search &&
+      url.hash !== current.hash,
+    );
+  }
+
+  private applyHashPop(url: YveeURL) {
+    this.currentURL = url;
+    const revision = this.revision;
+    void this.scroll.scrollToRoute(url, revision).then(() => {
+      if (this.mounted && revision === this.revision) this.history.trackDisplayedEntry();
+    }).catch(error => {
+      if (this.mounted && revision === this.revision) this.options.onError?.(error, url);
+    });
   }
 
   /**
@@ -348,18 +404,23 @@ export class YveeClient {
 
   /**
    * Region navigation is a soft URL change: same route, same non-region query,
-   * and a different region than the one displayed. Anything else falls through
-   * to the regular transition path.
+   * and either a different region, a different fragment, or an unknown region
+   * id that must be canonicalized. Anything else falls through to a transition.
    */
   private regionNavigation(target: YveeURL): "apply" | "noop" | undefined {
-    if (!this.mounted || !this.currentURL) return undefined;
-    if (this.activeLoad || this.pendingNavigation) return undefined;
+    const current = this.currentURL;
     const page = this.activePage;
+    if (!this.mounted || !current) return undefined;
+    if (this.activeLoad || this.pendingNavigation) return undefined;
     if (!hasRegions(page)) return undefined;
     if (!this.isRegionURL(target, page)) return undefined;
-    const next = regionIdFor(page, target);
+    const next = resolveRegionId(page, target)?.id;
     if (!next) return undefined;
-    return next === page.region.value ? "noop" : "apply";
+    // An unknown id resolves to the default region; apply it so the address can
+    // be canonicalized instead of no-opping with a stale parameter.
+    if (canonicalRegionURL(page, target)) return "apply";
+    if (next !== page.region.value) return "apply";
+    return target.hash === current.hash ? "noop" : "apply";
   }
 
   private isRegionOnlyPop(url: YveeURL) {
@@ -371,12 +432,13 @@ export class YveeClient {
 
   private isRegionURL(url: YveeURL, page: Page) {
     const current = this.currentURL!;
+    // The fragment may move with the region; the page load only depends on the
+    // route and the non-region query.
     return url.path === current.path &&
-      url.hash === current.hash &&
       sameRegionSearch(url, current, page.regionParam!);
   }
 
-  private navigateRegion(
+  private async navigateRegion(
     target: YveeURL,
     state: Record<string, unknown> | undefined,
     replace: boolean,
@@ -384,8 +446,58 @@ export class YveeClient {
     const page = this.activePage;
     const previous = this.currentURL;
     if (!page || !previous) return;
-    const region = regionIdFor(page, target);
-    if (!region) return;
+    const resolution = resolveRegionId(page, target);
+    const region = resolution?.id;
+    if (!resolution || region === undefined) return;
+    const revision = this.revision;
+
+    // Strict pages never canonicalize an unknown id to the default region: the
+    // navigation is denied and the displayed URL stays authoritative.
+    if (page.strictRegions && resolution.unknown !== undefined) {
+      if (this.mounted && revision === this.revision) {
+        this.options.onError?.(
+          new Error(`Unknown Yvee region: ${resolution.unknown}`),
+          target,
+        );
+      }
+      return;
+    }
+
+    if (region !== page.region.value) {
+      const epoch = this.regionEpoch;
+      // Region-scoped guards run first: a denied target never leaves the
+      // displayed region, so the leave hook must not fire and no history entry
+      // or scroll capture may happen. `stop` therefore costs nothing to undo.
+      const decision = await this.regionGuardDecision(page, target, region, page.region.value);
+      if (decision === "stale") return;
+      if (!this.mounted || revision !== this.revision || this.activePage !== page || epoch !== this.regionEpoch) return;
+      if (decision.kind === "stop") return;
+      if (decision.kind === "redirect") {
+        this.regionGuardRedirect(decision, target);
+        return;
+      }
+      if (page.regionWillLeave) {
+        try {
+          await page.regionWillLeave({
+            from: page.region.value,
+            to: region,
+            url: target,
+            params: page.params,
+            data: page.data,
+            signal: page.resources.signal,
+          });
+        } catch (error) {
+          if (this.mounted && revision === this.revision) this.options.onError?.(error, target);
+          return;
+        }
+        if (
+          !this.mounted ||
+          revision !== this.revision ||
+          this.activePage !== page ||
+          epoch !== this.regionEpoch
+        ) return;
+      }
+    }
 
     this.history.saveCurrentScroll();
     this.history.write(target, state, replace);
@@ -393,40 +505,175 @@ export class YveeClient {
     this.updateURL(target);
     this.history.trackDisplayedEntry();
 
-    const token = { epoch: ++this.regionEpoch, revision: this.revision };
+    const token = { epoch: ++this.regionEpoch, revision };
     void this.swapRegion(page, target, region, token).then(result => {
-      if (result !== "failed" || !this.isRegionCurrent(page, token)) return;
-      this.rollbackRegion(previous, replace);
+      if (result === "failed") {
+        if (this.isRegionCurrent(page, token)) this.rollbackRegion(previous, replace);
+        return;
+      }
+      if (result !== "applied" || !this.isRegionCurrent(page, token)) return;
+      this.redirects = 0;
+      const address = this.canonicalizeRegion(page, target);
+      // A region swap that also moved the fragment lands on its anchor; a
+      // no-hash target keeps the existing save/restore semantics untouched.
+      if (!address.hash) return;
+      void this.scroll.scrollToRoute(address, revision).catch(error => {
+        if (this.mounted && revision === this.revision) this.options.onError?.(error, address);
+      });
     });
   }
 
-  private applyRegionPop(previous: YveeURL, url: YveeURL, scroll?: ScrollPosition) {
+  /**
+   * Replace an entry naming an unknown region id with the resolved default so
+   * the address bar never keeps a parameter the runtime ignored.
+   */
+  private canonicalizeRegion(page: Page, url: YveeURL): YveeURL {
+    const canonical = canonicalRegionURL(page, url);
+    if (!canonical) return url;
+    this.history.write(canonical, undefined, true);
+    this.currentURL = canonical;
+    this.updateURL(canonical);
+    this.history.trackDisplayedEntry();
+    return canonical;
+  }
+
+  private async applyRegionPop(previous: YveeURL, url: YveeURL, scroll?: ScrollPosition) {
     const page = this.activePage;
     if (!page) return;
-    const region = regionIdFor(page, url);
-    if (!region) return;
+    const resolution = resolveRegionId(page, url);
+    const region = resolution?.id;
+    if (!resolution || region === undefined) return;
     this.currentURL = url;
     const revision = this.revision;
-    const restore = () => {
-      void this.scroll.restoreScroll(scroll, revision, url).catch(error => {
-        if (this.mounted && revision === this.revision) this.options.onError?.(error, url);
-      });
+    const report = (error: unknown) => {
+      if (this.mounted && revision === this.revision) this.options.onError?.(error, url);
     };
-    if (region === page.region.value) {
-      restore();
+    const settle = () => {
+      if (url.hash) void this.scroll.scrollToRoute(url, revision).catch(report);
+      else void this.scroll.restoreScroll(scroll, revision, url).catch(report);
+    };
+    const deny = (error?: unknown) => {
+      if (!this.mounted || revision !== this.revision) return;
+      this.currentURL = previous;
+      this.restoreURL(previous);
+      if (error !== undefined) this.options.onError?.(error, url);
+    };
+
+    if (page.strictRegions && resolution.unknown !== undefined) {
+      deny(new Error(`Unknown Yvee region: ${resolution.unknown}`));
       return;
     }
+    if (region === page.region.value) {
+      settle();
+      return;
+    }
+
+    const epoch = this.regionEpoch;
+    // Region-scoped guards run before the leave hook and the view mutation. The
+    // popstate already moved history, so a denial restores the previous URL.
+    const decision = await this.regionGuardDecision(page, url, region, page.region.value);
+    if (decision === "stale") return;
+    if (
+      !this.mounted ||
+      revision !== this.revision ||
+      this.activePage !== page ||
+      this.currentURL !== url ||
+      epoch !== this.regionEpoch
+    ) return;
+    if (decision.kind === "stop") { deny(); return; }
+    if (decision.kind === "redirect") { this.regionGuardRedirect(decision, url); return; }
+
+    if (page.regionWillLeave) {
+      try {
+        await page.regionWillLeave({
+          from: page.region.value,
+          to: region,
+          url,
+          params: page.params,
+          data: page.data,
+          signal: page.resources.signal,
+        });
+      } catch (error) {
+        deny(error);
+        return;
+      }
+      if (
+        !this.mounted ||
+        revision !== this.revision ||
+        this.activePage !== page ||
+        this.currentURL !== url ||
+        epoch !== this.regionEpoch
+      ) return;
+    }
+
     const token = { epoch: ++this.regionEpoch, revision };
     void this.swapRegion(page, url, region, token).then(result => {
       if (!this.mounted || revision !== this.revision) return;
-      if (result === "applied") restore();
+      if (result === "applied") { this.redirects = 0; settle(); }
       else if (result === "failed") this.restoreURL(previous);
     });
   }
 
   /**
-   * Replace the active region's view. Module loading happens before any state
-   * mutation so an import failure leaves the displayed region untouched.
+   * Run the guards declared for `region`. Returns their decision, or `"stale"`
+   * when a newer guard run, transition or unmount aborted this one. A guard
+   * error denies the navigation and is reported; an abort stays silent because
+   * a newer interaction owns the runtime state.
+   */
+  private async regionGuardDecision(
+    page: Page,
+    url: YveeURL,
+    region: string,
+    from: string | undefined,
+  ): Promise<{ kind: "allow" } | { kind: "stop" } | GuardRedirect | "stale"> {
+    const guards = page.regionGuards?.[region];
+    if (!guards || guards.length === 0) return { kind: "allow" };
+    this.abortRegionGuards();
+    const controller = new AbortController();
+    this.regionGuardRun = controller;
+    try {
+      return await checkRegionGuards(guards, {
+        app: this.options.app,
+        page,
+        url,
+        params: page.params,
+        data: page.data,
+        signal: controller.signal,
+        region,
+        from,
+      });
+    } catch (error) {
+      if (controller.signal.aborted) return "stale";
+      this.options.onError?.(error, url);
+      return { kind: "stop" };
+    }
+  }
+
+  /**
+   * Follow a region guard redirect through the normal classifier, bounded like
+   * route redirects. A same-page redirect re-enters the region classifier and
+   * re-runs the target region's guards.
+   */
+  private regionGuardRedirect(redirect: GuardRedirect, url: YveeURL) {
+    if (++this.redirects > 10) {
+      this.options.onError?.(new Error("Yvee redirect limit exceeded."), url);
+      return;
+    }
+    this.navigate(redirect.to, undefined, redirect.replace ?? true);
+  }
+
+  /** Abort an in-flight region guard run so its decision can no longer apply. */
+  private abortRegionGuards() {
+    const run = this.regionGuardRun;
+    this.regionGuardRun = undefined;
+    try { run?.abort(); }
+    catch { /* Abort listeners must not break navigation. */ }
+  }
+
+  /**
+   * Replace the active region's view. Scroll capture happens while the old DOM
+   * is live, module loading and optional data refresh happen before any state
+   * mutation, so a failure leaves the displayed region untouched.
    */
   private async swapRegion(
     page: Page,
@@ -436,7 +683,9 @@ export class YveeClient {
   ): Promise<"applied" | "failed" | "stale"> {
     if (region === page.region.value) return "applied";
 
-    let module;
+    captureRegionScroll(page, page.region.value, this.scrollRoot());
+
+    let module: RegionModule;
     try {
       module = await regionModule(page, region);
     } catch (error) {
@@ -446,21 +695,76 @@ export class YveeClient {
     }
     if (!this.isRegionCurrent(page, token)) return "stale";
 
+    // Refresh runs in the incoming region's scope, before the previous scope is
+    // disposed, so a failed fetch can retain the displayed region intact.
+    let nextScope: DisposalScope | undefined;
+    if (page.refreshOnRegionChange && page.fetch) {
+      nextScope = new DisposalScope();
+      try {
+        const fetched = await page.fetch({
+          url,
+          params: page.params,
+          data: page.data,
+          signal: nextScope.signal,
+          resources: nextScope,
+        });
+        Object.assign(page.data, fetched);
+      } catch (error) {
+        this.disposeScope(nextScope, url);
+        if (!this.isRegionCurrent(page, token)) return "stale";
+        this.options.onError?.(error, url);
+        return "failed";
+      }
+      if (!this.isRegionCurrent(page, token)) {
+        this.disposeScope(nextScope, url);
+        return "stale";
+      }
+    }
+
     const previousScope = page.regionResources;
     const previousRegion = page.region.value;
+    const previousHead = this.view.regionHead;
     try { previousScope.dispose(); }
     catch (error) { this.options.onError?.(error, url); }
 
-    const nextScope = new DisposalScope();
-    page.regionResources = nextScope;
+    const scope = nextScope ?? new DisposalScope();
+    page.regionResources = scope;
     page.region.value = region;
 
+    let nextHead: HeadConfig | undefined;
+    try {
+      nextHead = await regionHead(page, module);
+    } catch (error) {
+      this.disposeScope(scope, url);
+      if (!this.isRegionCurrent(page, token)) return "stale";
+      page.regionResources = new DisposalScope();
+      page.region.value = previousRegion;
+      this.options.onError?.(error, url);
+      return "failed";
+    }
+    if (!this.isRegionCurrent(page, token)) {
+      this.disposeScope(scope, url);
+      return "stale";
+    }
+
+    // Retained state is read before the view runs, so every await inside a
+    // render sees the entry snapshot. Writes only land while this swap still
+    // owns the region epoch.
+    const cache = regionCache(page, region);
+    const retained = cache.get();
     let content: unknown;
     try {
-      content = await module.default({ page });
+      content = await module.default({
+        page,
+        cache: {
+          get: () => retained,
+          set: (value) => {
+            if (this.isRegionCurrent(page, token)) cache.set(value);
+          },
+        },
+      });
     } catch (error) {
-      try { nextScope.dispose(); }
-      catch (cleanup) { this.options.onError?.(cleanup, url); }
+      this.disposeScope(scope, url);
       if (!this.isRegionCurrent(page, token)) return "stale";
       // The previous scope is already closed; give the retained region a fresh one.
       page.regionResources = new DisposalScope();
@@ -469,16 +773,128 @@ export class YveeClient {
       return "failed";
     }
     if (!this.isRegionCurrent(page, token)) {
-      try { nextScope.dispose(); }
-      catch (error) { this.options.onError?.(error, url); }
+      this.disposeScope(scope, url);
       return "stale";
+    }
+
+    // Region heads are revision-stable: stage and activate without bumping the
+    // route revision. A failed activation restores the previously active head.
+    if ((nextHead || previousHead) && this.view.base) {
+      try {
+        const committed = await this.commitRegionHead(page, nextHead, previousHead, url, token);
+        if (!committed) {
+          this.disposeScope(scope, url);
+          return "stale";
+        }
+      } catch (error) {
+        this.disposeScope(scope, url);
+        if (!this.isRegionCurrent(page, token)) return "stale";
+        page.regionResources = new DisposalScope();
+        page.region.value = previousRegion;
+        this.options.onError?.(error, url);
+        return "failed";
+      }
+      if (!this.isRegionCurrent(page, token)) {
+        this.disposeScope(scope, url);
+        return "stale";
+      }
     }
 
     page.regionContent.value = content;
     try { await page.regionContent.flush(); }
     catch (error) { this.options.onError?.(error, url); }
     rememberRegion(page, url, region);
+    this.restoreRegionScrollAfterFrame(page, region, token);
+    this.fireRegionDidEnter(page, region, url, token);
     return "applied";
+  }
+
+  /**
+   * Combine a region head on top of the route base head and activate it without
+   * a revision bump. The previous region head is re-staged when activation
+   * fails so the displayed document keeps its head.
+   */
+  private async commitRegionHead(
+    page: Page,
+    next: HeadConfig | undefined,
+    previous: HeadConfig | undefined,
+    url: YveeURL,
+    token: { epoch: number; revision: number },
+  ): Promise<boolean> {
+    const base = this.view.base!;
+    const head = this.view.stage(combineHead(base, next ?? {}), token.revision);
+    const previousActive = this.view.active;
+    try {
+      await head.ready;
+      if (!this.isRegionCurrent(page, token)) {
+        try { head(); } catch (cleanup) { this.options.onError?.(cleanup, url); }
+        return false;
+      }
+      previousActive?.();
+      await head.activate();
+      if (!this.isRegionCurrent(page, token)) {
+        try { head(); } catch (cleanup) { this.options.onError?.(cleanup, url); }
+        return false;
+      }
+    } catch (error) {
+      try { head(); } catch (cleanup) { this.options.onError?.(cleanup, url); }
+      try {
+        const fallback = this.view.stage(combineHead(base, previous ?? {}), token.revision);
+        await fallback.ready;
+        await fallback.activate();
+        this.view.active = fallback;
+        this.view.regionHead = previous;
+        this.view.releasePending(fallback);
+      } catch (rollback) {
+        throw new AggregateError([error, rollback], "Region head commit and rollback failed.");
+      }
+      throw error;
+    }
+    this.view.active = head;
+    this.view.regionHead = next;
+    this.view.releasePending(head);
+    return true;
+  }
+
+  private disposeScope(scope: DisposalScope, url: YveeURL) {
+    try { scope.dispose(); }
+    catch (error) { this.options.onError?.(error, url); }
+  }
+
+  /**
+   * Restore tracked container offsets after the region DOM paints. The check is
+   * gated by the region epoch (not the route revision) because a soft swap
+   * never bumps the revision.
+   */
+  private restoreRegionScrollAfterFrame(
+    page: Page,
+    region: string,
+    token: { epoch: number; revision: number },
+  ) {
+    scheduleFrame(() => {
+      if (!this.mounted || this.activePage !== page || token.epoch !== this.regionEpoch) return;
+      restoreRegionScroll(page, region, this.scrollRoot());
+    });
+  }
+
+  private fireRegionDidEnter(
+    page: Page,
+    region: string,
+    url: YveeURL,
+    token: { epoch: number; revision: number },
+  ) {
+    const hook = page.regionDidEnter;
+    if (!hook) return;
+    void Promise.resolve()
+      .then(() => page.regionDidEnter!({ region }))
+      .catch(error => {
+        if (this.isRegionCurrent(page, token)) this.options.onError?.(error, url);
+      });
+  }
+
+  private scrollRoot(): ParentNode | undefined {
+    if (this.element) return this.element;
+    return typeof document === "undefined" ? undefined : document;
   }
 
   private isRegionCurrent(page: Page, token: { epoch: number; revision: number }) {
@@ -553,6 +969,7 @@ export class YveeClient {
   ) {
     const revision = ++this.revision;
     this.regionEpoch++;
+    this.abortRegionGuards();
     this.history.beginTransition();
     this.view.discardPending();
     this.discardPendingPages();
@@ -625,6 +1042,8 @@ export class YveeClient {
     }
     if (result.dispose) this.pendingPages.delete(result.dispose);
     try { previousPage?.(); } catch (error) { this.options.onError?.(error, result.url); }
+    this.view.base = combineHead(this.options.getHead(), result.baseHead ?? result.head);
+    this.view.regionHead = result.regionHead;
     this.view.remember(result.body, combineHead(this.options.getHead(), result.head));
     this.currentURL = result.url;
     // Keep the SSR body marker in step with the committed page so a hydrated
@@ -729,6 +1148,7 @@ export class YveeClient {
     const errors: unknown[] = [];
     const cleanup = (fn: () => void) => { try { fn(); } catch (error) { errors.push(error); } };
     cleanup(() => activeLoad?.abort());
+    cleanup(() => this.abortRegionGuards());
     cleanup(() => stopURL?.());
     cleanup(() => this.view.releaseActive());
     cleanup(() => this.view.discardPending());
@@ -751,4 +1171,13 @@ export class YveeClient {
 function reconcileBodyError(status: number, body: HTMLElement = document.body) {
   if (status >= 400) body.dataset.error = String(status);
   else delete body.dataset.error;
+}
+
+/** Run one frame callback, falling back to a macrotask outside a browser. */
+function scheduleFrame(callback: FrameRequestCallback) {
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(callback);
+    return;
+  }
+  setTimeout(() => callback(0), 0);
 }

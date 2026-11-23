@@ -5,6 +5,13 @@ import { applyHead, type HeadCleanup, type HeadConfig } from "../../rendering/he
 export class RouteView {
   active: HeadCleanup | undefined;
   nonce: string | undefined;
+  /**
+   * Head of the last committed route without any region contribution. Region
+   * changes recombine their own head on top of this snapshot.
+   */
+  base: HeadConfig | undefined;
+  /** Region head currently combined into the active head, if any. */
+  regionHead: HeadConfig | undefined;
   private readonly pending = new Set<HeadCleanup>();
   private committedHead: HeadConfig | undefined;
   private committedBody: unknown[] | undefined;
@@ -19,7 +26,12 @@ export class RouteView {
     this.committedHead = head;
   }
 
-  reset() { this.committedHead = undefined; this.committedBody = undefined; }
+  reset() {
+    this.committedHead = undefined;
+    this.committedBody = undefined;
+    this.base = undefined;
+    this.regionHead = undefined;
+  }
 
   async setBody(body: unknown[], revision: number) {
     this.options.root.value = body;

@@ -1,4 +1,4 @@
-import { checkGuards, guardsFor, type Guard } from "../guards";
+import { checkGuards, checkRegionGuards, guardsFor, type Guard } from "../guards";
 import {
   combineHead,
   normalizeHeadValue,
@@ -8,10 +8,23 @@ import {
 import { FailurePage, MissingPage, type Page } from "../pages/page";
 import type { YveeURL } from "../routing/path";
 import { RouteBook, type Constructor } from "../routing/routes";
-import { regionIdFor, renderRegion } from "./regions";
+import { clearRegionCache, regionCache, regionHead, regionModule, resolveRegionId } from "./regions";
 
 export type PageLoad =
-  | { kind: "ready"; status: number; body: unknown[]; head: HeadConfig; url: YveeURL; page?: Page; failure?: unknown; dispose?: () => void }
+  | {
+      kind: "ready";
+      status: number;
+      body: unknown[];
+      head: HeadConfig;
+      /** Head contribution of the initially displayed region, when it declares one. */
+      regionHead?: HeadConfig;
+      /** Route-level head before the region contribution, for later recombination. */
+      baseHead?: HeadConfig;
+      url: YveeURL;
+      page?: Page;
+      failure?: unknown;
+      dispose?: () => void;
+    }
   | { kind: "stop" }
   | { kind: "redirect"; to: string; replace?: boolean };
 
@@ -53,7 +66,8 @@ export async function loadPage<TData extends Record<string, unknown>, TApp>({
     );
     if (decision.kind !== "allow") { disposePage(page); return decision; }
 
-    const loaded = await renderPage(page, url, signal);
+    const loaded = await renderPage(page, url, app, signal);
+    if ("decision" in loaded) { disposePage(page); return loaded.decision; }
     return { ...loaded, url, dispose: pageDispose(page) };
   } catch (failure) {
     disposePage(page);
@@ -83,9 +97,10 @@ function assignRoute(
   page.data = Object.assign(Object.create(null), page.data, data);
 }
 
-async function renderPage(page: Page, url: YveeURL, signal: AbortSignal) {
+async function renderPage(page: Page, url: YveeURL, app: unknown, signal: AbortSignal) {
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
 
+  assertStrictRegion(page);
   if (page.fetch) {
     const fetched = await page.fetch({
       url,
@@ -98,7 +113,9 @@ async function renderPage(page: Page, url: YveeURL, signal: AbortSignal) {
   }
 
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
-  await initializeRegion(page);
+  const region = await initializeRegion(page, app, signal);
+  // A region guard that stops or redirects replaces the whole page load.
+  if (region.decision) return { decision: region.decision };
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
   const bodyModule = await page.body?.();
   if (signal.aborted) throw signal.reason ?? new Error("Page load aborted.");
@@ -107,30 +124,85 @@ async function renderPage(page: Page, url: YveeURL, signal: AbortSignal) {
   signal.throwIfAborted();
   const routeHead = await page.head?.();
   signal.throwIfAborted();
-  const head = combineHead(
+  const baseHead = combineHead(
     normalizeHeadValue(moduleHead),
     normalizeHeadValue(routeHead),
   );
+  const head = region.head ? combineHead(baseHead, region.head) : baseHead;
 
   return {
     kind: "ready" as const,
     status: page.status,
     head,
+    ...(region.head ? { regionHead: region.head } : {}),
+    baseHead,
     body: Array.isArray(bodyValue) ? bodyValue : [bodyValue ?? ""],
     page,
   };
 }
 
 /**
- * Region views render on the critical path so SSR and hydration agree on the
- * requested region. The module cache makes later switches instantaneous.
+ * Strict pages treat an unknown region id as a missing page, reusing the
+ * existing 404 error-page path on both the server and the client.
  */
-async function initializeRegion(page: Page) {
-  if (!page.regions || !page.regionParam) return;
-  const id = regionIdFor(page, page.url);
-  if (!id) return;
+function assertStrictRegion(page: Page) {
+  if (!page.strictRegions) return;
+  if (resolveRegionId(page, page.url)?.unknown !== undefined) {
+    throw new Response(null, { status: 404 });
+  }
+}
+
+/**
+ * A region guard denial on the initial load. A `redirect` continues through the
+ * normal redirect loop; a `stop` replaces the whole page load.
+ */
+type RegionDenial = Extract<PageLoad, { kind: "stop" | "redirect" }>;
+
+type RegionInit =
+  | { head?: HeadConfig; decision?: undefined }
+  | { head?: undefined; decision: RegionDenial };
+
+/**
+ * Region views render on the critical path so SSR and hydration agree on the
+ * requested region. The module cache makes later switches instantaneous. The
+ * resolved region's guards run before its module imports or renders, and an
+ * unknown id has already resolved to `defaultRegion`, so guards see the region
+ * the page will actually display.
+ */
+async function initializeRegion(page: Page, app: unknown, signal: AbortSignal): Promise<RegionInit> {
+  if (!page.regions || !page.regionParam) return {};
+  const resolution = resolveRegionId(page, page.url);
+  if (!resolution?.id) return {};
+  const id = resolution.id;
+  const decision = await entryRegionDecision(page, app, id, signal);
+  if (decision) return { decision };
   page.region.value = id;
-  page.regionContent.value = await renderRegion(page, id);
+  const module = await regionModule(page, id);
+  page.regionContent.value = await module.default({ page, cache: regionCache(page, id) });
+  const head = await regionHead(page, module);
+  return head === undefined ? {} : { head };
+}
+
+/** Guards for the initially displayed region, with `from` empty as on any first load. */
+async function entryRegionDecision(
+  page: Page,
+  app: unknown,
+  region: string,
+  signal: AbortSignal,
+): Promise<RegionDenial | undefined> {
+  const guards = page.regionGuards?.[region];
+  if (!guards || guards.length === 0) return undefined;
+  const decision = await checkRegionGuards(guards, {
+    app,
+    page,
+    url: page.url,
+    params: page.params,
+    data: page.data,
+    signal,
+    region,
+    from: undefined,
+  });
+  return decision.kind === "allow" ? undefined : decision;
 }
 
 interface LazyPageModule {
@@ -192,7 +264,9 @@ async function renderFailure<TData extends Record<string, unknown>, TApp>({
       { app, page, url, params: page.params, data: page.data, signal },
     );
     if (decision.kind !== "allow") { disposePage(page); return decision; }
-    return { ...(await renderPage(page, url, signal)), url, failure, dispose: pageDispose(page) };
+    const rendered = await renderPage(page, url, app, signal);
+    if ("decision" in rendered) { disposePage(page); return rendered.decision; }
+    return { ...rendered, url, failure, dispose: pageDispose(page) };
   } catch (error) {
     disposePage(page);
     if (signal.aborted) throw signal.reason ?? error;
@@ -217,6 +291,7 @@ function disposePage(page: Page) {
   const errors: unknown[] = [];
   try { page.regionResources.dispose(); } catch (error) { errors.push(error); }
   try { page.resources.dispose(); } catch (error) { errors.push(error); }
+  clearRegionCache(page);
   if (errors.length === 1) throw errors[0];
   if (errors.length) throw new AggregateError(errors, "Yvee page cleanup failed.");
 }

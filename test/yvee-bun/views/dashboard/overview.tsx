@@ -63,19 +63,36 @@ export default function DashboardOverviewView() {
         <p class="eyebrow">Notes</p>
         <h2>Implementation notes</h2>
         <p>
-          The shell is the page body view. It renders the sidebar and the
-          <code>regionContent</code> outlet; the three region modules only
-          choose the panel.
+          The shell is the page body view; it renders the sidebar and the
+          <code>regionContent</code> outlet, while each tab is its own lazy
+          chunk.
         </p>
-        <blockquote class="dashboard-note">
-          Each region has a deep-linkable URL and its own lazy chunk, so direct
-          loads are server-rendered without client-side state.
-        </blockquote>
-        <p>
-          A query param and hash together (for example from Analytics) are a
-          full load by v1 design; hash-only links stay instant in the default
-          region.
-        </p>
+        <ul class="dashboard-steps">
+          <li>
+            <code>rememberRegion</code> reopens your last tab when you return to
+            the dashboard.
+          </li>
+          <li>
+            Anchor and hash links keep the displayed region and take the hash
+            fast path; a query plus hash is still a full load by design.
+          </li>
+          <li>
+            Analytics restores its region-local scroll offset through{" "}
+            <code>data-scroll-key</code>.
+          </li>
+          <li>
+            <code>keepAlive</code> keeps the Settings draft across tab
+            round-trips.
+          </li>
+          <li>
+            <code>regionWillLeave</code> blocks leaving Settings while its draft
+            is unsaved; save or clear it to navigate on.
+          </li>
+          <li>
+            <code>regionGuards</code> is supported but unused here, since the
+            demo has no auth.
+          </li>
+        </ul>
       </section>
     </article>
   );

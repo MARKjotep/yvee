@@ -10,6 +10,12 @@ export interface RuntimeOptions {
   useHistory: boolean;
   url: IStateful<YveeURL>;
   root: IStateful<unknown[]>;
+  /**
+   * Application instance handed to guard contexts. `Yvee` fills this in; it is
+   * optional so harnesses can construct a client without an app.
+   * @internal
+   */
+  app?: unknown;
   load(url: YveeURL, signal: AbortSignal, error?: number): Promise<PageLoad>;
   getHead(): HeadConfig;
   getLayout(): Layout | undefined;

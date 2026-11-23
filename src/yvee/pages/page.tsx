@@ -2,11 +2,59 @@ import { DisposalScope } from "@/core/disposal.core";
 import { State, type IStateful } from "@/core/core.core";
 import type { YveeURL } from "../routing/path";
 import type { HeadResult } from "../rendering/head";
+import type { RegionGuard } from "../guards/guards";
 import { dom } from "@/dom/render/node.dom";
+
+/**
+ * State retained for a region between renders. `get` returns the value stored
+ * by the previous render of the same region (or `undefined`), and `set` keeps
+ * `value` for its next render. The runtime owns storage: values are plain data
+ * that dies with the page, and they are only retained on pages that set
+ * `Page.keepAlive`.
+ */
+export interface RegionCache {
+  /** Value retained by the previous render of this region, or `undefined`. */
+  get(): unknown;
+  /** Store `value` for this region's next render. */
+  set(value: unknown): void;
+}
 
 /** A lazily imported in-page region view, using the same `default` contract as `body()`. */
 export interface RegionModule {
-  default: (context: { page: Page }) => unknown | Promise<unknown>;
+  /**
+   * Render the region view. `cache` is always provided: it is a working
+   * read/write store on `keepAlive` pages and a no-op store everywhere else,
+   * so modules stay portable.
+   */
+  default: (context: { page: Page; cache: RegionCache }) => unknown | Promise<unknown>;
+  /**
+   * Head contributed while this region is displayed. Accepts the same values
+   * as a body module `head`; the runtime recombines it with the page head on
+   * region changes without a route transition.
+   */
+  head?: HeadResult | ((context: { page: Page }) => HeadResult | Promise<HeadResult>);
+}
+
+/** Context passed to `Page.regionWillLeave` before a region changes. */
+export interface RegionLeaveContext<TData extends Record<string, unknown> = Record<string, unknown>> {
+  /** Region currently displayed. */
+  from: string;
+  /** Region the navigation wants to display. */
+  to: string;
+  /** Target URL; the navigation is not committed when the hook runs. */
+  url: YveeURL;
+  /** Route parameters of the current page. */
+  params: Record<string, string>;
+  /** Mutable page data, including any data merged by earlier region refreshes. */
+  data: TData;
+  /** Page-lifetime abort signal; aborts when the page is left. */
+  signal: AbortSignal;
+}
+
+/** Context passed to `Page.regionDidEnter` after a region view has settled. */
+export interface RegionEnterContext {
+  /** Region that is now displayed. */
+  region: string;
 }
 
 /** Imports one region view module; the runtime caches the promise per page and region. */
@@ -80,6 +128,63 @@ export class Page<TData extends Record<string, unknown> = Record<string, unknown
    * mounted while only `regionContent` changes.
    */
   regions?: Record<string, RegionLoader>;
+  /**
+   * Retain plain state per region between renders on this page (off by
+   * default). `true` keeps the five most recently rendered regions, and a
+   * number sets that bound. Retained values are handed back through the
+   * `cache` context member on the next render of the same region, which lets
+   * form data, selections or fetched lists survive tab round-trips; the DOM is
+   * rebuilt every time, so effects and subscriptions still belong to
+   * `regionResources`. Requires `regions` and `regionParam`.
+   */
+  keepAlive?: number | true;
+  /**
+   * Guards that run when a region becomes active, keyed by region id. They run
+   * before the region is imported and rendered, before `regionWillLeave`, and
+   * before any history write, scroll capture or view change.
+   *
+   * On the initial load the resolved region's guards run after region
+   * resolution (an unknown id resolves to `defaultRegion` first, and
+   * `strictRegions` still 404s before them): `redirect` returns to the normal
+   * server/client redirect loop, while `stop` leaves the request without a
+   * page. Because a first-load `stop` has no client render path, login-style
+   * gates should return `redirect` with `returnTo` instead.
+   *
+   * During an in-page swap a `stop` changes nothing at all, and a `redirect`
+   * re-enters navigation at the redirect target. A history move that is denied
+   * restores the previous URL. Guards are not run when the target region is
+   * already displayed.
+   */
+  regionGuards?: Record<string, RegionGuard<any, any, any>[]>;
+  /**
+   * Re-run `fetch` in the incoming region's scope on every in-page region
+   * change, so a region can load its own data without a full page load. The
+   * result merges into `page.data` before the region view renders. Ignored
+   * without `regions` or `fetch`, and the initial document load keeps using the
+   * normal `fetch` pass.
+   */
+  refreshOnRegionChange?: boolean;
+  /**
+   * Reject region ids the page does not declare. On the initial load an unknown
+   * id renders the 404 error page; an in-app navigation or history move to an
+   * unknown id is denied and the previous URL is restored instead of falling
+   * back to `defaultRegion`. Off by default, which keeps the canonicalizing
+   * default-region fallback.
+   */
+  strictRegions?: boolean;
+  /**
+   * Runs before an in-page region change writes history or swaps the view.
+   * Throwing (or rejecting) cancels the navigation: the URL, history entry and
+   * displayed region stay untouched and the error is reported through
+   * `onError`. Not called when the target region is already displayed.
+   */
+  regionWillLeave?(context: RegionLeaveContext<TData>): void | Promise<void>;
+  /**
+   * Runs after an in-page region swap or region history move has settled.
+   * Errors are reported through `onError` after the swap has committed. The
+   * initial document load does not call this hook.
+   */
+  regionDidEnter?(context: RegionEnterContext): void | Promise<void>;
   /**
    * Id of the displayed region. The runtime owns this value: it writes the id
    * after resolving the URL, so views should only read it (for example to mark

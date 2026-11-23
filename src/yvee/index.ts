@@ -3,7 +3,14 @@ export { MissingPage } from "./pages/page";
 export { FailurePage } from "./pages/page";
 export type { YveeOptions, MountOptions, RenderResult, Layout } from "./app";
 export { Page } from "./pages/page";
-export type { PageFetchContext, RegionLoader, RegionModule } from "./pages/page";
+export type {
+  PageFetchContext,
+  RegionLoader,
+  RegionModule,
+  RegionCache,
+  RegionLeaveContext,
+  RegionEnterContext,
+} from "./pages/page";
 export { page, route, error, socketRoute, RouteBook, interpolate } from "./routing/routes";
 export type { Constructor, RouteEntry, Transport } from "./routing/routes";
 /** Create and compose route guards; `buildReturnTo`/`readReturnTo` handle the rejected-URL round-trip. */
@@ -11,9 +18,11 @@ export { createGuard, use, buildReturnTo, readReturnTo } from "./guards";
 /**
  * Guard types. `GuardContextInput` is the shape accepted by the guard runner, and
  * `GuardRedirect.returnTo` preserves the rejected URL as a `?returnTo=` parameter.
+ * `RegionGuard`/`RegionGuardContext` add the region transition to the same contract.
  */
 export type {
   Guard, GuardApp, GuardContext, GuardContextInput, GuardRedirect, GuardResult, GuardFactory,
+  RegionGuard, RegionGuardContext,
 } from "./guards";
 /** `true` in a browser (a `window` exists); `false` during SSR and in other server-like runtimes. */
 export { isClient } from "./platform/env";

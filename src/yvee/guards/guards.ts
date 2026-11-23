@@ -61,6 +61,33 @@ export type Guard<
   TData extends Record<string, unknown> = Record<string, unknown>,
 > = (context: GuardContext<TApp, TPage, TData>) => GuardResult | Promise<GuardResult>;
 
+/**
+ * Guard context for a region becoming active. It is a `GuardContext` with the
+ * region transition itself added, so the same guards, decisions and helpers
+ * work for pages and regions.
+ */
+export interface RegionGuardContext<
+  TApp = unknown,
+  TPage = unknown,
+  TData extends Record<string, unknown> = Record<string, unknown>,
+> extends GuardContext<TApp, TPage, TData> {
+  /** Region id the navigation wants to display. */
+  region: string;
+  /** Region that was displayed before the change; `undefined` on the initial load. */
+  from: string | undefined;
+}
+
+/**
+ * A guard that runs when its region becomes active. Declare guards per region
+ * through `Page.regionGuards`; `stop` keeps the previous region (and URL) and a
+ * `redirect` re-enters navigation with the redirect target.
+ */
+export type RegionGuard<
+  TApp = unknown,
+  TPage = unknown,
+  TData extends Record<string, unknown> = Record<string, unknown>,
+> = (context: RegionGuardContext<TApp, TPage, TData>) => GuardResult | Promise<GuardResult>;
+
 export type GuardFactory<Args extends unknown[] = [], TContext = GuardContext> =
   (...args: Args) => (context: TContext) => GuardResult | Promise<GuardResult>;
 
@@ -153,4 +180,21 @@ export async function checkGuards<TApp, TPage, TData extends Record<string, unkn
   }
 
   return { kind: "allow" as const };
+}
+
+/**
+ * Run the guards declared for one region. The shared runner supplies ordering,
+ * `returnTo` resolution and abort checks; only the context type carries the
+ * region transition fields, which every region guard run fills in. Guard and
+ * context types stay loose here because `Page.regionGuards` accepts guards
+ * annotated with any app/page/data shape.
+ */
+export function checkRegionGuards(
+  guards: readonly RegionGuard<any, any, any>[],
+  context: Omit<RegionGuardContext<any, any, any>, "server"> & { readonly server?: boolean },
+) {
+  return checkGuards(
+    guards as readonly Guard<any, any, any>[],
+    context as GuardContextInput<any, any, any>,
+  );
 }
