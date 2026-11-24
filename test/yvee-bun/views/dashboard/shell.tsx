@@ -1,6 +1,6 @@
 import { Derived, type IStateful } from "../../../../src/core/core.core";
 import { dom } from "../../../../src/dom/render/node.dom";
-import type { Page } from "../../../../src/yvee";
+import { regionLevelIds, type Page } from "../../../../src/yvee";
 import type { DashboardNotice, DashboardRoute } from "../../routes/dashboard";
 
 const tabs = [
@@ -23,6 +23,9 @@ interface TabAttributes {
 }
 
 function tabAttributes(page: Page, tab: Tab): Promise<TabAttributes> {
+  // Which tabs own composite children comes from the region tree declaration,
+  // not a hardcoded level-id list.
+  const isLevel = regionLevelIds(page.regions ?? {}).includes(tab.id);
   return Promise.all([
     Derived(
       [page.region],
@@ -35,7 +38,7 @@ function tabAttributes(page: Page, tab: Tab): Promise<TabAttributes> {
       [page.region],
       (region) => region === tab.id
         ? "page" as const
-        : region.startsWith(`${tab.id}/`)
+        : isLevel && region.startsWith(`${tab.id}/`)
           ? "true" as const
           : "false" as const,
       { scope: page.resources },

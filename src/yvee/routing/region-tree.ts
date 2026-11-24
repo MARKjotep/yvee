@@ -2,6 +2,20 @@ import { combineHead, normalizeHeadValue, type HeadConfig, type HeadResult } fro
 import type { Page, RegionCache, RegionLoader, RegionModule } from "../pages/page";
 
 declare const REGION_LEVEL: unique symbol;
+const LEVEL_METADATA: unique symbol = Symbol("Yvee region level metadata");
+
+/** Metadata `regionTree` records for one level id. */
+export interface RegionLevelMetadata {
+  /** View rendered by the bare level id. */
+  readonly defaultView: string;
+  /** Declared view segments, in declaration order. */
+  readonly views: readonly string[];
+}
+
+/** Flat region map carrying the level metadata side channel. */
+type RegionMapWithLevels = Record<string, RegionLoader> & {
+  readonly [LEVEL_METADATA]?: Record<string, RegionLevelMetadata>;
+};
 
 /** Context passed to a level chrome module. */
 export interface RegionChromeContext {
@@ -61,23 +75,52 @@ export function regionLevel(options: RegionLevelOptions): RegionLevel {
  * `Page.regions` expects. Plain loaders are copied through unchanged; each
  * `regionLevel` adds its level id (the default view) and one composite
  * `<level>/<view>` id per view, all rendered inside the level chrome.
+ *
+ * Level ids and default views are recorded on the result and are readable
+ * through `regionLevelIds` and `defaultViewFor`; they never appear as keys.
  */
 export function regionTree(
   entries: Record<string, RegionLoader | RegionLevel>,
 ): Record<string, RegionLoader> {
   const flat: Record<string, RegionLoader> = {};
+  const levels: Record<string, RegionLevelMetadata> = {};
   for (const [id, entry] of Object.entries(entries)) {
-    if (isRegionLevel(entry)) expandLevel(flat, id, entry);
+    if (isRegionLevel(entry)) levels[id] = expandLevel(flat, id, entry);
     else addLoader(flat, id, entry);
   }
+  Object.defineProperty(flat, LEVEL_METADATA, { value: levels });
   return flat;
+}
+
+/**
+ * Level ids recorded by `regionTree`, in declaration order; empty for maps
+ * without level metadata (such as hand-built `Page.regions`).
+ */
+export function regionLevelIds(regions: Record<string, RegionLoader>): readonly string[] {
+  const metadata = (regions as RegionMapWithLevels)[LEVEL_METADATA];
+  return metadata ? Object.keys(metadata) : [];
+}
+
+/**
+ * Default view of a level id from `regionTree`, or `undefined` for non-level
+ * or unknown ids.
+ */
+export function defaultViewFor(
+  regions: Record<string, RegionLoader>,
+  regionId: string,
+): string | undefined {
+  return (regions as RegionMapWithLevels)[LEVEL_METADATA]?.[regionId]?.defaultView;
 }
 
 function isRegionLevel(entry: RegionLoader | RegionLevel): entry is RegionLevel {
   return typeof entry !== "function";
 }
 
-function expandLevel(flat: Record<string, RegionLoader>, levelId: string, level: RegionLevel) {
+function expandLevel(
+  flat: Record<string, RegionLoader>,
+  levelId: string,
+  level: RegionLevel,
+): RegionLevelMetadata {
   const views = Object.keys(level.views);
   if (views.length === 0) throw new Error(`Yvee region level "${levelId}" has no views.`);
   const defaultView = level.default ?? views[0]!;
@@ -90,6 +133,7 @@ function expandLevel(flat: Record<string, RegionLoader>, levelId: string, level:
   for (const view of views) {
     addLoader(flat, `${levelId}/${view}`, composeLevel(levelId, level.chrome, level.views[view]!));
   }
+  return { defaultView, views };
 }
 
 function addLoader(flat: Record<string, RegionLoader>, id: string, loader: RegionLoader) {

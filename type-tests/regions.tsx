@@ -7,9 +7,10 @@
  * region capability without any `any` casts or relative `src` imports.
  */
 import {
-  Yvee, Page, dom, regionTree, regionLevel,
+  Yvee, Page, dom, regionTree, regionLevel, regionLevelIds, defaultViewFor,
   type PageFetchContext,
   type RegionLoader,
+  type RegionLevelMetadata,
   type RegionModule,
   type RegionCache,
   type RegionLeaveContext,
@@ -103,6 +104,37 @@ class NestedDashboardPage extends Page<DashboardData> {
     return <main>{this.regionContent}</main>;
   }
 }
+
+/**
+ * A shared shell derives level-aware ARIA state from the declaration itself:
+ * `regionLevelIds`/`defaultViewFor` read the metadata `regionTree` recorded, so
+ * no parallel list of level ids is needed.
+ */
+function ariaCurrentFor(page: Page, tabId: string): 'page' | 'true' | 'false' {
+  const regions = page.regions ?? {};
+  const region = page.region.value;
+  if (region === tabId) return 'page';
+  const isLevel = regionLevelIds(regions).includes(tabId);
+  const defaultView = defaultViewFor(regions, tabId);
+  return isLevel && defaultView !== undefined && region.startsWith(`${tabId}/`)
+    ? 'true'
+    : 'false';
+}
+
+/** The per-level metadata shape is exported for consumer bookkeeping. */
+const analyticsLevelMetadata: RegionLevelMetadata = {
+  defaultView: 'overview',
+  views: ['overview', 'retention'],
+};
+void analyticsLevelMetadata;
+
+const nestedDashboard = new NestedDashboardPage();
+// `Page.regions` stays a plain `Record<string, RegionLoader>` for consumers.
+const nestedLevelIds: readonly string[] = regionLevelIds(nestedDashboard.regions);
+const nestedDefaultView: string | undefined = defaultViewFor(nestedDashboard.regions, 'analytics');
+void nestedLevelIds;
+void nestedDefaultView;
+void ariaCurrentFor;
 
 /** Region-scoped guard: allow, or redirect to login with a return path. */
 const billingGuard: RegionGuard<

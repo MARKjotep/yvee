@@ -13,13 +13,14 @@ export type {
 } from "./pages/page";
 export { page, route, error, socketRoute, RouteBook, interpolate } from "./routing/routes";
 export type { Constructor, RouteEntry, Transport } from "./routing/routes";
-/** Flatten a nested region declaration into `Page.regions`; `regionLevel` marks a chrome+views level. */
-export { regionTree, regionLevel } from "./routing/region-tree";
+/** Flatten a nested region declaration into `Page.regions`; `regionLevel` marks a chrome+views level. Level metadata is readable with `regionLevelIds` and `defaultViewFor`. */
+export { regionTree, regionLevel, regionLevelIds, defaultViewFor } from "./routing/region-tree";
 export type {
   RegionChromeContext,
   RegionChromeModule,
   RegionChromeLoader,
   RegionLevel,
+  RegionLevelMetadata,
   RegionLevelOptions,
 } from "./routing/region-tree";
 /** Create and compose route guards; `buildReturnTo`/`readReturnTo` handle the rejected-URL round-trip. */

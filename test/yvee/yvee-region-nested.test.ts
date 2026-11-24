@@ -14,7 +14,9 @@ import { toURL, type YveeURL } from "../../src/yvee/routing/path";
 import { RouteBook } from "../../src/yvee/routing/routes";
 import {
   Yvee,
+  defaultViewFor,
   regionLevel,
+  regionLevelIds,
   regionTree,
   route,
   type RegionChromeLoader,
@@ -344,6 +346,106 @@ describe("regionTree flattening", () => {
     expect(loaded.head.title).toBe("Retention analytics/retention");
     expect(loaded.page?.region.value).toBe("analytics/retention");
     expect(loaded.page?.regionContent.value).toBe("Retention");
+  });
+});
+
+describe("region level metadata", () => {
+  const leaf = (label: string): RegionLoader =>
+    async () => ({ default: () => label });
+  const chrome: RegionChromeLoader = async () => ({
+    default: ({ outlet }) => String(outlet),
+  });
+
+  it("lists level ids in declaration order without polluting the flat keys", () => {
+    const tree = regionTree({
+      home: leaf("Home"),
+      analytics: regionLevel({
+        chrome,
+        views: { overview: leaf("Overview"), retention: leaf("Retention") },
+      }),
+      settings: regionLevel({
+        chrome,
+        views: { profile: leaf("Profile"), billing: leaf("Billing") },
+      }),
+      about: leaf("About"),
+    });
+
+    expect(regionLevelIds(tree)).toEqual(["analytics", "settings"]);
+    expect(Object.keys(tree)).toEqual([
+      "home",
+      "analytics",
+      "analytics/overview",
+      "analytics/retention",
+      "settings",
+      "settings/profile",
+      "settings/billing",
+      "about",
+    ]);
+    // A spread copies only the enumerable string keys, never the metadata.
+    expect(Object.keys({ ...tree })).toEqual(Object.keys(tree));
+
+    const symbols = Object.getOwnPropertySymbols(tree);
+    expect(symbols).toHaveLength(1);
+    // The side channel is non-enumerable, so ordinary traversal ignores it.
+    expect(Object.getOwnPropertyDescriptor(tree, symbols[0]!)?.enumerable).toBe(false);
+  });
+
+  it("returns no level ids or defaults for plain maps and hand-built objects", () => {
+    const plain = regionTree({ home: leaf("Home"), about: leaf("About") });
+    expect(regionLevelIds(plain)).toEqual([]);
+    expect(defaultViewFor(plain, "home")).toBeUndefined();
+    expect(Object.keys(plain)).toEqual(["home", "about"]);
+
+    const handBuilt = { overview: leaf("Overview") };
+    expect(regionLevelIds(handBuilt)).toEqual([]);
+    expect(defaultViewFor(handBuilt, "overview")).toBeUndefined();
+  });
+
+  it("honors an explicit default and falls back to the first view key", () => {
+    const fallback = regionTree({
+      analytics: regionLevel({
+        chrome,
+        views: { overview: leaf("Overview"), retention: leaf("Retention") },
+      }),
+    });
+    const explicit = regionTree({
+      analytics: regionLevel({
+        chrome,
+        default: "retention",
+        views: { overview: leaf("Overview"), retention: leaf("Retention") },
+      }),
+    });
+
+    expect(defaultViewFor(fallback, "analytics")).toBe("overview");
+    expect(defaultViewFor(explicit, "analytics")).toBe("retention");
+  });
+
+  it("returns undefined for non-level and unknown ids", () => {
+    const tree = regionTree({
+      home: leaf("Home"),
+      analytics: regionLevel({
+        chrome,
+        views: { overview: leaf("Overview"), retention: leaf("Retention") },
+      }),
+    });
+
+    expect(defaultViewFor(tree, "home")).toBeUndefined();
+    expect(defaultViewFor(tree, "analytics/overview")).toBeUndefined();
+    expect(defaultViewFor(tree, "missing")).toBeUndefined();
+  });
+
+  it("reads metadata from the same object assigned to page.regions", () => {
+    const tree = regionTree({
+      analytics: regionLevel({
+        chrome,
+        views: { overview: leaf("Overview"), retention: leaf("Retention") },
+      }),
+    });
+    const page = new Page();
+    page.regions = tree;
+
+    expect(regionLevelIds(page.regions!)).toEqual(["analytics"]);
+    expect(defaultViewFor(page.regions!, "analytics")).toBe("overview");
   });
 });
 
