@@ -19,6 +19,16 @@ export function createDemoApp() {
 
   app.head({ css: "/styles/shared.css" });
 
+  app.onError = (error) => {
+    console.error("Yvee page transition failed", error);
+    window.dispatchEvent(new CustomEvent("yvee:notice", {
+      detail: {
+        tone: error instanceof Error && error.name === "RegionLeaveDenied" ? "warning" : "error",
+        message: error instanceof Error ? error.message : String(error),
+      },
+    }));
+  };
+
   app.register(
     HomeRoute,
     FeaturesRoute,

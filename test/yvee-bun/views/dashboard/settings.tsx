@@ -94,7 +94,12 @@ export default function DashboardSettingsView(
             type="button"
             on={{
               click() {
-                (page as DashboardRoute).settingsDraft = "";
+                const route = page as DashboardRoute;
+                route.settingsDraft = "";
+                route.showNotice({
+                  tone: "success",
+                  message: "Draft saved — you can switch tabs again.",
+                });
               },
             }}
           >

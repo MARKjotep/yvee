@@ -1,4 +1,4 @@
-import { dom } from "../../../../src/dom/render/node.dom";
+import { dom } from "../../../../../src/dom/render/node.dom";
 
 const metrics = [
   { label: "Page views", value: "12,480", note: "+18% · last 30 days" },
@@ -20,7 +20,7 @@ const topRoutes = [
   { path: "/dashboard", loads: "1,204" },
   { path: "/features", loads: "986" },
   { path: "/studio", loads: "742" },
-  { path: "/dashboard?tab=analytics", loads: "531" },
+  { path: "/dashboard?tab=analytics%2Foverview", loads: "531" },
   { path: "/dashboard?tab=settings", loads: "488" },
   { path: "/chat", loads: "402" },
   { path: "/docs/routing", loads: "377" },
@@ -33,16 +33,16 @@ const topRoutes = [
   { path: "/docs/sockets", loads: "182" },
 ];
 
-export default function DashboardAnalyticsView() {
+export default function DashboardAnalyticsOverviewView() {
   return (
     <article class="dashboard-tab">
       <header class="dashboard-tab__intro">
-        <p class="eyebrow">Analytics</p>
+        <p class="eyebrow">Analytics · Overview</p>
         <h1>Traffic that pays attention.</h1>
         <p>
-          This panel is the analytics region at{" "}
-          <code>/dashboard?tab=analytics</code>. It reuses the same shell and
-          swaps only the panel.
+          This panel is the analytics overview at{" "}
+          <code>/dashboard?tab=analytics%2Foverview</code>. The level chrome
+          renders the sub-nav and places this view below it.
         </p>
       </header>
 
@@ -83,7 +83,7 @@ export default function DashboardAnalyticsView() {
           Scroll this table, switch tabs and come back: the region restores the
           offset from <code>data-scroll-key</code>.
         </p>
-        <div class="dashboard-scroll" data-scroll-key="route-table">
+        <div class="dashboard-scroll" data-scroll-key="analytics-route-table">
           <ul class="dashboard-list">
             {topRoutes.map((row) => (
               <li key={row.path}>
@@ -92,6 +92,18 @@ export default function DashboardAnalyticsView() {
               </li>
             ))}
           </ul>
+        </div>
+        <div class="dashboard-links">
+          <a
+            href="/dashboard?tab=analytics/retention#fail"
+            on={{
+              click() {
+                (window as unknown as Record<string, unknown>).__dashboardFailNextSwap = true;
+              },
+            }}
+          >
+            Simulate a failed region swap
+          </a>
         </div>
       </section>
     </article>

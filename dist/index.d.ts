@@ -1749,6 +1749,62 @@ declare class Yvee<T extends Record<string, unknown> = Record<string, unknown>> 
     private load;
 }
 
+declare const REGION_LEVEL: unique symbol;
+/** Context passed to a level chrome module. */
+interface RegionChromeContext {
+    /** Page that owns the region. */
+    page: Page;
+    /** Stateless cache: chrome must not retain state between renders. */
+    cache: RegionCache;
+    /** Render output of the active child view, to place where the panel belongs. */
+    outlet: unknown;
+}
+/**
+ * A lazily imported level chrome module. `default` renders the level shell and
+ * places `outlet`; it must be stateless because the surrounding composite region
+ * re-renders when the inner view changes.
+ */
+interface RegionChromeModule {
+    /** Render the level chrome around `outlet`. */
+    default: (context: RegionChromeContext) => unknown | Promise<unknown>;
+    /** Head contributed while the level is displayed, combined with the view head. */
+    head?: HeadResult | ((context: {
+        page: Page;
+    }) => HeadResult | Promise<HeadResult>);
+}
+/** Imports one level chrome module. */
+type RegionChromeLoader = () => Promise<RegionChromeModule>;
+/** Configuration accepted by `regionLevel`. */
+interface RegionLevelOptions {
+    /** Lazy chrome module that renders the shared level shell around the outlet. */
+    chrome: RegionChromeLoader;
+    /** View shown by the level id (`"analytics"`); defaults to the first `views` key. */
+    default?: string;
+    /** Child views keyed by their segment after the level id (`"analytics/<view>"`). */
+    views: Record<string, RegionLoader>;
+}
+/**
+ * A marked level produced by `regionLevel`. Pass it to `regionTree`; it is not a
+ * `RegionLoader`, so nesting one inside `views` is a type error.
+ */
+interface RegionLevel extends RegionLevelOptions {
+    /** Compile-time marker; the runtime never reads it. */
+    readonly [REGION_LEVEL]: true;
+}
+/**
+ * Mark a level for `regionTree`: a level id plus chrome around one of its views.
+ * Flattens to the level id (its default view) and one `<level>/<view>` id per
+ * `views` entry. Two levels are supported by design.
+ */
+declare function regionLevel(options: RegionLevelOptions): RegionLevel;
+/**
+ * Flatten a nested region declaration into the flat `regions` map that
+ * `Page.regions` expects. Plain loaders are copied through unchanged; each
+ * `regionLevel` adds its level id (the default view) and one composite
+ * `<level>/<view>` id per view, all rendered inside the level chrome.
+ */
+declare function regionTree(entries: Record<string, RegionLoader | RegionLevel>): Record<string, RegionLoader>;
+
 /**
  * `true` when the module is evaluated in a browser (a global `window` exists).
  *
@@ -1927,5 +1983,5 @@ declare function renderJSONScript(value: unknown, options: {
     nonce?: string;
 }): string;
 
-export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, buildReturnTo, createGuard, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, isClient, loaded, local, normalizePath, page, paramsGuard, readCookie, readReturnTo, renderContent, renderDom, renderJSONScript, requestForm, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
-export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, CsrfOptions, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, FormRequestOptions, FormResult, Guard, GuardApp, GuardContext, GuardContextInput, GuardFactory, GuardFallback, GuardPredicate, GuardRedirect, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RegionCache, RegionEnterContext, RegionGuard, RegionGuardContext, RegionLeaveContext, RegionLoader, RegionModule, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketConnectionState, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };
+export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, buildReturnTo, createGuard, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, isClient, loaded, local, normalizePath, page, paramsGuard, readCookie, readReturnTo, regionLevel, regionTree, renderContent, renderDom, renderJSONScript, requestForm, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
+export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, CsrfOptions, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, FormRequestOptions, FormResult, Guard, GuardApp, GuardContext, GuardContextInput, GuardFactory, GuardFallback, GuardPredicate, GuardRedirect, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RegionCache, RegionChromeContext, RegionChromeLoader, RegionChromeModule, RegionEnterContext, RegionGuard, RegionGuardContext, RegionLeaveContext, RegionLevel, RegionLevelOptions, RegionLoader, RegionModule, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketConnectionState, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };

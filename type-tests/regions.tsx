@@ -7,7 +7,7 @@
  * region capability without any `any` casts or relative `src` imports.
  */
 import {
-  Yvee, Page, dom,
+  Yvee, Page, dom, regionTree, regionLevel,
   type PageFetchContext,
   type RegionLoader,
   type RegionModule,
@@ -17,6 +17,9 @@ import {
   type RegionGuard,
   type RegionGuardContext,
   type GuardApp,
+  type RegionChromeContext,
+  type RegionChromeLoader,
+  type DOMContext,
 } from 'yvee';
 
 type DashboardData = {
@@ -50,6 +53,56 @@ const analyticsRegion: RegionLoader = async () => ({
     return <p>Analytics for {page.region.value}: scroll depth {saved?.depth ?? 0}</p>;
   },
 });
+
+/**
+ * Level chrome receives a stateless cache and the active child render as
+ * `outlet`. The helper composes it with each `regionLevel` view.
+ */
+const analyticsChrome: RegionChromeLoader = async () => ({
+  default: ({ page, cache, outlet }: RegionChromeContext) => {
+    // Chrome must not retain state; the helper hands it a no-op cache.
+    void cache.get();
+    return (
+      <section aria-label="Analytics">
+        <h2>Analytics for {page.region.value}</h2>
+        <div class="analytics-panel">{outlet as DOMContext}</div>
+      </section>
+    );
+  },
+  head: { title: 'Analytics' },
+});
+
+const analyticsViews: Record<string, RegionLoader> = {
+  overview: async () => ({ default: () => <p>Analytics overview</p> }),
+  retention: async () => ({ default: () => <p>Analytics retention</p> }),
+};
+
+const nestedLevel = regionLevel({ chrome: analyticsChrome, views: analyticsViews });
+
+/** A nested region page authored through the public helpers only. */
+class NestedDashboardPage extends Page<DashboardData> {
+  regionParam = 'tab';
+  defaultRegion = 'analytics';
+  keepAlive: number | true = true;
+  rememberRegion = true;
+
+  regions = regionTree({
+    overview: async () => ({ default: () => <p>Overview</p> }),
+    analytics: regionLevel({
+      chrome: analyticsChrome,
+      default: 'overview',
+      views: {
+        ...analyticsViews,
+        // @ts-expect-error A level view must be a RegionLoader, never a nested level.
+        nested: nestedLevel,
+      },
+    }),
+  });
+
+  override body() {
+    return <main>{this.regionContent}</main>;
+  }
+}
 
 /** Region-scoped guard: allow, or redirect to login with a return path. */
 const billingGuard: RegionGuard<
@@ -116,5 +169,6 @@ class DashboardPage extends Page<DashboardData> {
 
 const app = new Yvee<DashboardData>();
 app.route('/dashboard')(DashboardPage);
+app.route('/nested')(NestedDashboardPage);
 app.Main(content => <main class="app-shell">{content}</main>);
 await app.render({ id: 'dashboard-root', data: { notes: { draft: false, summary: 'Ready' }, stats: { visits: 0 } } });
