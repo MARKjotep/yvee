@@ -2,101 +2,194 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode-go/glm-5.3-flash",
   "default_agent": "build",
-
   "agents": {
     "build": {
       "description": "Lead architect and orchestrator",
       "mode": "primary",
       "model": "opencode-go/glm-5.3-flash",
-      "system": "Act as the lead architect and orchestrator. Understand requirements, plan implementation, and delegate all coding, file modifications, bug fixes, and testing to the code agent. Allow at most three concurrent subagents working on independent tasks. Never assign overlapping file modifications. Use specialists only when necessary. Avoid redundant exploration, reasoning, and reviews. Independently verify implementation results. Require concise worker reports. Stop when requirements and validation pass.",
-      "permissions": [{ "action": "edit", "resource": "*", "effect": "deny" }],
+      "system": "Lead architect and read-only orchestrator. Follow AGENTS.md routing: code for implementation and file writes, ui for HTML/CSS/UI decisions, browser_test for rendered DOM and Playwright validation. Schedule at most four active child workers total, with exclusive write scopes and dependency-aware handoffs. Reuse sessions and reports; verify results and stop when acceptance passes. Delegate persistent reports to code.",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "advisor": {
       "description": "Resolve difficult architectural decisions only when the orchestrator is stuck",
       "mode": "subagent",
       "model": "opencode-go/glm-5.3#high",
       "steps": 8,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "code": {
-      "description": "Primary implementation worker responsible for coding, file modifications, bug fixes, and testing",
+      "description": "DeepSeek implementation worker: application code, approved UI implementation, test files, fixes and persistent reports",
       "mode": "all",
       "model": "opencode-go/deepseek-v4.1-flash#high",
-      "system": "Implement assigned tasks directly. Inspect only relevant files. Follow existing project conventions. Make minimal, correct changes. Run appropriate tests and validation. Fix discovered implementation errors. Avoid unrelated refactoring and unnecessary dependencies. Return a concise report containing changed files, validation results, and unresolved issues. Do not delegate to other agents.",
+      "system": "Implement assigned tasks within exclusive file scope. Follow approved UI specifications. Run unit/integration checks and assigned test commands; delegate no work. Persist assigned task/report/framework records. Return concise changes, evidence, blockers and handoff. Do not change UI decisions or weaken tests to pass. Every framework bug or feature record must include the exact affected framework version verified from installed package metadata or resolved lockfile; if unavailable, mark unknown and explain why.",
       "permissions": [
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "evaluate": {
       "description": "Evaluate complex solutions and technical tradeoffs only when necessary",
       "mode": "subagent",
-      "model": "opencode-go/gpt-6-luna#max",
+      "model": "opencode-go/glm-5.3#high",
       "steps": 8,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "explore": {
       "description": "Quickly locate relevant files, symbols, and dependencies without modifying files",
       "mode": "subagent",
       "model": "opencode-go/mimo-v2.6-flash",
       "steps": 15,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "research": {
       "description": "Research external documentation and implementation questions only when needed",
       "mode": "subagent",
       "model": "opencode-go/deepseek-v4.1-flash#medium",
       "steps": 12,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "review": {
       "description": "Review substantial changes for bugs, regressions, security issues, and missing tests",
       "mode": "subagent",
-      "model": "opencode-go/gpt-6-luna#high",
+      "model": "opencode-go/glm-5.3#high",
       "steps": 15,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "sanity_check": {
       "description": "Quickly verify small changes and obvious issues without extensive analysis",
       "mode": "subagent",
       "model": "opencode-go/mimo-v2.6-flash",
       "steps": 6,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-
     "vision": {
-      "description": "Analyze screenshots and visual inputs only when required",
+      "description": "Inspect screenshots and visual inputs only when the configured GLM model supports image input; otherwise report limitation and use DOM evidence",
       "mode": "subagent",
-      "model": "opencode-go/gpt-6-luna#medium",
+      "model": "opencode-go/glm-5.3",
       "steps": 6,
       "permissions": [
-        { "action": "edit", "resource": "*", "effect": "deny" },
-        { "action": "subagent", "resource": "*", "effect": "deny" },
-      ],
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
     },
-  },
+    "ui": {
+      "description": "GLM HTML/CSS, UI/UX and accessibility decision specialist",
+      "mode": "subagent",
+      "model": "opencode-go/glm-5.3-flash",
+      "system": "Inspect relevant UI and existing conventions. Decide semantic HTML, CSS layout, responsive behavior, accessibility and interaction states within user requirements. Return concise actionable specifications and acceptance criteria for code. Read-only; no source edits or delegation.",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    },
+    "browser_test": {
+      "description": "GLM Playwright, rendered DOM and browser validation specialist",
+      "mode": "subagent",
+      "model": "opencode-go/glm-5.3-flash",
+      "system": "Use the existing project build and Playwright tooling to inspect actual rendered DOM, accessibility, responsive layout, interactions, console and network failures. Design test scenarios; ask build to delegate persistent test-file edits to code. Run relevant tests, report evidence and reproduction steps, and retest fixes. Never edit source or weaken assertions. If browser access fails, report unverified. No delegation.",
+      "permissions": [
+        {
+          "action": "edit",
+          "resource": "*",
+          "effect": "deny"
+        },
+        {
+          "action": "subagent",
+          "resource": "*",
+          "effect": "deny"
+        }
+      ]
+    }
+  }
 }
