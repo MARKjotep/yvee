@@ -167,13 +167,29 @@ See the [IndexedDB guide](../src/core/indexeddb/README.md) for schema examples
 and data lifetime guidance. IndexedDB remains browser-managed persistent storage;
 application expiry requires explicit deletion.
 
+## JSX runtime
+
+Automatic-runtime output is resolved through `jsxImportSource: "yvee"`. These
+subpaths are package exports selected by TypeScript and Bun; application code
+does not import them by hand. Children remain rest arguments, are never placed
+on `props`, and a `key` stays in the attribute object.
+
+| Export | Description |
+| --- | --- |
+| `yvee/jsx-runtime` | Production runtime used by automatic JSX: `jsx`, `jsxs` and `Fragment`. |
+| `yvee/jsx-dev-runtime` | Development runtime: `jsxDEV` and `Fragment`. Debug source/self arguments are accepted and ignored. |
+
+The root entry also re-exports these helpers (`jsx`, `jsxs`, `jsxDEV`,
+`Fragment`) plus the `JSX` type namespace so a single `dist/index.d.ts` covers
+both entries.
+
 ## DOM, TSX and browser element helpers
 
 | Export | Description |
 | --- | --- |
 | `DOM` / `DOMNode` | Renderer node containing tag, attributes and child contexts; usually created through TSX. |
-| `dom` | JSX element factory configured by this package's TSX settings. |
-| `frag` | JSX fragment factory that groups children without a wrapper element. |
+| `dom` | Classic JSX element factory for the legacy `"jsx": "react"` setup; the renderer itself also exposes it. |
+| `frag` | Classic JSX fragment factory for the legacy setup that groups children without a wrapper element. |
 | `DOMAttr` | Attribute/event shape accepted by renderer nodes. |
 | `DOMValue<T>` | Static or reactive DOM attribute value type. |
 | `DOMRenderable` / `DOMContext` | Values and promise-capable contexts accepted as DOM children. |
@@ -229,7 +245,7 @@ head attributes; existing record-based metadata remains supported.
 
 ## Version
 
-This documentation targets `yvee@0.1.1`. The package `exports` map currently
-exposes only the root entry (`import ... from "yvee"`). Run `bun run test:types`
-in this repository for consumer TSX, context inference and expected-invalid
-calls.
+This documentation targets `yvee@0.1.7`. The package `exports` map exposes the
+root entry (`import ... from "yvee"`) plus the automatic JSX runtime subpaths
+(`yvee/jsx-runtime` and `yvee/jsx-dev-runtime`). Run `bun run test:types` in this
+repository for consumer TSX, context inference and expected-invalid calls.

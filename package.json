@@ -1,6 +1,6 @@
 {
   "name": "yvee",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "TypeScript UI framework with reactive state, a TSX renderer, client-side routing with guards, server-side rendering, and browser storage and network helpers.",
   "keywords": [
     "typescript",
@@ -22,6 +22,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/jsx-runtime.js"
     }
   },
   "sideEffects": false,

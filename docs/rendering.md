@@ -11,12 +11,25 @@ services.
 
 ## TSX and the DOM renderer
 
-Write markup in `.tsx` files with HTML and SVG tags. Configure `dom` as the JSX
-factory and `frag` for fragments (`<>...</>`), then import those names where
-needed:
+Write markup in `.tsx` files with HTML and SVG tags. Yvee uses the automatic
+JSX runtime, so no import is needed for JSX. Configure TypeScript (and Bun
+1.4+) with:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "yvee"
+  }
+}
+```
+
+TypeScript and Bun resolve `yvee/jsx-runtime` (`jsx`, `jsxs`, `Fragment`) or
+`yvee/jsx-dev-runtime` (`jsxDEV`, `Fragment`) from that setting. A `key` stays
+in the attribute object, matching classic behavior.
 
 ```tsx
-import { State, dom, frag } from "yvee";
+import { State } from "yvee";
 
 const count = State(0);
 
@@ -32,11 +45,16 @@ State values can appear in children and supported attributes. The renderer
 registers bindings so updates change the corresponding browser content. App
 mounting handles rendering and activating those bindings for page content.
 
-`DOM` is the node class; `DOMNode` is its type alias. `dom` creates nodes and
-`frag` groups children. `DOMAttr`/`DOMValue` describe attributes, and
+`DOM` is the node class; `DOMNode` is its type alias. Internally `dom` creates
+nodes and `frag` groups children; automatic-runtime TSX reaches them through
+`yvee/jsx-runtime`. `DOMAttr`/`DOMValue` describe attributes, and
 `DOMRenderable`/`DOMContext` describe accepted children, including promises.
 `DOMComponent<Props>` is a typed function component. Because TSX elements may be
 promises, the renderer awaits async components during SSR and navigation.
+
+Classic JSX factories remain supported for existing code. Set
+`"jsx": "react"`, `"jsxFactory": "dom"`, `"jsxFragmentFactory": "frag"`, then
+import the factories with `import { dom, frag } from "yvee"` where JSX is used.
 
 Optional attributes — intrinsic attribute maps and `DOMAttr` alike — are typed
 as `?: T | undefined`. Forwarding a conditionally-present value such as
@@ -47,11 +65,11 @@ attributes produce the same markup for the same value.
 
 ### Components and children
 
-A component is a function `dom` calls with attributes as its first argument and
-JSX children as **rest arguments**:
+A component is a function the renderer calls with attributes as its first
+argument and JSX children as **rest arguments**:
 
 ```tsx
-import { dom, type DOMContext } from "yvee";
+import type { DOMContext } from "yvee";
 
 function Card(props: { title: string }, ...children: DOMContext[]) {
   return (
@@ -270,7 +288,7 @@ from an optional `head({ page })` export in a lazy page module:
 
 ```tsx
 // page.tsx
-import { Page, State, dom, route } from "yvee";
+import { Page, State, route } from "yvee";
 
 @route("/status")
 export class StatusPage extends Page {
@@ -281,7 +299,6 @@ export class StatusPage extends Page {
 }
 
 // status-view.tsx
-import { dom } from "yvee";
 import type { StatusPage } from "./page";
 
 export const head = ({ page }: { page: StatusPage }) => (

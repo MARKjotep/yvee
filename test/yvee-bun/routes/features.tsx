@@ -1,6 +1,5 @@
 import { State } from "../../../src/core/core.core";
 import { Page, route } from "../../../src/yvee";
-import { dom, frag } from "../../../src/dom/render/node.dom";
 
 export class FeaturesRoute extends Page {
   title = State("Features · Yvee Bun example");

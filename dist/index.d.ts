@@ -101,7 +101,7 @@ declare class Elem<T extends Elements = HTMLElement> extends Eget<T> {
     animate(keyframes: KFType, onComplete?: fn<any, void>): this;
     query(query: string): T | null;
     queryAll(query: string): T[];
-    newChild<P>(element: keyof HTMLElementTagNameMap, props?: Record<string, P>): Elem<HTMLElement | HTMLObjectElement | HTMLMapElement | HTMLDataElement | HTMLScriptElement | HTMLStyleElement | HTMLHtmlElement | HTMLAnchorElement | HTMLAreaElement | HTMLAudioElement | HTMLBaseElement | HTMLQuoteElement | HTMLBodyElement | HTMLBRElement | HTMLButtonElement | HTMLCanvasElement | HTMLTableCaptionElement | HTMLTableColElement | HTMLDataListElement | HTMLModElement | HTMLDetailsElement | HTMLDialogElement | HTMLDivElement | HTMLDListElement | HTMLEmbedElement | HTMLFieldSetElement | HTMLFormElement | HTMLHeadingElement | HTMLHeadElement | HTMLHRElement | HTMLIFrameElement | HTMLImageElement | HTMLInputElement | HTMLLabelElement | HTMLLegendElement | HTMLLIElement | HTMLLinkElement | HTMLMenuElement | HTMLMetaElement | HTMLMeterElement | HTMLOListElement | HTMLOptGroupElement | HTMLOptionElement | HTMLOutputElement | HTMLParagraphElement | HTMLPictureElement | HTMLPreElement | HTMLProgressElement | HTMLSelectElement | HTMLSlotElement | HTMLSourceElement | HTMLSpanElement | HTMLTableElement | HTMLTableSectionElement | HTMLTableCellElement | HTMLTemplateElement | HTMLTextAreaElement | HTMLTimeElement | HTMLTitleElement | HTMLTableRowElement | HTMLTrackElement | HTMLUListElement | HTMLVideoElement>;
+    newChild<P>(element: keyof HTMLElementTagNameMap, props?: Record<string, P>): Elem<HTMLElement | HTMLObjectElement | HTMLMapElement | HTMLLinkElement | HTMLDataElement | HTMLScriptElement | HTMLStyleElement | HTMLHtmlElement | HTMLAnchorElement | HTMLAreaElement | HTMLAudioElement | HTMLBaseElement | HTMLQuoteElement | HTMLBodyElement | HTMLBRElement | HTMLButtonElement | HTMLCanvasElement | HTMLTableCaptionElement | HTMLTableColElement | HTMLDataListElement | HTMLModElement | HTMLDetailsElement | HTMLDialogElement | HTMLDivElement | HTMLDListElement | HTMLEmbedElement | HTMLFieldSetElement | HTMLFormElement | HTMLHeadingElement | HTMLHeadElement | HTMLHRElement | HTMLIFrameElement | HTMLImageElement | HTMLInputElement | HTMLLabelElement | HTMLLegendElement | HTMLLIElement | HTMLMenuElement | HTMLMetaElement | HTMLMeterElement | HTMLOListElement | HTMLOptGroupElement | HTMLOptionElement | HTMLOutputElement | HTMLParagraphElement | HTMLPictureElement | HTMLPreElement | HTMLProgressElement | HTMLSelectElement | HTMLSlotElement | HTMLSourceElement | HTMLSpanElement | HTMLTableElement | HTMLTableSectionElement | HTMLTableCellElement | HTMLTemplateElement | HTMLTextAreaElement | HTMLTimeElement | HTMLTitleElement | HTMLTableRowElement | HTMLTrackElement | HTMLUListElement | HTMLVideoElement>;
     newChildNS<P>(element: keyof SVGElementTagNameMap, props?: Record<string, P>): Elem<SVGSymbolElement | SVGFilterElement | SVGScriptElement | SVGStyleElement | SVGAElement | SVGTitleElement | SVGAnimateElement | SVGAnimateMotionElement | SVGAnimateTransformElement | SVGCircleElement | SVGClipPathElement | SVGDefsElement | SVGDescElement | SVGEllipseElement | SVGFEBlendElement | SVGFEColorMatrixElement | SVGFEComponentTransferElement | SVGFECompositeElement | SVGFEConvolveMatrixElement | SVGFEDiffuseLightingElement | SVGFEDisplacementMapElement | SVGFEDistantLightElement | SVGFEDropShadowElement | SVGFEFloodElement | SVGFEFuncAElement | SVGFEFuncBElement | SVGFEFuncGElement | SVGFEFuncRElement | SVGFEGaussianBlurElement | SVGFEImageElement | SVGFEMergeElement | SVGFEMergeNodeElement | SVGFEMorphologyElement | SVGFEOffsetElement | SVGFEPointLightElement | SVGFESpecularLightingElement | SVGFESpotLightElement | SVGFETileElement | SVGFETurbulenceElement | SVGForeignObjectElement | SVGGElement | SVGImageElement | SVGLineElement | SVGLinearGradientElement | SVGMarkerElement | SVGMaskElement | SVGMetadataElement | SVGMPathElement | SVGPathElement | SVGPatternElement | SVGPolygonElement | SVGPolylineElement | SVGRadialGradientElement | SVGRectElement | SVGSetElement | SVGStopElement | SVGSVGElement | SVGSwitchElement | SVGTextElement | SVGTextPathElement | SVGTSpanElement | SVGUseElement | SVGViewElement>;
     get<K extends keyof T>(property: K): T[K];
     get(property: string): unknown;
@@ -1438,11 +1438,11 @@ interface PageFetchContext<TData extends Record<string, unknown>> {
     resources: DisposalScope;
 }
 declare class MissingPage extends Page {
-    body(): JSX.Element;
+    body(): maybePromise<DOM>;
 }
 declare class FailurePage extends Page {
     status: number;
-    body(): JSX.Element;
+    body(): maybePromise<DOM>;
 }
 
 type Constructor<T = object> = new (...args: any[]) => T;
@@ -1749,7 +1749,79 @@ declare class Yvee<T extends Record<string, unknown> = Record<string, unknown>> 
     private load;
 }
 
+/**
+ * Automatic JSX runtime for Yvee (`"jsx": "react-jsx"`,
+ * `"jsxImportSource": "yvee"`).
+ *
+ * Bun and TypeScript import `jsx`/`jsxs` from `yvee/jsx-runtime` (or `jsxDEV`
+ * from `yvee/jsx-dev-runtime` in development). JSX children arrive on the
+ * props object here and are forwarded to {@link dom} as rest arguments, so
+ * component authors keep the usual `(props, ...children)` contract. Nothing
+ * needs to be imported in `.tsx` files; classic `dom`/`frag` usage keeps
+ * working unchanged.
+ */
+type JsxType = Parameters<typeof dom>[0];
+type JsxProps = Record<string, unknown> & {
+    children?: DOMContext | DOMContext[] | undefined;
+};
+/**
+ * Compile target for a JSX element with zero or one child.
+ *
+ * Bun and TypeScript call this from automatic-runtime output; it renders the
+ * element through {@link dom} and returns the same promise.
+ */
+declare function jsx(type: JsxType, props: JsxProps | null, key?: unknown): Promise<DOM>;
+/**
+ * Compile target for a JSX element with multiple static children.
+ *
+ * Behaves like {@link jsx}: array `children` are forwarded as rest arguments.
+ */
+declare function jsxs(type: JsxType, props: JsxProps | null, key?: unknown): Promise<DOM>;
+/**
+ * Development-runtime compile target.
+ *
+ * Identical to {@link jsx}; the source/self debugging arguments are accepted
+ * for compatibility and ignored.
+ */
+declare function jsxDEV(type: JsxType, props: JsxProps | null, key?: unknown, _isStatic?: boolean, _source?: unknown, _self?: unknown): Promise<DOM>;
+/**
+ * JSX fragment component (`<>…</>`).
+ *
+ * Null or omitted attributes are accepted because the automatic runtime does
+ * not pass a props object for fragments.
+ */
+declare function Fragment(attr?: DOMAttr | null, ...ctx: DOMContext[]): Promise<DOM>;
+/**
+ * JSX types resolved by TypeScript from the `jsxImportSource` module when the
+ * automatic runtime is enabled.
+ *
+ * Mirrors the global `JSX` namespace declared by the renderer.
+ */
+declare namespace JSX {
+    type Element = maybePromise<DOM>;
+    interface IntrinsicElements extends ElementAttributes, SVGAttributes {
+    }
+    /**
+     * Allows JSX children on components whose props type does not declare
+     * `children`.
+     *
+     * The automatic runtime type-checker merges children into the attribute
+     * object; Yvee forwards them to components as rest arguments, never on
+     * `props`, so this only satisfies the attribute merge.
+     */
+    interface IntrinsicAttributes {
+        children?: unknown;
+    }
+}
+
 declare const REGION_LEVEL: unique symbol;
+/** Metadata `regionTree` records for one level id. */
+interface RegionLevelMetadata {
+    /** View rendered by the bare level id. */
+    readonly defaultView: string;
+    /** Declared view segments, in declaration order. */
+    readonly views: readonly string[];
+}
 /** Context passed to a level chrome module. */
 interface RegionChromeContext {
     /** Page that owns the region. */
@@ -1802,8 +1874,21 @@ declare function regionLevel(options: RegionLevelOptions): RegionLevel;
  * `Page.regions` expects. Plain loaders are copied through unchanged; each
  * `regionLevel` adds its level id (the default view) and one composite
  * `<level>/<view>` id per view, all rendered inside the level chrome.
+ *
+ * Level ids and default views are recorded on the result and are readable
+ * through `regionLevelIds` and `defaultViewFor`; they never appear as keys.
  */
 declare function regionTree(entries: Record<string, RegionLoader | RegionLevel>): Record<string, RegionLoader>;
+/**
+ * Level ids recorded by `regionTree`, in declaration order; empty for maps
+ * without level metadata (such as hand-built `Page.regions`).
+ */
+declare function regionLevelIds(regions: Record<string, RegionLoader>): readonly string[];
+/**
+ * Default view of a level id from `regionTree`, or `undefined` for non-level
+ * or unknown ids.
+ */
+declare function defaultViewFor(regions: Record<string, RegionLoader>, regionId: string): string | undefined;
 
 /**
  * `true` when the module is evaluated in a browser (a global `window` exists).
@@ -1983,5 +2068,5 @@ declare function renderJSONScript(value: unknown, options: {
     nonce?: string;
 }): string;
 
-export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, buildReturnTo, createGuard, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, isClient, loaded, local, normalizePath, page, paramsGuard, readCookie, readReturnTo, regionLevel, regionTree, renderContent, renderDom, renderJSONScript, requestForm, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
-export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, CsrfOptions, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, FormRequestOptions, FormResult, Guard, GuardApp, GuardContext, GuardContextInput, GuardFactory, GuardFallback, GuardPredicate, GuardRedirect, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RegionCache, RegionChromeContext, RegionChromeLoader, RegionChromeModule, RegionEnterContext, RegionGuard, RegionGuardContext, RegionLeaveContext, RegionLevel, RegionLevelOptions, RegionLoader, RegionModule, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketConnectionState, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };
+export { $, ATTR, BrowserStore, Column, DOM, DbRepository, Derived, DisposalScope, Elem, EventStream, FailurePage, Field, Fragment, HTTPError, HeadDefaults, IDNotConnected, IndexedDatabase, JSX, MissingPage, Page, QState, RecState, RecStateful, Ref, RefState, RouteBook, Schema, Scope, SetState, SetStateful, SocketController, SocketHub, State, StateEffect, StateHook, StateLoaded, Stateful, Stored, StoredValue, Toggled, VersionedValue, Yvee, allGuards, applyHead, attr_value, batch, buildReturnTo, createGuard, defaultViewFor, dom, error, eventStream, eventStreams, frag, getElementById, hook, interpolate, isClient, jsx, jsxDEV, jsxs, loaded, local, normalizePath, page, paramsGuard, readCookie, readReturnTo, regionLevel, regionLevelIds, regionTree, renderContent, renderDom, renderJSONScript, requestForm, requestJSON, requireGuard, route, serializePayload, session, setContentRenderer, shallowEqual, socketRoute, t, toURL, use, useRef, whenGuard };
+export type { $_, CSSStyle, Cleanup, ColumnType, Constructor, ContentRenderer, ContextGuard, CsrfOptions, DOMAttr, DOMComponent, DOMComponentProps, DOMContext, DOMEvents, DOMNode, DOMRenderable, DOMValue, DVal, DerivedOptions, DerivedValue, Disposable, EAttr, ElementAttributes, Elements, Equality, EventMap, FieldScopeSet, FormRequestOptions, FormResult, Guard, GuardApp, GuardContext, GuardContextInput, GuardFactory, GuardFallback, GuardPredicate, GuardRedirect, GuardRejection, GuardResult, HeadConfig, HeadResult, IRecStateful, ISetStateful, IStateful, JSONRequestOptions, JsonMessageOptions, Layout, MessageFailure, MountOptions, OpenOptions, PageFetchContext, RegionCache, RegionChromeContext, RegionChromeLoader, RegionChromeModule, RegionEnterContext, RegionGuard, RegionGuardContext, RegionLeaveContext, RegionLevel, RegionLevelMetadata, RegionLevelOptions, RegionLoader, RegionModule, RenderResult, RenderedContent, RenderedDOM, RequestRetry, RouteEntry, SVGAttributes, ScopeDecorator, ScopeProxy, ScopeSet, ServerDataContext, ServerOptions, ServerRenderer, ServerRequest, ServerStatusResult, SocketConnectionState, SocketLoadOptions, StateHookOptions, StateOptions, StateUpdate, StorageChange, StorageSchema, StorageWatchOptions, StreamHandlers, StreamOptions, TagNames, Transport, YveeOptions, YveeURL, _$, aAttr, areaAttr, audioAttr, baseAttr, blockquoteAttr, buttonAttr, c_events, canvasAttr, colAttr, colgroupAttr, contenteditableAttr, dataAttr, delAttr, detailsAttr, dialogAttr, embedAttr, errorStatus, fieldsetAttr, formAttr, iframeAttr, imgAttr, inputAttr, insAttr, labelAttr, liAttr, linkAttr, mapAttr, menuAttr, metaAttr, meterAttr, objectAttr, olAttr, optgroupAttr, optionAttr, outputAttr, paramAttr, progressAttr, qAttr, renderedDom, scriptAttr, selectAttr, sourceAttr, statefulValue, styleAttr, successStatus, svgAttr, svgEAttr, svgETextAttr, tdAttr, textareaAttr, thAttr, timeAttr, trackAttr, videoAttr };

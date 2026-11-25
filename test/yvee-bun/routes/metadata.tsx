@@ -1,5 +1,4 @@
 import { Page, route, type PageFetchContext } from "../../../src/yvee";
-import { dom, frag } from "../../../src/dom/render/node.dom";
 import type { DemoRequestData, PostPayloadResponse } from "../data";
 
 export class MetadataRoute extends Page<DemoRequestData> {

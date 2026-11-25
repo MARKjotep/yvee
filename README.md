@@ -3,7 +3,7 @@
 Yvee is a TypeScript UI framework with reactive state, a TSX renderer, browser
 element helpers, client-side routing and guards, server-side rendering, and
 browser storage and network helpers. It ships as one dependency-free package,
-`yvee@0.1.0`.
+`yvee@0.1.7`.
 
 ## Install
 
@@ -25,20 +25,20 @@ After changing Yvee source, rebuild the package so consumers that import the
 build see the new code and declarations. Restart the consumer's dev server when
 its bundler caches linked dependencies.
 
-The package exposes only its root entry through the `exports` map. Import from
-`yvee`; source folders are not stable package subpaths.
+The package exposes its root entry and the JSX runtime subpaths through the
+`exports` map: `yvee`, `yvee/jsx-runtime` and `yvee/jsx-dev-runtime`. Source
+folders are not stable package subpaths.
 
 ## TypeScript and TSX setup
 
-Yvee's TSX elements use its `dom` factory and `frag` fragment factory. Add a
-`.tsx` extension and configure TypeScript accordingly:
+Yvee uses the automatic JSX runtime, so `.tsx` files need **no import** for
+JSX. Add a `.tsx` extension and point TypeScript (and Bun 1.4+) at Yvee:
 
 ```json
 {
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "dom",
-    "jsxFragmentFactory": "frag",
+    "jsx": "react-jsx",
+    "jsxImportSource": "yvee",
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "esnext",
@@ -47,9 +47,37 @@ Yvee's TSX elements use its `dom` factory and `frag` fragment factory. Add a
 }
 ```
 
-Import `dom` and `frag` in TSX modules where JSX is used. A consuming bundler
-must compile TypeScript/TSX and include Yvee's browser code in its client
-bundle. Yvee does not currently ship a framework-specific CLI or bundler plugin.
+Bun 1.4+ is recommended because its transpiler and `Bun.build` honor the same
+`jsx` settings. Oven users can forward them explicitly with the optional
+`jsx` and `tsconfig` build options.
+
+### JSX runtime exports
+
+`yvee/jsx-runtime` exports `jsx`, `jsxs` and `Fragment`;
+`yvee/jsx-dev-runtime` exports `jsxDEV` and `Fragment`. TypeScript and Bun
+select the right module from `jsxImportSource` and the build mode, so you never
+import these by hand. The component contract is unchanged: components receive
+`(props, ...children)`, children are never on `props`, and a `key` passed in
+JSX stays in the attribute object (classic parity).
+
+Classic JSX factories remain supported for existing code. To keep using them,
+set `"jsx": "react"`, `"jsxFactory": "dom"` and
+`"jsxFragmentFactory": "frag"`, then import `dom`/`frag` from `"yvee"` in TSX
+modules:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "dom",
+    "jsxFragmentFactory": "frag"
+  }
+}
+```
+
+A consuming bundler must compile TypeScript/TSX and include Yvee's browser code
+in its client bundle. Yvee does not currently ship a framework-specific CLI or
+bundler plugin.
 
 ## Quick start
 
@@ -57,7 +85,7 @@ Pages are classes decorated with a route path. Register them on an app and
 mount it into an element that already exists in the host HTML:
 
 ```tsx
-import { Page, Yvee, dom, route } from "yvee";
+import { Page, Yvee, route } from "yvee";
 
 @route("/")
 class HomePage extends Page {
@@ -88,7 +116,7 @@ const unmount = await app.render({ id: "app-root" });
 State values can be read directly by DOM children and supported attributes:
 
 ```tsx
-import { State, dom } from "yvee";
+import { State } from "yvee";
 
 const count = State(0);
 const button = (
@@ -105,11 +133,11 @@ new Yvee({ base: "/my-project/", client: "/my-project/client.js" });
 
 ## Component authoring
 
-A Yvee component is a function called by `dom`. Attributes are its first
+A Yvee component is a function called by the renderer. Attributes are its first
 argument; **JSX children are rest arguments**:
 
 ```tsx
-import { dom, type DOMContext } from "yvee";
+import type { DOMContext } from "yvee";
 
 function Card(props: { title: string }, ...children: DOMContext[]) {
   return (
@@ -127,9 +155,9 @@ const view = (
 );
 ```
 
-> **Children are not on `props`.** Because `dom` forwards JSX children only as
-> rest arguments, `props.children` is always `undefined`, and rendering it
-> silently drops the children. Type the props parameter as your own props
+> **Children are not on `props`.** Because the renderer forwards JSX children
+> only as rest arguments, `props.children` is always `undefined`, and rendering
+> it silently drops the children. Type the props parameter as your own props
 > object and render the `...children` rest parameter instead. (`DOMComponent`
 > and `DOMComponentProps` describe this shape for typed components.)
 

@@ -1,5 +1,3 @@
-import { dom } from "../../../src/dom/render/node.dom";
-
 async function AsyncResult() {
   await new Promise((resolve) => setTimeout(resolve, 300));
   return <p class="async-result">The async custom DOM component resolved.</p>;

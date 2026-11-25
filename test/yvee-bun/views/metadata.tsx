@@ -1,4 +1,3 @@
-import { dom } from "../../../src/dom/render/node.dom";
 import type { Page } from "../../../src/yvee";
 import type { DemoRequestData } from "../data";
 

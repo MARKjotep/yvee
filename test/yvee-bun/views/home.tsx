@@ -1,5 +1,3 @@
-import { dom } from "../../../src/dom/render/node.dom";
-
 export default function HomeView() {
   return (
     <section class="route-card home-card">

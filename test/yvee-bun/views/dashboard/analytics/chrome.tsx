@@ -1,5 +1,4 @@
 import { Derived, type IStateful } from "../../../../../src/core/core.core";
-import { dom } from "../../../../../src/dom/render/node.dom";
 import type { DOMContext } from "../../../../../src/dom/render/contracts.dom";
 import type { Page, RegionChromeContext } from "../../../../../src/yvee";
 

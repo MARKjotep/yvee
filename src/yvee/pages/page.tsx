@@ -4,6 +4,8 @@ import type { YveeURL } from "../routing/path";
 import type { HeadResult } from "../rendering/head";
 import type { RegionGuard } from "../guards/guards";
 import { dom } from "@/dom/render/node.dom";
+import type { DOM } from "@/dom/render/node.dom";
+import type { maybePromise } from "@/utils";
 
 /**
  * State retained for a region between renders. `get` returns the value stored
@@ -230,7 +232,7 @@ export interface PageFetchContext<TData extends Record<string, unknown>> {
 }
 
 export class MissingPage extends Page {
-  body() {
+  body(): maybePromise<DOM> {
     return <main role="status">Page not found: {this.path}</main>;
   }
 }
@@ -238,7 +240,7 @@ export class MissingPage extends Page {
 export class FailurePage extends Page {
   override status = 500;
 
-  body() {
+  body(): maybePromise<DOM> {
     return <main role="alert">This page could not be loaded.</main>;
   }
 }

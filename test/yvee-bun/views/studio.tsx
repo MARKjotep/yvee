@@ -1,5 +1,3 @@
-import { dom, frag } from "../../../src/dom/render/node.dom";
-
 export const head = () => (
   <>
     <meta property="og:title" content="Field Studio — grow ideas in the open" />

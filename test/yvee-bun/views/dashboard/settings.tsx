@@ -1,4 +1,3 @@
-import { dom } from "../../../../src/dom/render/node.dom";
 import type { Page, RegionCache } from "../../../../src/yvee";
 import type { DashboardRoute } from "../../routes/dashboard";
 

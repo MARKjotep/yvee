@@ -1,5 +1,3 @@
-import { dom } from "../../../../src/dom/render/node.dom";
-
 const stats = [
   { label: "Open tasks", value: "18", note: "4 due this week" },
   { label: "Active members", value: "12", note: "2 invitations pending" },

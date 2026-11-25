@@ -1,5 +1,4 @@
 import { State } from "@/core/core.core";
-import { dom } from "@/dom/render/node.dom";
 import { SocketController, socketRoute, type SocketHub } from "@/yvee";
 import { chatPath, messageLimit, type ChatMessage } from "./room";
 

@@ -1,7 +1,12 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "paths": { "@/*": ["./src/*"], "yvee": ["./src/index.ts"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "yvee": ["./src/index.ts"],
+      "yvee/jsx-runtime": ["./src/yvee/jsx-runtime.ts"],
+      "yvee/jsx-dev-runtime": ["./src/yvee/jsx-runtime.ts"]
+    }
   },
   "include": ["type-tests/**/*.ts", "type-tests/**/*.tsx"],
   "exclude": ["node_modules", "dist", "types"]

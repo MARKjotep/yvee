@@ -1,5 +1,4 @@
 import { Page, route } from "../../../src/yvee";
-import { dom, frag } from "../../../src/dom/render/node.dom";
 
 export class AsyncDOMRoute extends Page {
   override head() {

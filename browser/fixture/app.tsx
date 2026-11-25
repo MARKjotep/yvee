@@ -1,5 +1,6 @@
 import { Yvee, Page, State } from '../../src';
 import { DOM, dom, frag } from '../../src/dom/render/node.dom';
+import { JsxProbe, KeyedList } from './jsx-runtime';
 
 export const metrics = { clicks: 0, live: 0, globalEvents: 0, pages: 0, pageEvents: 0, lateReadyReturned: 0 };
 export const counter = State(0);
@@ -60,6 +61,13 @@ export function createApp(id = 'fixture', history = true) {
       </section>;
       if (name === 'large') return <section><h1>large</h1><ul>{largeItems}</ul></section>;
       if (name === 'large-fine') return <section><h1>large-fine</h1><ul>{largeFineRows.map(row => <li>{row}</li>)}</ul></section>;
+      if (name === 'jsx-runtime') return <section>
+        <h1>jsx runtime</h1>
+        <JsxProbe label='automatic'>
+          <p>child</p>
+        </JsxProbe>
+        <KeyedList items={['one', 'two']} />
+      </section>;
       return <section>
         <h1>{name === 'slowcommit' ? async () => { await fetch('/commit-gate'); return name; } : name}</h1>
         <button on={{ click() { metrics.clicks++; counter.value++; },

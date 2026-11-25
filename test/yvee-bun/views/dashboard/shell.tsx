@@ -1,5 +1,4 @@
 import { Derived, type IStateful } from "../../../../src/core/core.core";
-import { dom } from "../../../../src/dom/render/node.dom";
 import { regionLevelIds, type Page } from "../../../../src/yvee";
 import type { DashboardNotice, DashboardRoute } from "../../routes/dashboard";
 

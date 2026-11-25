@@ -1,5 +1,4 @@
 import type { FeaturesRoute } from "../routes/features";
-import { dom, frag } from "../../../src/dom/render/node.dom";
 
 export const head = ({ page }: { page: FeaturesRoute }) => (
   <>

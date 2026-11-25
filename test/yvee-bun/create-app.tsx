@@ -1,7 +1,6 @@
 import { chatPopup, ChatSocket } from "./chat/popup";
 import { NotFoundPage } from "./routes/not-found";
 import { Yvee } from "../../src/yvee";
-import { dom } from "../../src/dom/render/node.dom";
 import { client } from "./client-config";
 import { FeaturesRoute } from "./routes/features";
 import { AsyncDOMRoute } from "./routes/async-dom";

@@ -1,7 +1,7 @@
 # Getting started
 
 Yvee is a TypeScript UI framework in a single, dependency-free package
-(`yvee@0.1.0`). It combines:
+(`yvee@0.1.7`). It combines:
 
 - reactive state, derived values and lifecycle hooks;
 - a TSX renderer for HTML and SVG;
@@ -45,7 +45,8 @@ repository uses `builder.ts` with `@ohmyqt/oven`) so consumers that import the
 build see the new code and declarations. Restart the consumer's dev server when
 its bundler caches linked dependencies.
 
-The package exposes only its root entry through the `exports` map:
+The package exposes its root entry and the JSX runtime subpaths through the
+`exports` map:
 
 ```jsonc
 // package.json
@@ -54,25 +55,33 @@ The package exposes only its root entry through the `exports` map:
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/jsx-runtime.js"
     }
   }
 }
 ```
 
-Import from `yvee`. Source folders such as `src/core` are readable but are not
-stable package subpaths.
+Import public APIs from `yvee`; the runtime subpaths are selected by
+`jsxImportSource` and are not imported by hand. Source folders such as
+`src/core` are readable but are not stable package subpaths.
 
 ## TypeScript and TSX setup
 
-Yvee's TSX elements use its `dom` element factory and `frag` fragment factory.
-Configure TypeScript accordingly:
+Yvee uses the automatic JSX runtime, so `.tsx` files need **no import** for
+JSX. Configure TypeScript (and Bun 1.4+) accordingly:
 
 ```json
 {
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "dom",
-    "jsxFragmentFactory": "frag",
+    "jsx": "react-jsx",
+    "jsxImportSource": "yvee",
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "esnext",
@@ -81,7 +90,18 @@ Configure TypeScript accordingly:
 }
 ```
 
-Import `dom` and `frag` in modules that contain JSX:
+Bun 1.4+ is recommended because its transpiler and `Bun.build` honor the same
+settings. Oven users can forward them explicitly with the optional `jsx` and
+`tsconfig` build options.
+
+The runtime subpaths are `yvee/jsx-runtime` (`jsx`, `jsxs`, `Fragment`) and
+`yvee/jsx-dev-runtime` (`jsxDEV`, `Fragment`). Components keep the same
+contract: `(props, ...children)`, children never on `props`, and `key` stays in
+the attribute object.
+
+Classic JSX factories remain supported for existing code. Set
+`"jsx": "react"`, `"jsxFactory": "dom"` and `"jsxFragmentFactory": "frag"`, then
+import the factories in modules that contain JSX:
 
 ```tsx
 import { dom, frag } from "yvee";
@@ -97,7 +117,7 @@ Pages are ordinary TypeScript classes. Write their markup with HTML-like TSX
 nodes for Yvee's renderer.
 
 ```tsx
-import { Page, Yvee, dom, route } from "yvee";
+import { Page, Yvee, route } from "yvee";
 
 @route("/")
 class HomePage extends Page {
@@ -138,7 +158,7 @@ const unmount = await app.render({ id: "app-root" });
 Named route segments are available on the page:
 
 ```tsx
-import { Page, dom, route } from "yvee";
+import { Page, route } from "yvee";
 
 @route("/users/:id")
 class UserPage extends Page<{ name?: string }> {
@@ -164,7 +184,7 @@ State values can appear in children and supported attributes. The renderer
 registers bindings so updates change the corresponding browser content:
 
 ```tsx
-import { State, dom } from "yvee";
+import { State } from "yvee";
 
 const count = State(0);
 const view = (

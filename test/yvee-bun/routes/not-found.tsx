@@ -1,4 +1,3 @@
-import { dom, frag } from "@/dom/render/node.dom";
 import { Page, error } from "@/yvee";
 
 @error(404)

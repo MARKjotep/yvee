@@ -1,6 +1,11 @@
 import { State } from "../../../src/core/core.core";
-import { Page, regionLevel, regionTree, route, type RegionLeaveContext } from "../../../src/yvee";
-import { dom, frag } from "../../../src/dom/render/node.dom";
+import {
+  Page,
+  regionLevel,
+  regionTree,
+  route,
+  type RegionLeaveContext,
+} from "../../../src/yvee";
 
 export type DashboardNotice = {
   tone: "warning" | "error" | "success";
@@ -59,7 +64,9 @@ export class DashboardRoute extends Page {
 
   override async regionWillLeave({ from }: RegionLeaveContext) {
     if (from === "settings" && this.settingsDraft.trim()) {
-      const denial = new Error("Unsaved draft in Settings — clear it to leave.");
+      const denial = new Error(
+        "Unsaved draft in Settings — clear it to leave.",
+      );
       denial.name = "RegionLeaveDenied";
       throw denial;
     }

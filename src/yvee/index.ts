@@ -1,4 +1,10 @@
 export { Yvee } from "./app";
+/**
+ * Automatic JSX runtime (`yvee/jsx-runtime`). Re-exported here so its value
+ * and type declarations ship in `dist/index.d.ts`; the dedicated
+ * `yvee/jsx-runtime` subpath points its `types` at that file.
+ */
+export * from "./jsx-runtime";
 export { MissingPage } from "./pages/page";
 export { FailurePage } from "./pages/page";
 export type { YveeOptions, MountOptions, RenderResult, Layout } from "./app";

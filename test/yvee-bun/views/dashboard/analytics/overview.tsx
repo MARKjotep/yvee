@@ -1,5 +1,3 @@
-import { dom } from "../../../../../src/dom/render/node.dom";
-
 const metrics = [
   { label: "Page views", value: "12,480", note: "+18% · last 30 days" },
   { label: "Route loads", value: "3,214", note: "+9% · last 30 days" },
