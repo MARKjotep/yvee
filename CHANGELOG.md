@@ -2,6 +2,17 @@
 
 All notable changes to `yvee` are recorded here.
 
+## Unreleased
+
+### Changed
+
+- The build toolchain now uses the published `@xyrah/oven` ^0.0.3 dev
+  dependency instead of the previous linked local build (0.0.1). Oven remains a
+  dev-only dependency; no runtime dependency was added.
+- `dist/` rebuilt with the published toolchain: the output is byte-identical to
+  0.1.7, so no runtime or declaration types changed.
+- Dev dependency `@axe-core/playwright` bumped from ^4.14.0 to ^4.14.1.
+
 ## 0.1.7 — 2026-11-25
 
 ### Added

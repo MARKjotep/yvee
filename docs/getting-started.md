@@ -41,7 +41,7 @@ bun link yvee
 ```
 
 After changing Yvee source, rebuild the package bundle and declarations (the
-repository uses `builder.ts` with `@ohmyqt/oven`) so consumers that import the
+repository uses `builder.ts` with `@xyrah/oven`) so consumers that import the
 build see the new code and declarations. Restart the consumer's dev server when
 its bundler caches linked dependencies.
 

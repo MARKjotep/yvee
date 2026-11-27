@@ -65,6 +65,6 @@ Use 🟢 complete, 🟡 partial/in progress, 🔴 open/blocked, ⚪ not applicab
 
 ## Project build and source rules
 
-- Use `bun run builder/html_builder.ts` for client builds and Playwright; it bundles `client/` via `@ohmyqt/oven` and `builder/client_builder.ts`, and generates test HTML. Playwright `webServer` runs it automatically. No ad-hoc `bun build` or `tsc` substitute; report missing builder as blocker.
+- Use `bun run builder/html_builder.ts` for client builds and Playwright; it bundles `client/` via `@xyrah/oven` and `builder/client_builder.ts`, and generates test HTML. Playwright `webServer` runs it automatically. No ad-hoc `bun build` or `tsc` substitute; report missing builder as blocker.
 - Keep TypeScript modular; split unrelated logic and large lookup families into focused modules with small facades as useful. Preserve public imports, keys, behavior and type inference.
 - Add concise user-oriented JSDoc to public Tally chain/configuration types (utilities, indexed scales, variants, colors, `MEDIA`, `configure`); prefer mapped-type docs over repetitive declarations.

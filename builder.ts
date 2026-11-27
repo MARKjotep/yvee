@@ -1,4 +1,4 @@
-import { Roll, Oven } from "@ohmyqt/oven";
+import { Roll, Oven } from "@xyrah/oven";
 
 /**
  * Automatic JSX transform shared by the package entries: Bun resolves
